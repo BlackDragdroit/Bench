@@ -1376,9 +1376,8 @@ const DROP_INTENTS = [
   { id: 'showoff', label: 'Show-off', weight: 13, line: 'Point of it: it looks good sitting on a shelf or running on a screen. The kind of thing you hand someone and they immediately want a go. Lean into the aesthetics.', payoff: 'the moment that lands when someone else sees it' },
   { id: 'absurd', label: 'Ridiculous', weight: 9, line: 'Point of it: it\'s a joke. A useless machine, a wildly over-engineered answer to a non-problem, a bit taken much too far in hardware or code. Commit to it completely — do not sneak in an educational justification.', payoff: 'the joke' }
 ];
-const DROP_DEFAULT_KIT = 'Python, C, Arduino. Breadboard, jumper wires, multimeter, soldering iron. No oscilloscope. 3D printer sometimes.';
 const DISTILL_EVERY = 5;
-const DROP_DEFAULT = { kit: DROP_DEFAULT_KIT, mode: 'parts', feedback: [], taste: '', tasteAt: 0, sinceDistill: 0, lastDomains: [] };
+const DROP_DEFAULT = { kit: '', mode: 'parts', feedback: [], taste: '', tasteAt: 0, sinceDistill: 0, lastDomains: [] };
 const D = { order: null, rolling: null, error: '', settingsOpen: false, reveal: false, distilling: false, learnMsg: '', ctl: null, distillT: null };
 
 const dropCol = () => S.db.collection(`data/users/${S.uid}/drop/items`);
@@ -1500,7 +1499,7 @@ function buildDropPrompt(scope, domain, difficulty, intent, avoid, parts) {
 
 ${dropSchema(intent.payoff, fromParts)}
 
-The person: an engineering student who builds things for fun. Their skills and tools: ${dropState().kit || DROP_DEFAULT_KIT}
+The person: an engineering student who builds things for fun.${str(dropState().kit) ? ' Notes on their skills, tools or limits: ' + str(dropState().kit) : ''}
 ${fromParts ? `
 Their parts inventory (id | part | category, value, package | how many):
 ${partsBlock(parts)}
@@ -1611,7 +1610,7 @@ function DropSettings() {
   const st = dropState(), fb = st.feedback || [], up = fb.filter(f => f.vote > 0).length;
   const meta = fb.length ? `${up} liked, ${fb.length - up} disliked.` + (st.tasteAt ? ` Profile last rewritten: ${shortDate(st.tasteAt)}` : ` The profile gets written after ${DISTILL_EVERY} ratings.`) : 'Nothing yet. Rate a few rolls and this fills in.';
   return h('div', { class: 'dsettings' },
-    h('label', { class: 'field' }, h('span', null, 'Your skills and tools (goes into every roll)'), boundInput({ tag: 'textarea', class: 'inp', rows: 3, key: 'drop:kit', value: st.kit, placeholder: DROP_DEFAULT_KIT, onCommit: v => patchDrop({ kit: v }) })),
+    h('label', { class: 'field' }, h('span', null, 'Anything Drop should know about you (optional)'), boundInput({ tag: 'textarea', class: 'inp', rows: 3, key: 'drop:kit', value: st.kit, placeholder: 'Leave empty if nothing holds you back. Otherwise e.g. “no oscilloscope” or “only Python, no C”.', onCommit: v => patchDrop({ kit: v }) })),
     h('h3', null, 'What Drop has learned'),
     h('p', { class: 'dim sm', style: 'margin:0' }, meta),
     fb.length ? h('div', { class: 'daff' }, DROP_DOMAINS.map(d => { const a = affinity('domain', d.id); return [h('span', null, d.label), h('span', { class: 'meter', title: `×${a.toFixed(2)} roll odds` }, h('i', { style: `width:${Math.round(a / 2.5 * 100)}%;background:${d.color}` }))]; })) : null,
