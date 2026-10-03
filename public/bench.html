@@ -1,0 +1,1834 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bench</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --paper:#E7EDE1; --paper-2:#F3F6EF; --paper-3:#DAE3D3;
+  --grid:rgba(40,92,58,.085); --grid-strong:rgba(40,92,58,.19);
+  --ink:#1A2920; --ink-2:#4A5C50; --ink-3:#6F8275;
+  --line:#BCCAB5; --line-strong:#1A2920;
+  --accent:#1D5A39; --on-accent:#F3F6EF;
+  --gold:#94700F; --sel:#2563C9;
+  --danger:#A3392A; --ok:#2C7444; --warn:#A35F0C;
+  --s-idea:#7D877F; --s-planning:#C9A200; --s-building:#D2691C; --s-testing:#2E66BC; --s-done:#2C7A45; --s-paused:#7A51A8;
+  --shadow:0 1px 0 rgba(26,41,32,.05),0 14px 34px -14px rgba(26,41,32,.35);
+  --scrim:rgba(18,30,22,.42);
+  --pcb:0;
+  --font:"Barlow",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --font-head:"Barlow Semi Condensed","Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  color-scheme:light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#0D2318; --paper-2:#122D1F; --paper-3:#1A3A29;
+    --grid:rgba(214,184,96,.055); --grid-strong:rgba(214,184,96,.17);
+    --ink:#E4ECE3; --ink-2:#A6BAAB; --ink-3:#83998A;
+    --line:#2A4B3B; --line-strong:#B9C9BC;
+    --accent:#D6B860; --on-accent:#13281C;
+    --gold:#D6B860; --sel:#7FB2FF;
+    --danger:#EE8B74; --ok:#74C690; --warn:#E9A955;
+    --s-idea:#9AA69E; --s-planning:#E6C93C; --s-building:#F08C42; --s-testing:#6E9FEA; --s-done:#74C690; --s-paused:#AE8CDB;
+    --shadow:0 1px 0 rgba(0,0,0,.2),0 18px 40px -16px rgba(0,0,0,.6);
+    --scrim:rgba(3,10,6,.62);
+    --pcb:1; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0D2318; --paper-2:#122D1F; --paper-3:#1A3A29;
+  --grid:rgba(214,184,96,.055); --grid-strong:rgba(214,184,96,.17);
+  --ink:#E4ECE3; --ink-2:#A6BAAB; --ink-3:#83998A;
+  --line:#2A4B3B; --line-strong:#B9C9BC;
+  --accent:#D6B860; --on-accent:#13281C;
+  --gold:#D6B860; --sel:#7FB2FF;
+  --danger:#EE8B74; --ok:#74C690; --warn:#E9A955;
+  --s-idea:#9AA69E; --s-planning:#E6C93C; --s-building:#F08C42; --s-testing:#6E9FEA; --s-done:#74C690; --s-paused:#AE8CDB;
+  --shadow:0 1px 0 rgba(0,0,0,.2),0 18px 40px -16px rgba(0,0,0,.6);
+  --scrim:rgba(3,10,6,.62);
+  --pcb:1; color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+html,body{height:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 15px/1.45 var(--font);-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;overflow:hidden}
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer}
+img{max-width:100%}
+:focus-visible{outline:2px solid var(--sel);outline-offset:2px}
+[hidden]{display:none!important}
+.dim{color:var(--ink-2)}
+.sm{font-size:13px}
+.grow{flex:1}
+.mono{font-family:var(--font-mono);font-size:13px;letter-spacing:-.01em}
+.warn{color:var(--warn)}
+.danger-text{color:var(--danger)!important}
+
+/* ---------- shell ---------- */
+#app{height:100%}
+.shell{height:100%;display:grid;grid-template-columns:236px minmax(0,1fr)}
+.side{display:flex;flex-direction:column;gap:3px;padding:18px 12px 14px;background:var(--paper-2);border-right:1.5px solid var(--line-strong);overflow:auto}
+.brand{display:flex;align-items:center;gap:10px;padding:4px 10px 20px;font:700 25px/1 var(--font-head);letter-spacing:.005em}
+.brand svg{color:var(--accent);flex:none}
+.nav{display:flex;align-items:center;gap:10px;width:100%;padding:9px 10px;border:0;border-radius:6px;background:none;text-align:left;font-weight:500;color:var(--ink-2)}
+.nav:hover{background:var(--paper-3);color:var(--ink)}
+.nav[aria-current="page"]{background:var(--ink);color:var(--paper-2)}
+.nav .count{margin-left:auto;font:500 12px var(--font-mono);opacity:.75}
+.side-foot{margin-top:auto;display:flex;flex-direction:column;gap:6px;padding:14px 4px 0;border-top:1px solid var(--line)}
+.usage{font-size:12.5px;color:var(--ink-3);padding:0 6px}
+.usage .meter{width:100%;margin-top:5px}
+.main{overflow:auto;min-height:0;min-width:0;overscroll-behavior:contain;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:20px 20px;background-attachment:local}
+.page{max-width:1040px;margin:0 auto;padding:30px 32px 72px}
+.bottomnav{display:none}
+@media (max-width:820px){
+  .shell{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) auto}
+  .side{display:none}
+  .bottomnav{display:flex;background:var(--paper-2);border-top:1.5px solid var(--line-strong)}
+  .bottomnav button{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:9px 4px 9px;border:0;background:none;font-size:12.5px;font-weight:500;color:var(--ink-3);position:relative}
+  .bottomnav button[aria-current="page"]{color:var(--ink)}
+  .bottomnav button[aria-current="page"]::before{content:"";position:absolute;top:-1.5px;left:30%;right:30%;height:3px;background:var(--accent)}
+  .page{padding:18px 16px 40px}
+}
+
+/* ---------- page header ---------- */
+.pagehead{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:20px}
+.pagehead h1{margin:0;font:700 36px/1.02 var(--font-head);letter-spacing:-.005em}
+.pagehead .sub{color:var(--ink-2);margin-top:5px}
+.pagehead .actions{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+@media (max-width:820px){.pagehead h1{font-size:30px}}
+
+/* ---------- controls ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:38px;padding:0 14px;border:1.5px solid var(--ink);border-radius:5px;background:transparent;font-weight:600;white-space:nowrap;color:var(--ink)}
+.btn:hover{background:var(--paper-3)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.btn.primary:hover{filter:brightness(1.1)}
+.btn.quiet{border-color:transparent}
+.btn.danger{color:var(--danger);border-color:currentColor}
+.btn.sm{min-height:32px;padding:0 10px;font-size:14px}
+.btn:disabled{opacity:.45;cursor:default;filter:none}
+.ibtn{flex:none;width:38px;height:38px;display:inline-grid;place-items:center;border:0;border-radius:5px;background:transparent;color:var(--ink-2)}
+.ibtn:hover{background:var(--paper-3);color:var(--ink)}
+.ibtn:disabled{opacity:.35;cursor:default;background:none}
+.field{display:flex;flex-direction:column;gap:5px;min-width:0}
+.field>span{font-size:13px;font-weight:500;color:var(--ink-2)}
+.inp{width:100%;min-height:40px;padding:8px 11px;border:1.5px solid var(--line);border-radius:5px;background:var(--paper-2)}
+.inp:focus{outline:none;border-color:var(--ink)}
+textarea.inp{resize:vertical;min-height:72px;line-height:1.5}
+select.inp{appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--ink-2) 50%),linear-gradient(135deg,var(--ink-2) 50%,transparent 50%);background-position:calc(100% - 17px) 17px,calc(100% - 12px) 17px;background-size:5px 5px;background-repeat:no-repeat;padding-right:30px}
+.searchwrap{position:relative;display:flex;align-items:center;min-width:0}
+.searchwrap svg{position:absolute;left:11px;color:var(--ink-3);pointer-events:none}
+.searchwrap .inp{padding-left:35px}
+.toolbar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.toolbar .searchwrap{flex:0 1 280px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chips.scroll{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding:2px 0}
+.chips.scroll::-webkit-scrollbar{display:none}
+.chip{flex:none;display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border:1.5px solid var(--line);border-radius:999px;background:var(--paper-2);font-size:14px;font-weight:500}
+.chip:hover{border-color:var(--ink-2)}
+.chip[aria-pressed="true"]{border-color:var(--ink);background:var(--ink);color:var(--paper-2)}
+.chip .n{font:500 12px var(--font-mono);opacity:.7}
+.dot{width:10px;height:10px;border-radius:2px;background:var(--c)}
+.meter{display:inline-block;width:72px;height:6px;border-radius:3px;background:var(--paper-3);overflow:hidden;vertical-align:middle}
+.meter>i{display:block;height:100%;background:var(--gold)}
+.status{display:inline-flex;align-items:center;gap:7px;font-weight:500;white-space:nowrap}
+.status::before{content:"";width:10px;height:10px;border-radius:2px;background:var(--c)}
+.pill{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:999px;font-size:13px;font-weight:600;white-space:nowrap}
+.pill.ok{color:var(--ok);background:color-mix(in srgb,var(--ok) 14%,transparent)}
+.pill.short{color:var(--warn);background:color-mix(in srgb,var(--warn) 15%,transparent)}
+.pill.unk{color:var(--ink-3);background:var(--paper-3)}
+.psub{display:flex;flex-wrap:wrap;gap:3px 10px;font-size:13px;color:var(--ink-2);margin-top:1px}
+.stepper{display:inline-flex;align-items:center;border:1.5px solid var(--line);border-radius:5px;background:var(--paper);overflow:hidden}
+.stepper button{width:30px;height:30px;border:0;background:none;font-size:17px;line-height:1;color:var(--ink-2)}
+.stepper button:hover{background:var(--paper-3);color:var(--ink)}
+.stepper input{width:38px;height:30px;border:0;background:none;text-align:center;font:500 14px var(--font-mono);-moz-appearance:textfield;appearance:textfield}
+.stepper input::-webkit-inner-spin-button,.stepper input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.stepper input:focus{outline:none;background:var(--paper-3)}
+.empty{padding:38px 24px;text-align:center;border:1.5px dashed var(--line);border-radius:6px;background:var(--paper-2)}
+.empty h3{margin:0 0 6px;font:600 21px/1.2 var(--font-head)}
+.empty p{margin:0 auto 18px;color:var(--ink-2);max-width:46ch}
+.empty p:last-child{margin-bottom:0}
+.loading{padding:40px 8px;color:var(--ink-2)}
+.spin{width:16px;height:16px;border-radius:50%;border:2px solid var(--line);border-top-color:var(--ink);animation:spin .8s linear infinite;flex:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spin{animation-duration:2.4s}}
+
+/* ---------- project list ---------- */
+.plist{border:1.5px solid var(--line-strong);border-radius:6px;background:var(--paper-2);overflow:hidden}
+.prow{display:grid;grid-template-columns:6px minmax(0,1fr) auto;align-items:stretch;width:100%;padding:0;border:0;border-top:1px solid var(--line);background:none;text-align:left}
+.prow:first-child{border-top:0}
+.prow:hover{background:var(--paper-3)}
+.prow .band{background:var(--c)}
+.prow-main{display:flex;flex-direction:column;justify-content:center;padding:14px 16px;min-width:0}
+.prow-name{font:600 20px/1.2 var(--font-head)}
+.prow-desc{color:var(--ink-2);font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.prow-meta{display:flex;align-items:center;gap:20px;padding:0 18px;color:var(--ink-2);font-size:13.5px;white-space:nowrap}
+.prow-meta .mstat{display:inline-flex;align-items:center;gap:8px}
+.prow-meta .st{min-width:92px}
+@media (max-width:820px){
+  .prow{grid-template-columns:6px minmax(0,1fr)}
+  .prow-main{padding-bottom:4px}
+  .prow-meta{grid-column:2;flex-wrap:wrap;gap:6px 14px;padding:0 16px 13px}
+  .prow-meta .st{min-width:0}
+}
+.backup-row{display:flex;justify-content:center;margin-top:26px}
+
+/* ---------- project view ---------- */
+.crumb{margin:0 0 12px -10px}
+.tblock{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1.5px;background:var(--line-strong);border:1.5px solid var(--line-strong);border-radius:3px;overflow:hidden}
+.tblock>div{background:var(--paper-2);padding:9px 14px 11px;min-width:0}
+.tb-l{display:block;font-size:12.5px;color:var(--ink-3);margin-bottom:2px}
+.tb-v{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font:600 17px/1.25 var(--font-head)}
+.tb-v .warn{font:600 14px var(--font)}
+.tb-name{grid-column:span 3;display:flex;align-items:flex-start;gap:8px}
+.tb-name h1{margin:0;font:700 34px/1.05 var(--font-head);overflow-wrap:anywhere}
+.tb-sel{display:flex;align-items:center;gap:8px;position:relative}
+.tb-sel::before{content:"";width:12px;height:12px;border-radius:2px;background:var(--c);flex:none}
+.tb-sel select{appearance:none;border:0;background:transparent;font:600 18px var(--font-head);padding:2px 22px 2px 0;width:100%;min-width:0;cursor:pointer}
+.tb-sel::after{content:"";position:absolute;right:4px;top:50%;width:7px;height:7px;border-right:1.5px solid var(--ink-2);border-bottom:1.5px solid var(--ink-2);transform:translateY(-70%) rotate(45deg);pointer-events:none}
+.tb-sel select:focus-visible{outline:2px solid var(--sel)}
+.pdesc{margin:14px 0 0;color:var(--ink-2);max-width:72ch;white-space:pre-wrap}
+@media (max-width:820px){
+  .tblock{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .tb-name{grid-column:span 2}
+  .tblock>div:last-child{grid-column:span 2}
+  .tb-name h1{font-size:28px}
+}
+.tabs{display:flex;gap:2px;margin:24px 0 16px;border-bottom:1.5px solid var(--line-strong);overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{position:relative;flex:none;padding:10px 14px;border:0;background:none;font:600 17px var(--font-head);color:var(--ink-2)}
+.tab:hover{color:var(--ink)}
+.tab[aria-selected="true"]{color:var(--ink)}
+.tab[aria-selected="true"]::after{content:"";position:absolute;left:8px;right:8px;bottom:-1.5px;height:3px;background:var(--accent)}
+.tab .n{margin-left:5px;font:500 12px var(--font-mono);color:var(--ink-3)}
+.bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+
+/* steps */
+.steps{list-style:none;margin:0;padding:0;border:1.5px solid var(--line-strong);border-radius:6px;background:var(--paper-2);overflow:hidden}
+.step{border-top:1px solid var(--line)}
+.step:first-child{border-top:0}
+.step-row{display:grid;grid-template-columns:auto auto minmax(0,1fr) auto;align-items:center;gap:8px;padding:5px 6px 5px 12px}
+.chk{width:24px;height:24px;display:grid;place-items:center;padding:0;border:1.5px solid var(--ink);border-radius:4px;background:transparent;color:var(--on-accent)}
+.step.done .chk{background:var(--accent);border-color:var(--accent)}
+.step-num{min-width:1.7em;text-align:right;font:500 13px var(--font-mono);color:var(--ink-3)}
+.step-text{display:block;width:100%;min-height:0;padding:8px 6px;border:0;border-radius:4px;background:transparent;font-size:15.5px;line-height:1.4;resize:none;overflow:hidden}
+.step-text:focus{outline:none;background:var(--paper)}
+.step.done .step-text{color:var(--ink-3);text-decoration:line-through;text-decoration-color:var(--ink-3)}
+.step-more{display:flex;flex-direction:column;gap:8px;padding:2px 12px 12px 76px}
+.step-acts{display:flex;gap:4px;flex-wrap:wrap}
+@media (max-width:820px){.step-more{padding-left:12px}}
+.addrow{display:flex;gap:8px;margin-top:10px}
+.addrow .inp{flex:1}
+
+/* bom */
+.bom{border:1.5px solid var(--line-strong);border-radius:6px;background:var(--paper-2);overflow:hidden}
+.bom-row{display:grid;grid-template-columns:minmax(0,1fr) 104px 104px 112px 38px;align-items:center;gap:14px;padding:10px 8px 10px 14px;border-top:1px solid var(--line)}
+.bom-row:first-child{border-top:0}
+.bom-head{padding-top:8px;padding-bottom:8px;font-size:12.5px;color:var(--ink-3);background:var(--paper)}
+.bom-head span:nth-child(2),.bom-head span:nth-child(3){text-align:center}
+.pname{padding:0;border:0;background:none;text-align:left;font-weight:600;font-size:15.5px}
+.pname:hover{text-decoration:underline;text-underline-offset:3px}
+.bstock .btn{min-width:100px}
+.bom-row .pill{justify-self:start}
+@media (max-width:820px){
+  .bom-head{display:none}
+  .bom-row{grid-template-columns:auto auto minmax(0,1fr) 38px;gap:8px 10px}
+  .bom-row .bcell-name{grid-column:1/-1}
+}
+.cap{display:block;font-size:11.5px;color:var(--ink-3);margin-bottom:2px;text-align:center}
+@media (min-width:821px){.cap{display:none}}
+
+/* files */
+.drop{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:14px 16px;margin-bottom:14px;border:1.5px dashed var(--line);border-radius:6px;background:var(--paper-2)}
+.drop.over{border-color:var(--accent);background:var(--paper-3)}
+.drop .usage{margin-left:auto;padding:0}
+.fgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.ftile{display:flex;flex-direction:column;align-items:stretch;padding:0;border:1.5px solid var(--line);border-radius:6px;background:var(--paper-2);overflow:hidden;text-align:left}
+.ftile:hover{border-color:var(--ink)}
+.fthumb{aspect-ratio:4/3;display:grid;place-items:center;background:var(--paper-3);overflow:hidden}
+.fthumb img{width:100%;height:100%;object-fit:cover;display:block}
+.fext{padding:5px 9px;border:1.5px solid currentColor;border-radius:3px;font:500 15px var(--font-mono);color:var(--ink-2)}
+.fext.big{font-size:22px;padding:8px 14px}
+.fmeta{display:flex;flex-direction:column;padding:8px 10px 9px;min-width:0}
+.fname{font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fsize{font-size:12.5px;color:var(--ink-3)}
+.pv-img{display:block;max-width:100%;max-height:62vh;margin:0 auto;border-radius:4px}
+.pv-pdf{width:100%;height:62vh;border:1px solid var(--line);border-radius:4px;background:#fff}
+.pv-text{margin:0;max-height:58vh;overflow:auto;padding:12px 14px;border:1px solid var(--line);border-radius:4px;background:var(--paper);font:13px/1.5 var(--font-mono);white-space:pre-wrap;overflow-wrap:anywhere}
+.pv-none{display:flex;flex-direction:column;align-items:center;gap:12px;padding:34px 10px;text-align:center}
+
+/* sketches */
+.sgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px}
+.scard{border:1.5px solid var(--line-strong);border-radius:6px;background:var(--paper-2);overflow:hidden}
+.sthumb{display:grid;place-items:center;width:100%;aspect-ratio:16/10;padding:6px;border:0;color:var(--ink);background-color:var(--paper);background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:12px 12px}
+.sthumb svg{width:100%;height:100%;display:block}
+.sthumb svg path,.sthumb svg rect,.sthumb svg circle{vector-effect:non-scaling-stroke;stroke-width:1.4px}
+.sthumb:hover{background-color:var(--paper-3)}
+.smeta{display:flex;align-items:center;gap:6px;padding:8px 4px 8px 12px;border-top:1px solid var(--line)}
+
+/* notes */
+.notes-ta{min-height:46vh;font-size:15.5px;line-height:1.6;padding:14px 16px}
+
+/* library */
+.lib{border:1.5px solid var(--line-strong);border-radius:6px;background:var(--paper-2);overflow:hidden}
+.lib-row{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(0,1fr) minmax(0,.9fr) 116px;align-items:center;gap:16px;padding:10px 12px 10px 14px;border-top:1px solid var(--line)}
+.lib-row:first-child{border-top:0}
+.lib-main{display:flex;flex-direction:column;align-items:flex-start;min-width:0;padding:2px 0;border:0;background:none;text-align:left}
+.lib-main .pick-name{font-weight:600;font-size:15.5px}
+.lib-main:hover .pick-name{text-decoration:underline;text-underline-offset:3px}
+.clamp{display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
+.lib-col{display:flex;flex-direction:column;min-width:0;font-size:14px}
+.lib-col .psub{margin:0}
+.lib-stock{justify-self:end}
+.lib-stock .btn{min-width:98px}
+@media (max-width:820px){
+  .lib-row{grid-template-columns:minmax(0,1fr) auto;gap:6px 12px}
+  .lib-row .lib-col{display:none}
+  .lib-row .lib-main .psub{display:flex}
+}
+
+/* modal */
+.modal-back{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:calc(env(safe-area-inset-top,0px) + 16px) 16px calc(env(safe-area-inset-bottom,0px) + 16px);background:var(--scrim)}
+.modal{display:flex;flex-direction:column;width:min(580px,100%);max-height:100%;background:var(--paper-2);border:1.5px solid var(--line-strong);border-radius:8px;box-shadow:var(--shadow)}
+.modal.wide{width:min(780px,100%)}
+.modal-h{display:flex;align-items:center;gap:8px;padding:14px 10px 10px 20px;border-bottom:1px solid var(--line)}
+.modal-h h2{flex:1;margin:0;font:700 23px/1.15 var(--font-head);overflow-wrap:anywhere}
+.modal-b{display:flex;flex-direction:column;gap:14px;padding:16px 20px 18px;overflow:auto;min-height:0}
+.modal-f{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end;padding:12px 20px 16px;border-top:1px solid var(--line)}
+.modal-f .grow{flex:1}
+@media (max-width:600px){
+  .modal-back{align-items:flex-end;padding:calc(env(safe-area-inset-top,0px) + 28px) 0 0}
+  .modal,.modal.wide{width:100%;border-radius:12px 12px 0 0;border-bottom:0;padding-bottom:env(safe-area-inset-bottom,0px)}
+  .modal-f{justify-content:stretch}
+  .modal-f .btn{flex:1}
+  .modal-f .grow{display:none}
+}
+.form2{display:grid;grid-template-columns:1fr 1fr;gap:12px 14px}
+.form2 .span2{grid-column:1/-1}
+@media (max-width:600px){.form2{grid-template-columns:1fr}.form2 .span2{grid-column:auto}}
+.lookup{display:flex;flex-direction:column;gap:10px;padding:14px;border:1.5px solid var(--line-strong);border-radius:6px;background:var(--paper)}
+.lookup h3{margin:0;font:600 18px var(--font-head)}
+.lookup .lk-row{display:flex;gap:8px;flex-wrap:wrap}
+.lookup .lk-row .inp{flex:1 1 200px}
+.lk-inp{font-family:var(--font-mono);font-size:16px;letter-spacing:.02em}
+.lk-busy{display:flex;align-items:center;gap:10px;color:var(--ink-2)}
+.lk-res{display:flex;flex-direction:column;gap:6px;padding:12px 14px;border-left:3px solid var(--ok);background:var(--paper-2);border-radius:0 4px 4px 0}
+.lk-res.miss{border-left-color:var(--warn)}
+.lk-res p{margin:0}
+.lk-title{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:16px}
+.conf{font-size:12.5px;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--paper-3);color:var(--ink-2)}
+.conf.high{color:var(--ok)} .conf.low{color:var(--warn)}
+.lk-dup{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding-top:6px;color:var(--warn);font-weight:500}
+.linkbtn{padding:0;border:0;background:none;color:var(--ink);font-weight:600;text-decoration:underline;text-underline-offset:3px}
+.pick-list{display:flex;flex-direction:column;border:1.5px solid var(--line);border-radius:6px;overflow:hidden;background:var(--paper)}
+.pick{display:flex;align-items:center;gap:12px;width:100%;padding:10px 12px;border:0;border-top:1px solid var(--line);background:none;text-align:left}
+.pick:first-child{border-top:0}
+.pick:hover{background:var(--paper-3)}
+.pick-main{flex:1;min-width:0;display:flex;flex-direction:column}
+.pick-name{font-weight:600}
+.pick-empty{padding:14px 12px;color:var(--ink-2)}
+.pick-new{display:flex;align-items:center;gap:12px;width:100%;padding:12px;border:1.5px dashed var(--line);border-radius:6px;background:none;text-align:left}
+.pick-new:hover{border-color:var(--ink)}
+.pick-new b{display:block}
+.toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 86px);transform:translateX(-50%);z-index:200;max-width:calc(100% - 32px);padding:10px 16px;border-radius:6px;background:var(--ink);color:var(--paper-2);font-weight:500;box-shadow:var(--shadow)}
+.notice{max-width:520px;margin:12vh auto 0;padding:0 24px}
+.notice h1{font:700 30px/1.1 var(--font-head);margin:14px 0 8px}
+.notice p{color:var(--ink-2)}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opt{display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:6px;background:var(--paper);text-align:left;font-weight:600}
+.opt:hover{border-color:var(--ink)}
+.opt small{display:block;font-weight:400;color:var(--ink-2);font-size:13px}
+
+/* ---------- sketch editor ---------- */
+.ed{position:fixed;inset:0;z-index:60;display:flex;flex-direction:column;background:var(--paper);padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+.ed-top{display:flex;align-items:center;gap:4px;padding:7px 10px;background:var(--paper-2);border-bottom:1.5px solid var(--line-strong)}
+.ed-name{flex:1 1 auto;min-width:60px;max-width:360px;padding:6px 8px;border:0;border-radius:4px;background:transparent;font:700 19px var(--font-head)}
+.ed-name:focus{outline:none;background:var(--paper)}
+.ed-save{padding:0 6px;font-size:13px;color:var(--ink-3);white-space:nowrap}
+.ed-body{position:relative;flex:1;min-height:0;display:grid;grid-template-columns:68px minmax(0,1fr) auto}
+.ed-tools{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 6px;background:var(--paper-2);border-right:1.5px solid var(--line-strong);overflow:auto}
+.tool{width:54px;display:flex;flex-direction:column;align-items:center;gap:2px;padding:7px 2px 5px;border:0;border-radius:6px;background:none;color:var(--ink-2)}
+.tool span{font-size:11px;font-weight:500}
+.tool:hover{background:var(--paper-3);color:var(--ink)}
+.tool[aria-pressed="true"]{background:var(--ink);color:var(--paper-2)}
+.tool.add{color:var(--accent)}
+.tool-sep{width:30px;height:1px;margin:4px 0;background:var(--line)}
+.ed-stage{position:relative;min-width:0;min-height:0;overflow:hidden}
+.cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;color:var(--ink);cursor:default}
+.cv.m-pen,.cv.m-text{cursor:crosshair}
+.cv.m-wire{cursor:cell}
+.cv .gl{fill:none;stroke:var(--grid);stroke-width:1}
+.cv .gl2{fill:none;stroke:var(--grid-strong);stroke-width:1}
+.cv .gh{fill:none;stroke:var(--grid-strong);stroke-width:1.5}
+.cv .hit{fill:transparent;stroke:none}
+.cv .whit{fill:none;stroke:transparent;stroke-width:14}
+.cv .cmp{cursor:grab}
+.cv .sel{color:var(--sel)}
+.cv .selbox{fill:none;stroke:var(--sel);stroke-width:1.2;stroke-dasharray:4 3}
+.cv .str-sel{fill:none;stroke:var(--sel);stroke-width:9;opacity:.28}
+.cv .pin{fill:var(--paper);stroke:var(--gold);stroke-width:1.6}
+.cv .pin.on{fill:var(--gold)}
+.cv .node-ghost{fill:var(--paper);stroke:currentColor;stroke-width:1.2;opacity:.6}
+.cv .rubber{fill:none;stroke:var(--sel);stroke-width:2;stroke-dasharray:6 4}
+.ed-hint{position:absolute;top:10px;left:50%;transform:translateX(-50%);max-width:calc(100% - 24px);padding:6px 13px;border:1px solid var(--line);border-radius:999px;background:var(--paper-2);color:var(--ink-2);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
+.ed-zoom{position:absolute;right:10px;bottom:10px;display:flex;flex-direction:column;border:1.5px solid var(--line-strong);border-radius:6px;background:var(--paper-2)}
+.ed-selbar{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);display:flex;gap:2px;padding:4px;border-radius:8px;background:var(--ink);color:var(--paper-2);box-shadow:var(--shadow)}
+.ed-selbar button{display:flex;flex-direction:column;align-items:center;gap:1px;min-width:56px;padding:6px 6px 4px;border:0;border-radius:5px;background:none;color:inherit;font-size:11px;font-weight:500}
+.ed-selbar button:hover{background:color-mix(in srgb,var(--paper-2) 16%,transparent)}
+.ed-pens{position:absolute;left:12px;bottom:12px;display:flex;gap:6px;padding:6px;border:1.5px solid var(--line-strong);border-radius:999px;background:var(--paper-2)}
+.pen-c{width:30px;height:30px;border-radius:50%;border:2px solid transparent;background:var(--pc);box-shadow:inset 0 0 0 3px var(--paper-2)}
+.pen-c[aria-pressed="true"]{border-color:var(--ink)}
+.ed-pal{width:310px;display:flex;flex-direction:column;min-height:0;background:var(--paper-2);border-left:1.5px solid var(--line-strong)}
+.pal-h{display:flex;align-items:center;gap:8px;padding:10px 8px 8px 16px;border-bottom:1px solid var(--line)}
+.pal-h b{flex:1;font:700 19px var(--font-head)}
+.pal-b{display:flex;flex-direction:column;gap:10px;padding:12px 14px 24px;overflow:auto;min-height:0}
+.pal-b>*,.modal-b>*{flex-shrink:0}
+.pal-b h4{margin:8px 0 0;font:600 16px var(--font-head)}
+.symgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.sym{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px 6px;border:1.5px solid var(--line);border-radius:6px;background:var(--paper);font-size:12px;font-weight:500}
+.sym:hover{border-color:var(--ink)}
+.sym-ic{display:block;width:60px;height:34px;color:var(--ink)}
+.sym-ic svg{width:100%;height:100%;display:block}
+.pal-list{display:flex;flex-direction:column;border:1.5px solid var(--line);border-radius:6px;overflow:hidden;background:var(--paper)}
+.pal-list .pick{padding:8px 10px}
+@media (max-width:820px){
+  .ed-body{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) auto}
+  .ed-stage{grid-row:1}
+  .ed-tools{grid-row:2;flex-direction:row;justify-content:space-around;padding:4px 6px;border-right:0;border-top:1.5px solid var(--line-strong);overflow:visible}
+  .tool-sep{width:1px;height:30px;margin:0 2px}
+  .ed-pal{position:absolute;left:0;right:0;bottom:0;z-index:5;width:auto;height:74%;border-left:0;border-top:1.5px solid var(--line-strong);border-radius:12px 12px 0 0;box-shadow:var(--shadow)}
+  .hide-sm{display:none}
+  .ed-selbar button{min-width:50px}
+  .ed-zoom{bottom:auto;top:52px}
+}
+.m-only{display:none}
+@media (max-width:820px){.m-only{display:inline}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="editor"></div>
+<div id="modals"></div>
+<script>
+'use strict';
+/* ================= basics ================= */
+const SVGNS = 'http://www.w3.org/2000/svg';
+const FONT = 'Barlow, Arial, sans-serif';
+const uid8 = () => Math.random().toString(36).slice(2, 9) + Date.now().toString(36).slice(-4);
+const clone = o => JSON.parse(JSON.stringify(o));
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const str = v => (v == null ? '' : String(v)).trim();
+const extOf = n => { const m = /\.([A-Za-z0-9_]+)$/.exec(n || ''); return m ? m[1].toLowerCase() : ''; };
+
+function h(tag, props, ...kids) {
+  const el = document.createElement(tag);
+  if (props) for (const [k, v] of Object.entries(props)) {
+    if (v == null || v === false) continue;
+    if (k === 'class') el.className = v;
+    else if (k === 'html') el.innerHTML = v;
+    else if (k === 'value') el.value = v;
+    else if (k.startsWith('on') && typeof v === 'function') el.addEventListener(k.slice(2).toLowerCase(), v);
+    else if (v === true) el.setAttribute(k, '');
+    else el.setAttribute(k, v);
+  }
+  for (const kid of kids.flat(Infinity)) {
+    if (kid == null || kid === false || kid === '') continue;
+    el.append(kid instanceof Node ? kid : document.createTextNode(String(kid)));
+  }
+  return el;
+}
+const ICONS = {
+  plus:'<path d="M12 5v14M5 12h14"/>', back:'<path d="M15 18l-6-6 6-6"/>',
+  trash:'<path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 13h9l1-13M10 11v5M14 11v5"/>',
+  edit:'<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/>', x:'<path d="M6 6l12 12M18 6L6 18"/>',
+  check:'<path d="M5 12.5l4.5 4.5L19 7"/>', upload:'<path d="M12 16V4M7 9l5-5 5 5M4 20h16"/>',
+  download:'<path d="M12 4v12M7 11l5 5 5-5M4 20h16"/>', search:'<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/>',
+  camera:'<path d="M3.5 8h3.5l2-2.5h6L17 8h3.5v11h-17z"/><circle cx="12" cy="13.5" r="3.5"/>',
+  rotate:'<path d="M20 12a8 8 0 1 1-2.6-5.9"/><path d="M20 4v5h-5"/>',
+  undo:'<path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>',
+  redo:'<path d="M15 14l5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/>',
+  cursor:'<path d="M6 3.5l12.5 7.2-5.6 1.4-2.6 5.4z"/>',
+  wire:'<circle cx="5" cy="18" r="2"/><circle cx="19" cy="6" r="2"/><path d="M7 18h5V6h5"/>',
+  pen:'<path d="M4 20l1-4.5L16.5 4 20 7.5 8.5 19z"/><path d="M14 6.5l3.5 3.5"/>',
+  text:'<path d="M5 7V4.5h14V7M12 4.5v15M9 19.5h6"/>',
+  chip:'<rect x="6.5" y="6.5" width="11" height="11" rx="1.5"/><path d="M9.5 3v3.5M14.5 3v3.5M9.5 17.5V21M14.5 17.5V21M3 9.5h3.5M3 14.5h3.5M17.5 9.5H21M17.5 14.5H21"/>',
+  folder:'<path d="M3 6.5h6l2 2h10v10.5H3z"/>', file:'<path d="M6 3h8l5 5v13H6z"/><path d="M14 3v5h5"/>',
+  flip:'<path d="M4 8h12l-3-3M20 16H8l3 3"/>', copy:'<rect x="8.5" y="8.5" width="11.5" height="11.5" rx="1.5"/><path d="M15.5 8.5V4H4v11.5h4.5"/>',
+  zin:'<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5M8 11h6M11 8v6"/>', zout:'<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5M8 11h6"/>',
+  fit:'<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>',
+  more:'<circle cx="5.5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="18.5" cy="12" r="1.2"/>',
+  up:'<path d="M6 15l6-6 6 6"/>', down:'<path d="M6 9l6 6 6-6"/>',
+  list:'<path d="M9 6h11M9 12h11M9 18h11M4.5 6h.5M4.5 12h.5M4.5 18h.5"/>',
+  note:'<path d="M5 4h14v16H5z"/><path d="M8.5 9h7M8.5 13h7M8.5 17h4"/>',
+  scan:'<path d="M4 8.5V4h4.5M15.5 4H20v4.5M20 15.5V20h-4.5M8.5 20H4v-4.5"/><path d="M7.5 12h9"/>',
+  image:'<rect x="3.5" y="5" width="17" height="14" rx="1.5"/><circle cx="9" cy="10" r="1.7"/><path d="M20.5 16l-5-5-8.5 8"/>'
+};
+function icon(n, s = 18) {
+  const t = document.createElement('template');
+  t.innerHTML = `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${ICONS[n] || ''}</svg>`;
+  return t.content.firstChild;
+}
+const logo = () => { const t = document.createElement('template'); t.innerHTML = '<svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><path d="M2 9h5M2 14h5M2 19h5M21 9h5M21 14h5M21 19h5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><rect x="6.5" y="4.5" width="15" height="19" rx="1.8" fill="currentColor"/><circle cx="10.2" cy="8.4" r="1.6" fill="var(--paper-2)"/></svg>'; return t.content.firstChild; };
+
+function fmtBytes(n) { n = n || 0; if (n < 1024) return n + ' B'; if (n < 1048576) return (n / 1024).toFixed(n < 10240 ? 1 : 0) + ' KB'; if (n < 1073741824) return (n / 1048576).toFixed(1) + ' MB'; return (n / 1073741824).toFixed(2) + ' GB'; }
+function relTime(ts) {
+  if (!ts) return '—'; const d = (Date.now() - ts) / 1000;
+  if (d < 60) return 'just now'; if (d < 3600) return Math.floor(d / 60) + ' min ago'; if (d < 86400) return Math.floor(d / 3600) + ' h ago';
+  if (d < 172800) return 'yesterday'; if (d < 604800) return Math.floor(d / 86400) + ' days ago'; return shortDate(ts);
+}
+function shortDate(ts) { if (!ts) return '—'; const dt = new Date(ts); return dt.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: dt.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined }); }
+
+const STATUSES = [['idea','Idea'],['planning','Planning'],['building','Building'],['testing','Testing'],['done','Done'],['paused','Paused']];
+const statusLabel = k => (STATUSES.find(s => s[0] === k) || STATUSES[0])[1];
+const CATS = ['Dev board','Microcontroller','IC','Sensor','Module','Transistor','Diode','LED','Resistor','Capacitor','Inductor','Switch','Connector','Power','Display','Motor','Mechanical','Other'];
+
+/* ================= state ================= */
+const S = {
+  ready: false, err: null, uid: null, db: null, assets: null, sample: null, downloads: null, imgOK: false,
+  projects: new Map(), parts: new Map(), sketches: new Map(), sketchSub: null, sketchesLoaded: false,
+  loaded: { projects: false, parts: false },
+  route: { view: 'projects', pid: null, tab: 'steps' },
+  filter: { status: 'all', q: '' }, partFilter: { cat: 'all', q: '' },
+  openStep: null, uploading: null, usage: null, pendingRender: false, scrollReset: false
+};
+try { const r = JSON.parse(localStorage.getItem('bench.route') || 'null'); if (r && r.view) S.route = { ...S.route, ...r }; } catch (e) {}
+function saveRoute() { try { localStorage.setItem('bench.route', JSON.stringify(S.route)); } catch (e) {} }
+
+const projCol = () => S.db.collection(`data/users/${S.uid}/projects/items`);
+const partCol = () => S.db.collection(`data/users/${S.uid}/library/parts`);
+const sketchCol = () => S.db.collection(`data/users/${S.uid}/sketches/items`);
+
+/* ================= writes ================= */
+const wq = new Map();
+function queueWrite(ref, patch, mode = 'update') {
+  let q = wq.get(ref.path);
+  if (!q) { q = { ref, patch: null, mode: 'update', running: false, waiters: [] }; wq.set(ref.path, q); }
+  if (mode === 'set') { q.patch = { ...patch }; q.mode = 'set'; } else q.patch = Object.assign(q.patch || {}, patch);
+  const p = new Promise(r => q.waiters.push(r));
+  if (!q.running) runQueue(q);
+  return p;
+}
+async function runQueue(q) {
+  q.running = true;
+  while (q.patch) {
+    const patch = q.patch, mode = q.mode; q.patch = null; q.mode = 'update';
+    const go = () => mode === 'set' ? q.ref.set(patch) : q.ref.update(patch);
+    try { await go(); }
+    catch (e) {
+      if (e && e.code === 'unavailable') { await sleep(500 + Math.random() * 700); try { await go(); } catch (e2) { writeFailed(e2); } }
+      else writeFailed(e);
+    }
+  }
+  q.running = false; q.waiters.splice(0).forEach(f => f());
+}
+function writeFailed(e) {
+  const c = e && e.code; console.warn('write failed', e);
+  if (c === 'quota_exceeded') toast('Storage is full. Delete old sketches or projects to keep saving.');
+  else if (c === 'revoked') { S.err = 'revoked'; render(); }
+  else if (c === 'invalid_argument') toast('That change couldn’t be saved.');
+  else toast('Saving failed. Check your connection and try again.');
+}
+function withPending(path, data) { const q = wq.get(path); if (q && q.patch) return q.mode === 'set' ? { ...q.patch } : { ...data, ...q.patch }; return data; }
+function patchProject(pid, patch) {
+  const cur = S.projects.get(pid); if (!cur) return;
+  const next = { ...cur, ...patch, updated: Date.now() };
+  S.projects.set(pid, next);
+  queueWrite(projCol().doc(pid), { ...patch, updated: next.updated });
+  schedRender();
+}
+function patchPart(id, patch) {
+  const cur = S.parts.get(id); if (!cur) return;
+  S.parts.set(id, { ...cur, ...patch, updated: Date.now() });
+  queueWrite(partCol().doc(id), { ...patch, updated: Date.now() });
+  schedRender();
+}
+
+/* ================= render plumbing ================= */
+let rq = false, pointerDown = false, pendAfterPtr = false;
+function isTyping() { const a = document.activeElement; return !!(a && a.dataset && a.dataset.key && !a.hasAttribute('data-live') && document.getElementById('app').contains(a)); }
+function schedRender() {
+  if (rq) return; rq = true;
+  requestAnimationFrame(() => {
+    rq = false;
+    if (pointerDown) { pendAfterPtr = true; return; }
+    if (isTyping()) { S.pendingRender = true; return; }
+    render();
+  });
+}
+document.addEventListener('pointerdown', () => { pointerDown = true; }, true);
+const ptrUp = () => { pointerDown = false; if (pendAfterPtr) { pendAfterPtr = false; setTimeout(schedRender, 0); } };
+document.addEventListener('pointerup', ptrUp, true);
+document.addEventListener('pointercancel', ptrUp, true);
+window.addEventListener('blur', ptrUp);
+document.addEventListener('focusout', () => { if (S.pendingRender) { S.pendingRender = false; setTimeout(schedRender, 0); } });
+
+function render() {
+  const app = document.getElementById('app');
+  const a = document.activeElement; let fk = null, ss = null, se = null;
+  if (a && a.dataset && a.dataset.key && app.contains(a)) { fk = a.dataset.key; try { ss = a.selectionStart; se = a.selectionEnd; } catch (e) {} }
+  const mo = app.querySelector('.main'); const st = mo ? mo.scrollTop : 0;
+  app.replaceChildren(View());
+  app.querySelectorAll('textarea.autosize').forEach(autoFit);
+  const mn = app.querySelector('.main'); if (mn) mn.scrollTop = S.scrollReset ? 0 : st; S.scrollReset = false;
+  if (fk) { const el = app.querySelector(`[data-key="${CSS.escape(fk)}"]`); if (el) { el.focus({ preventScroll: true }); try { if (ss != null) el.setSelectionRange(ss, se); } catch (e) {} } }
+}
+function go(r) {
+  S.route = { ...S.route, ...r }; S.scrollReset = true; saveRoute();
+  if (S.route.view === 'project' && S.route.pid) subscribeSketches(S.route.pid);
+  render();
+}
+
+const drafts = new Map(), debT = new Map();
+function boundInput({ tag = 'input', key, value, onCommit, delay = 700, ...props }) {
+  const el = h(tag, { ...props, 'data-key': key });
+  el.value = drafts.has(key) ? drafts.get(key) : (value ?? '');
+  const commit = () => { clearTimeout(debT.get(key)); debT.delete(key); if (!drafts.has(key)) return; const v = drafts.get(key); drafts.delete(key); onCommit(v); };
+  el.addEventListener('input', () => { drafts.set(key, el.value); clearTimeout(debT.get(key)); debT.set(key, setTimeout(commit, delay)); });
+  el.addEventListener('blur', commit);
+  return el;
+}
+
+/* ================= small UI pieces ================= */
+let toastT;
+function toast(msg) {
+  let el = document.getElementById('toast');
+  if (!el) { el = h('div', { id: 'toast', class: 'toast', role: 'status', 'aria-live': 'polite' }); document.body.append(el); }
+  el.textContent = msg; el.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => { el.hidden = true; }, 2800);
+}
+const modalStack = [];
+function openModal({ title, body, footer, wide, onClose }) {
+  const root = document.getElementById('modals');
+  const back = h('div', { class: 'modal-back' });
+  let closed = false;
+  const close = () => { if (closed) return; closed = true; back.remove(); const i = modalStack.indexOf(m); if (i >= 0) modalStack.splice(i, 1); onClose && onClose(); };
+  back.addEventListener('pointerdown', e => { back._down = e.target === back; });
+  back.addEventListener('click', e => { if (e.target === back && back._down) close(); back._down = false; });
+  const dlg = h('div', { class: 'modal' + (wide ? ' wide' : ''), role: 'dialog', 'aria-modal': 'true', 'aria-label': title },
+    h('div', { class: 'modal-h' }, h('h2', null, title), h('button', { class: 'ibtn', 'aria-label': 'Close', onClick: () => close() }, icon('x'))),
+    h('div', { class: 'modal-b' }, body),
+    footer ? h('div', { class: 'modal-f' }, footer) : null);
+  back.append(dlg); root.append(back);
+  const m = { close, el: dlg }; modalStack.push(m);
+  setTimeout(() => { const f = dlg.querySelector('[autofocus]'); if (f && window.matchMedia('(pointer:fine)').matches) f.focus(); }, 40);
+  return m;
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && modalStack.length) { e.stopPropagation(); modalStack[modalStack.length - 1].close(); } }, true);
+function confirmDialog({ title, text, ok = 'Delete', danger = true }) {
+  return new Promise(res => {
+    let done = false, m;
+    const fin = v => { if (done) return; done = true; res(v); m.close(); };
+    m = openModal({ title, body: h('p', { style: 'margin:0;color:var(--ink-2)' }, text),
+      footer: [h('button', { class: 'btn quiet', onClick: () => fin(false) }, 'Cancel'), h('button', { class: 'btn ' + (danger ? 'danger' : 'primary'), onClick: () => fin(true) }, ok)],
+      onClose: () => { if (!done) { done = true; res(false); } } });
+  });
+}
+function promptDialog({ title, label, value = '', ok = 'Save', multiline = false, placeholder = '' }) {
+  return new Promise(res => {
+    let done = false, m;
+    const inp = h(multiline ? 'textarea' : 'input', { class: 'inp', autofocus: true, placeholder, rows: multiline ? 3 : null });
+    inp.value = value;
+    const fin = v => { if (done) return; done = true; res(v); m.close(); };
+    inp.addEventListener('keydown', e => { if (e.key === 'Enter' && !multiline && !e.isComposing) { e.preventDefault(); fin(inp.value); } });
+    m = openModal({ title, body: h('label', { class: 'field' }, h('span', null, label), inp),
+      footer: [h('button', { class: 'btn quiet', onClick: () => fin(null) }, 'Cancel'), h('button', { class: 'btn primary', onClick: () => fin(inp.value) }, ok)],
+      onClose: () => { if (!done) { done = true; res(null); } } });
+    setTimeout(() => { inp.focus(); try { inp.select(); } catch (e) {} }, 60);
+  });
+}
+function chip(label, n, on, fn, color) {
+  return h('button', { class: 'chip', 'aria-pressed': String(on), onClick: fn }, color ? h('i', { class: 'dot', style: `--c:${color}` }) : null, label, n != null ? h('span', { class: 'n' }, n) : null);
+}
+function searchBox(key, val, onChange, ph) {
+  return h('label', { class: 'searchwrap' }, icon('search', 17), h('input', { class: 'inp', type: 'search', placeholder: ph, 'aria-label': ph, 'data-key': key, 'data-live': true, value: val, onInput: e => onChange(e.target.value) }));
+}
+function Stepper(get, set, min, label, key) {
+  const v = get();
+  const inp = h('input', { type: 'number', inputmode: 'numeric', min, value: String(v), 'aria-label': label, 'data-key': key,
+    onChange: e => { const n = Math.max(min, parseInt(e.target.value, 10) || min); set(n); } });
+  return h('div', { class: 'stepper' },
+    h('button', { 'aria-label': 'Decrease ' + label, onClick: () => set(Math.max(min, get() - 1)) }, '−'), inp,
+    h('button', { 'aria-label': 'Increase ' + label, onClick: () => set(get() + 1) }, '+'));
+}
+function EmptyBlock(title, text, action) { return h('div', { class: 'empty' }, h('h3', null, title), h('p', null, text), action || null); }
+
+/* ================= derived ================= */
+const projectList = () => [...S.projects.entries()].map(([id, p]) => ({ id, ...p }));
+const partList = () => [...S.parts.entries()].map(([id, p]) => ({ id, ...p }));
+const byName = (a, b) => (a.name || '').localeCompare(b.name || '', undefined, { numeric: true, sensitivity: 'base' });
+function stepsStat(p) { const s = p.steps || []; return { done: s.filter(x => x.done).length, total: s.length }; }
+function bomShort(p) { let n = 0; for (const b of p.bom || []) { const pt = S.parts.get(b.partId); if (pt && typeof pt.stock === 'number' && pt.stock < b.qty) n++; } return n; }
+
+/* ================= views ================= */
+function View() {
+  if (!S.ready && !S.err) return h('div', { class: 'notice' }, h('div', { class: 'brand', style: 'padding:0' }, logo(), 'Bench'), h('p', { class: 'lk-busy' }, h('span', { class: 'spin' }), 'Opening your bench…'));
+  if (S.err) return Notice();
+  const r = S.route; let main;
+  if (r.view === 'project') {
+    if (S.projects.has(r.pid)) main = ProjectView(r.pid);
+    else if (!S.loaded.projects) main = h('div', { class: 'page loading' }, 'Loading project…');
+    else { S.route = { view: 'projects', pid: null, tab: 'steps' }; main = ProjectsView(); }
+  } else if (r.view === 'parts') main = PartsView();
+  else main = ProjectsView();
+  const cur = S.route.view === 'parts' ? 'parts' : 'projects';
+  const nav = (k, label, n, ic) => h('button', { class: 'nav', 'aria-current': cur === k ? 'page' : null, onClick: () => go({ view: k }) }, icon(ic), label, h('span', { class: 'count' }, n));
+  const bnav = (k, label, ic) => h('button', { 'aria-current': cur === k ? 'page' : null, onClick: () => go({ view: k }) }, icon(ic, 22), label);
+  return h('div', { class: 'shell' },
+    h('aside', { class: 'side' },
+      h('div', { class: 'brand' }, logo(), 'Bench'),
+      nav('projects', 'Projects', S.projects.size, 'folder'),
+      nav('parts', 'Parts library', S.parts.size, 'chip'),
+      h('div', { class: 'side-foot' },
+        S.usage ? h('div', { class: 'usage' }, `Files: ${fmtBytes(S.usage.bytes)} of ${fmtBytes(S.usage.maxBytes)}`, h('span', { class: 'meter' }, h('i', { style: `width:${Math.min(100, S.usage.bytes / Math.max(1, S.usage.maxBytes) * 100).toFixed(1)}%` }))) : null,
+        S.downloads ? h('button', { class: 'btn sm quiet', style: 'justify-content:flex-start', title: 'Projects, parts and sketches as a JSON file (uploaded files aren’t included)', onClick: exportBackup }, icon('download', 16), 'Export backup') : null)),
+    h('main', { class: 'main' }, main),
+    h('nav', { class: 'bottomnav', 'aria-label': 'Sections' }, bnav('projects', 'Projects', 'folder'), bnav('parts', 'Parts', 'chip')));
+}
+function Notice() {
+  const msgs = {
+    noclaude: ['Open this in Claude', 'Bench keeps your projects in your Claude account, so it only works when opened from claude.ai or the Claude app.'],
+    nodb: ['Sign in to open your bench', 'Your projects are stored with your Claude account. Open this page in claude.ai or the Claude app while signed in.'],
+    revoked: ['Bench lost its connection', 'Access to storage was withdrawn while the page was open. Reload the page to reconnect.']
+  };
+  const [t, p] = msgs[S.err] || msgs.nodb;
+  return h('div', { class: 'notice' }, h('div', { class: 'brand', style: 'padding:0' }, logo(), 'Bench'), h('h1', null, t), h('p', null, p));
+}
+
+function ProjectsView() {
+  const all = projectList(); const counts = {};
+  all.forEach(p => { counts[p.status] = (counts[p.status] || 0) + 1; });
+  const q = S.filter.q.trim().toLowerCase();
+  if (S.filter.status !== 'all' && !counts[S.filter.status]) S.filter.status = 'all';
+  const list = all.filter(p => (S.filter.status === 'all' || p.status === S.filter.status) && (!q || ((p.name || '') + ' ' + (p.description || '')).toLowerCase().includes(q)))
+    .sort((a, b) => (b.updated || 0) - (a.updated || 0));
+  return h('div', { class: 'page' },
+    h('header', { class: 'pagehead' },
+      h('div', null, h('h1', null, 'Projects'), h('div', { class: 'sub' }, all.length ? `${all.length} on the bench` : 'Nothing on the bench yet')),
+      h('div', { class: 'actions' }, h('button', { class: 'btn primary', onClick: newProjectDialog }, icon('plus'), 'New project'))),
+    all.length > 1 ? h('div', { class: 'toolbar' },
+      searchBox('pq', S.filter.q, v => { S.filter.q = v; render(); }, 'Search projects'),
+      h('div', { class: 'chips scroll' },
+        chip('All', all.length, S.filter.status === 'all', () => { S.filter.status = 'all'; render(); }),
+        STATUSES.filter(s => counts[s[0]]).map(([k, l]) => chip(l, counts[k], S.filter.status === k, () => { S.filter.status = k; render(); }, `var(--s-${k})`)))) : null,
+    !S.loaded.projects ? h('div', { class: 'loading' }, 'Loading projects…') :
+    all.length === 0 ? EmptyBlock('Start your first project', 'Give it a name, then add the steps, the parts it needs, files and circuit sketches as you go.', h('button', { class: 'btn primary', onClick: newProjectDialog }, icon('plus'), 'New project')) :
+    list.length === 0 ? h('div', { class: 'empty' }, h('p', null, 'No projects match that filter.')) :
+    h('div', { class: 'plist' }, list.map(ProjectRow)),
+    S.downloads && all.length ? h('div', { class: 'backup-row' }, h('button', { class: 'btn sm quiet', onClick: exportBackup }, icon('download', 16), 'Export a backup')) : null);
+}
+function ProjectRow(p) {
+  const st = stepsStat(p), short = bomShort(p), k = p.status || 'idea';
+  return h('button', { class: 'prow', style: `--c:var(--s-${k})`, onClick: () => go({ view: 'project', pid: p.id, tab: S.route.pid === p.id ? S.route.tab : 'steps' }) },
+    h('span', { class: 'band' }),
+    h('span', { class: 'prow-main' }, h('span', { class: 'prow-name' }, p.name || 'Untitled'), p.description ? h('span', { class: 'prow-desc' }, p.description) : null),
+    h('span', { class: 'prow-meta' },
+      h('span', { class: 'status st', style: `--c:var(--s-${k})` }, statusLabel(k)),
+      st.total ? h('span', { class: 'mstat' }, h('span', { class: 'meter' }, h('i', { style: `width:${Math.round(st.done / st.total * 100)}%` })), `${st.done}/${st.total} steps`) : h('span', null, 'No steps yet'),
+      h('span', null, `${(p.bom || []).length} parts`, short ? h('span', { class: 'warn' }, `, ${short} short`) : null),
+      h('span', null, relTime(p.updated))));
+}
+
+function ProjectView(pid) {
+  const p = { id: pid, ...S.projects.get(pid) };
+  const st = stepsStat(p), short = bomShort(p), tab = S.route.tab || 'steps';
+  const nSk = S.sketchSub && S.sketchSub.pid === pid && S.sketchesLoaded ? S.sketches.size : null;
+  const tabs = [['steps', 'Steps', st.total || null], ['parts', 'Parts', (p.bom || []).length || null], ['files', 'Files', (p.files || []).length || null], ['sketches', 'Sketches', nSk || null], ['notes', 'Notes', null]];
+  const k = p.status || 'idea';
+  const sel = h('select', { 'aria-label': 'Status', onChange: e => patchProject(pid, { status: e.target.value }) }, STATUSES.map(([sk, l]) => h('option', { value: sk, selected: sk === k }, l)));
+  return h('div', { class: 'page' },
+    h('button', { class: 'btn quiet sm crumb', onClick: () => go({ view: 'projects' }) }, icon('back', 16), 'Projects'),
+    h('section', { class: 'tblock', style: `--c:var(--s-${k})`, 'aria-label': 'Project summary' },
+      h('div', { class: 'tb-name' }, h('div', { style: 'flex:1;min-width:0' }, h('span', { class: 'tb-l' }, 'Project'), h('h1', null, p.name || 'Untitled')),
+        h('button', { class: 'ibtn', 'aria-label': 'Edit project', title: 'Edit project', onClick: () => projectDialog(pid) }, icon('edit'))),
+      h('div', null, h('span', { class: 'tb-l' }, 'Status'), h('label', { class: 'tb-sel' }, sel)),
+      h('div', null, h('span', { class: 'tb-l' }, 'Steps'), h('div', { class: 'tb-v' }, st.total ? `${st.done} of ${st.total}` : 'None yet', st.total ? h('span', { class: 'meter' }, h('i', { style: `width:${Math.round(st.done / st.total * 100)}%` })) : null)),
+      h('div', null, h('span', { class: 'tb-l' }, 'Parts'), h('div', { class: 'tb-v' }, String((p.bom || []).length), short ? h('span', { class: 'warn' }, `${short} short`) : null)),
+      h('div', null, h('span', { class: 'tb-l' }, 'Started'), h('div', { class: 'tb-v' }, shortDate(p.created))),
+      h('div', null, h('span', { class: 'tb-l' }, 'Last change'), h('div', { class: 'tb-v' }, relTime(p.updated)))),
+    p.description ? h('p', { class: 'pdesc' }, p.description) : null,
+    h('div', { class: 'tabs', role: 'tablist' }, tabs.map(([tk, l, n]) => h('button', { class: 'tab', role: 'tab', 'aria-selected': String(tab === tk), onClick: () => { S.route.tab = tk; saveRoute(); render(); } }, l, n != null ? h('span', { class: 'n' }, n) : null))),
+    h('div', { role: 'tabpanel' }, tab === 'steps' ? StepsTab(p) : tab === 'parts' ? BomTab(p) : tab === 'files' ? FilesTab(p) : tab === 'sketches' ? SketchesTab(p) : NotesTab(p)));
+}
+
+/* ---- steps ---- */
+const curSteps = pid => (S.projects.get(pid) || {}).steps || [];
+function updStep(pid, sid, patch) { patchProject(pid, { steps: curSteps(pid).map(s => s.id === sid ? { ...s, ...patch } : s) }); }
+function moveStep(pid, i, d) { const a = [...curSteps(pid)]; const j = i + d; if (j < 0 || j >= a.length) return; [a[i], a[j]] = [a[j], a[i]]; patchProject(pid, { steps: a }); }
+function delStep(pid, sid) { patchProject(pid, { steps: curSteps(pid).filter(s => s.id !== sid) }); if (S.openStep === sid) S.openStep = null; }
+function StepsTab(p) {
+  const steps = p.steps || [], key = 'newstep:' + p.id;
+  const add = h('input', { class: 'inp', placeholder: 'Add a step and press Enter', 'aria-label': 'New step', 'data-key': key, 'data-live': true, enterkeyhint: 'done' });
+  add.value = drafts.get(key) || '';
+  add.addEventListener('input', () => drafts.set(key, add.value));
+  const addStep = () => { const t = add.value.trim(); if (!t) return; drafts.delete(key); add.value = ''; patchProject(p.id, { steps: [...curSteps(p.id), { id: uid8(), text: t, done: false, note: '' }] }); };
+  add.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); addStep(); } });
+  return h('div', null,
+    steps.length ? h('ol', { class: 'steps' }, steps.map((s, i) => StepRow(p, s, i, steps.length))) :
+      EmptyBlock('No steps yet', 'Break the build into steps you can tick off: order parts, breadboard it, write firmware, solder, test.'),
+    h('div', { class: 'addrow' }, add, h('button', { class: 'btn', onClick: addStep }, icon('plus', 17), 'Add')));
+}
+function autoFit(el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; }
+window.addEventListener('resize', () => document.querySelectorAll('textarea.autosize').forEach(autoFit));
+function stepText(p, s, i) {
+  const el = boundInput({ tag: 'textarea', key: 'step:' + s.id, value: s.text, rows: 1, class: 'step-text autosize', 'aria-label': `Step ${i + 1}`, onCommit: v => updStep(p.id, s.id, { text: v.replace(/\n+/g, ' ') }) });
+  el.addEventListener('input', () => autoFit(el));
+  el.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); el.blur(); } });
+  return el;
+}
+function StepRow(p, s, i, n) {
+  const open = S.openStep === s.id;
+  return h('li', { class: 'step' + (s.done ? ' done' : '') },
+    h('div', { class: 'step-row' },
+      h('button', { class: 'chk', role: 'checkbox', 'aria-checked': String(!!s.done), 'aria-label': 'Mark step done', onClick: () => updStep(p.id, s.id, { done: !s.done }) }, s.done ? icon('check', 15) : null),
+      h('span', { class: 'step-num' }, i + 1),
+      stepText(p, s, i),
+      h('button', { class: 'ibtn', 'aria-label': open ? 'Hide step details' : 'Step details', 'aria-expanded': String(open), title: s.note ? 'Has notes' : 'Notes and options', onClick: () => { S.openStep = open ? null : s.id; render(); } }, icon(open ? 'up' : (s.note ? 'note' : 'down'), 18))),
+    open ? h('div', { class: 'step-more' },
+      boundInput({ tag: 'textarea', key: 'stepnote:' + s.id, value: s.note, class: 'inp', rows: 3, placeholder: 'Notes, measurements, links…', 'aria-label': 'Step notes', onCommit: v => updStep(p.id, s.id, { note: v }) }),
+      h('div', { class: 'step-acts' },
+        h('button', { class: 'btn sm quiet', disabled: i === 0, onClick: () => moveStep(p.id, i, -1) }, icon('up', 16), 'Move up'),
+        h('button', { class: 'btn sm quiet', disabled: i === n - 1, onClick: () => moveStep(p.id, i, 1) }, icon('down', 16), 'Move down'),
+        h('button', { class: 'btn sm quiet danger-text', onClick: () => delStep(p.id, s.id) }, icon('trash', 16), 'Delete step'))) : null);
+}
+
+/* ---- parts list (BOM) ---- */
+const curBom = pid => (S.projects.get(pid) || {}).bom || [];
+function updBom(pid, id, patch) { patchProject(pid, { bom: curBom(pid).map(b => b.id === id ? { ...b, ...patch } : b) }); }
+function addToBom(pid, partId, silent) {
+  const bom = curBom(pid), part = S.parts.get(partId), name = part ? part.name : 'Part';
+  const ex = bom.find(b => b.partId === partId);
+  if (ex) { updBom(pid, ex.id, { qty: ex.qty + 1 }); if (!silent) toast(`${name}: ${ex.qty + 1} needed`); }
+  else { patchProject(pid, { bom: [...bom, { id: uid8(), partId, qty: 1, note: '' }] }); if (!silent) toast(`Added ${name} to the parts list`); }
+}
+function BomTab(p) {
+  const bom = p.bom || [], short = bomShort(p);
+  return h('div', null,
+    h('div', { class: 'bar' },
+      h('span', { class: 'dim' }, bom.length ? `${bom.length} part${bom.length > 1 ? 's' : ''} on the list` : ''),
+      short ? h('span', { class: 'pill short' }, `${short} short`) : null, h('span', { class: 'grow' }),
+      short ? h('button', { class: 'btn sm', onClick: () => shoppingList(p.id) }, icon('list', 16), 'Shopping list') : null,
+      h('button', { class: 'btn primary sm', onClick: () => bomPicker(p.id) }, icon('plus', 16), 'Add part')),
+    bom.length === 0 ? EmptyBlock('No parts listed yet', 'Pick parts from your library. If one isn’t there, type the number printed on it and it gets identified for you.', h('button', { class: 'btn primary', onClick: () => bomPicker(p.id) }, icon('plus'), 'Add part')) :
+    h('div', { class: 'bom' },
+      h('div', { class: 'bom-row bom-head' }, h('span', null, 'Part'), h('span', null, 'Needed'), h('span', null, 'In stock'), h('span', null, 'Status'), h('span')),
+      bom.map(b => BomRow(p, b))));
+}
+function BomRow(p, b) {
+  const part = S.parts.get(b.partId), stock = part ? part.stock : null;
+  const status = !part ? h('span', { class: 'pill unk' }, 'Removed') : typeof stock !== 'number' ? h('span', { class: 'pill unk' }, 'Not counted') :
+    stock >= b.qty ? h('span', { class: 'pill ok' }, icon('check', 13), 'Enough') : h('span', { class: 'pill short' }, `${b.qty - stock} short`);
+  return h('div', { class: 'bom-row' },
+    h('div', { class: 'bcell-name' },
+      part ? h('button', { class: 'pname', onClick: () => partDialog({ id: b.partId }) }, part.name) : h('span', { class: 'pname' }, 'Part no longer in library'),
+      part ? h('div', { class: 'psub' }, part.mpn ? h('span', { class: 'mono' }, part.mpn) : null, part.category ? h('span', null, part.category) : null, part.location ? h('span', null, part.location) : null) : null),
+    h('div', null, h('span', { class: 'cap' }, 'Needed'), Stepper(() => (curBom(p.id).find(x => x.id === b.id) || b).qty, v => updBom(p.id, b.id, { qty: v }), 1, 'needed', 'qty:' + b.id)),
+    h('div', { class: 'bstock' }, h('span', { class: 'cap' }, 'In stock'),
+      !part ? h('span', { class: 'dim' }, '—') : typeof stock === 'number' ? Stepper(() => (S.parts.get(b.partId) || {}).stock || 0, v => patchPart(b.partId, { stock: v }), 0, 'in stock', 'stk:' + b.id) :
+        h('button', { class: 'btn sm', onClick: () => patchPart(b.partId, { stock: 0 }) }, 'Count it')),
+    status,
+    h('button', { class: 'ibtn', 'aria-label': `Remove ${part ? part.name : 'part'} from list`, onClick: () => patchProject(p.id, { bom: curBom(p.id).filter(x => x.id !== b.id) }) }, icon('x', 17)));
+}
+function shoppingList(pid) {
+  const p = S.projects.get(pid), lines = [];
+  for (const b of p.bom || []) {
+    const pt = S.parts.get(b.partId); if (!pt || typeof pt.stock !== 'number') continue;
+    const need = b.qty - pt.stock;
+    if (need > 0) lines.push(`${need} × ${pt.name}${pt.mpn && !(pt.name || '').includes(pt.mpn) ? ` (${pt.mpn})` : ''}`);
+  }
+  const text = `${p.name}: parts to buy\n` + lines.join('\n');
+  const ta = h('textarea', { class: 'inp mono', rows: Math.min(14, lines.length + 2), readonly: true, 'aria-label': 'Shopping list' }); ta.value = text;
+  let m;
+  m = openModal({ title: 'Shopping list', body: [h('p', { class: 'dim', style: 'margin:0' }, 'Everything where the list needs more than you have in stock.'), ta],
+    footer: [h('button', { class: 'btn quiet', onClick: () => m.close() }, 'Close'),
+      h('button', { class: 'btn primary', onClick: async () => { try { await navigator.clipboard.writeText(text); toast('List copied'); } catch (e) { ta.focus(); ta.select(); toast('Select the text and copy it'); } } }, icon('copy', 16), 'Copy list')] });
+}
+function bomPicker(pid) {
+  let q = '', m;
+  const listEl = h('div', { class: 'pick-list' });
+  const newEl = h('div');
+  const search = h('input', { class: 'inp', type: 'search', placeholder: 'Search by name, number or category', 'aria-label': 'Search your parts', autofocus: true, onInput: e => { q = e.target.value; draw(); } });
+  function draw() {
+    const inBom = new Map(curBom(pid).map(b => [b.partId, b.qty]));
+    const ql = q.trim().toLowerCase();
+    const parts = partList().filter(x => !ql || [x.name, x.mpn, x.category, x.value, x.manufacturer, x.package].join(' ').toLowerCase().includes(ql)).sort(byName);
+    listEl.hidden = !S.parts.size;
+    listEl.replaceChildren(...(parts.length ? parts.slice(0, 150).map(x => h('button', { class: 'pick', onClick: () => { addToBom(pid, x.id); draw(); } },
+      h('span', { class: 'pick-main' }, h('span', { class: 'pick-name' }, x.name),
+        h('span', { class: 'psub' }, x.mpn ? h('span', { class: 'mono' }, x.mpn) : null, x.category ? h('span', null, x.category) : null, typeof x.stock === 'number' ? h('span', null, `${x.stock} in stock`) : null)),
+      inBom.has(x.id) ? h('span', { class: 'pill ok' }, icon('check', 13), `${inBom.get(x.id)} on list`) : icon('plus', 18)))
+      : [h('div', { class: 'pick-empty' }, `Nothing in your library matches “${q.trim()}”.`)]));
+    newEl.replaceChildren(h('button', { class: 'pick-new', onClick: () => { m.close(); partDialog({ prefill: q.trim(), onSaved: id => addToBom(pid, id) }); } }, icon('scan', 20),
+      h('span', null, h('b', null, S.parts.size ? 'Not in your library?' : 'Your library is empty'), h('span', { class: 'dim sm' }, q.trim() ? `Look up “${q.trim()}” by its part number and add it` : 'Add a part by typing the number printed on it'))));
+  }
+  m = openModal({ title: 'Add parts to the list', body: [search, listEl, newEl], footer: [h('button', { class: 'btn primary', onClick: () => m.close() }, 'Done')] });
+  draw();
+}
+
+/* ---- part dialog with lookup ---- */
+function guessCat(c) {
+  const t = str(c).toLowerCase(); if (!t) return 'Other';
+  const exact = CATS.find(x => x.toLowerCase() === t); if (exact) return exact;
+  const rules = [[/board|arduino|devkit|dev kit/, 'Dev board'], [/microcontroller|mcu|soc/, 'Microcontroller'], [/sensor|imu|accel|gyro|thermist/, 'Sensor'], [/op-?amp|timer|regulator ic|logic|driver|ic|amplifier|comparator/, 'IC'],
+    [/mosfet|transistor|bjt|fet/, 'Transistor'], [/led/, 'LED'], [/diode|rectifier|zener/, 'Diode'], [/resistor|potentiometer|trimmer/, 'Resistor'], [/capacitor/, 'Capacitor'], [/inductor|coil|choke/, 'Inductor'],
+    [/switch|button/, 'Switch'], [/connector|header|terminal|jack/, 'Connector'], [/regulator|battery|power|converter/, 'Power'], [/display|lcd|oled/, 'Display'], [/motor|servo|actuator|stepper/, 'Motor'], [/module|breakout/, 'Module'], [/magnet|screw|enclosure|mechanical/, 'Mechanical']];
+  for (const [re, cat] of rules) if (re.test(t)) return cat;
+  return 'Other';
+}
+function lookupPrompt(marking, context, fromPhoto) {
+  return [
+    'You identify electronic components for a hobbyist\'s parts inventory.',
+    fromPhoto ? `The attached photo shows a component. Read the markings printed on it${marking ? ` (the user also typed: "${marking}")` : ''} and identify it.` : `The user typed this part number or marking, as printed on the part: "${marking}".`,
+    context ? `Extra context from the user: "${context}".` : '',
+    'Markings on small parts are often abbreviated (SMD codes, date codes, manufacturer prefixes). If several parts match, choose the most likely one for hobby electronics and list the others as alternatives.',
+    '',
+    'Reply with only a JSON object and no other text:',
+    `{"found": true, "name": "short descriptive name, e.g. LM358 dual op-amp", "mpn": "full part number", "manufacturer": "", "category": "exactly one of: ${CATS.join(', ')}", "package": "e.g. DIP-8, TO-92, SOT-23, module", "value": "for passives, e.g. 10k or 100n; otherwise empty", "description": "one plain sentence on what it is for", "pins": ["pin names in pin-number order, e.g. OUT A, IN- A, IN+ A, GND, ...; for boards and modules list the header pins in order; empty array for two-lead parts or if unsure"], "specs": [{"k": "Supply voltage", "v": "3–32 V"}], "alternatives": ["other parts the marking could be"], "confidence": "high, medium or low", "note": "short caveat, or empty"}`,
+    'Use at most 6 specs and 48 pins. If you cannot identify it, reply {"found": false, "note": "why, and what to check on the part"}.'
+  ].filter(x => x !== null).join('\n');
+}
+function sampleErrCopy(e) {
+  const c = e && e.code;
+  return ({ not_granted: 'Part lookup needs permission to use Claude. Reload and allow it, or fill in the details yourself.',
+    rate_limited: 'Too many lookups at once. Wait a moment and try again.',
+    invalid_json: 'The answer came back garbled. Try again, or fill in the details yourself.',
+    images_unavailable: 'Photos can’t be sent from here. Type the number instead.',
+    image_rejected: 'That photo couldn’t be read. Try a sharper JPEG or PNG.',
+    prompt_too_large: 'That was too much text to look up.' })[c] || 'The lookup didn’t work this time. Try again, or fill in the details yourself.';
+}
+function partDialog({ id, prefill = '', onSaved } = {}) {
+  const existing = id ? S.parts.get(id) : null;
+  const f = existing ? clone(existing) : { name: '', mpn: '', manufacturer: '', category: 'Other', package: '', value: '', description: '', pins: [], specs: [], stock: null, location: '', datasheet: '', notes: '' };
+  const els = {}; let m;
+  const field = (label, key, o = {}) => {
+    let el;
+    if (o.tag === 'textarea') el = h('textarea', { class: 'inp' + (o.mono ? ' mono' : ''), rows: o.rows || 3, placeholder: o.ph || '' });
+    else if (o.tag === 'select') el = h('select', { class: 'inp' }, CATS.map(c => h('option', { value: c }, c)));
+    else el = h('input', { class: 'inp' + (o.mono ? ' mono' : ''), placeholder: o.ph || '', inputmode: o.inputmode || null, type: o.type || 'text' });
+    el.value = key === 'pins' ? (f.pins || []).join('\n') : key === 'specs' ? (f.specs || []).map(s => `${s.k}: ${s.v}`).join('\n') : key === 'stock' ? (typeof f.stock === 'number' ? String(f.stock) : '') : (f[key] ?? '');
+    els[key] = el;
+    return h('label', { class: 'field' + (o.span ? ' span2' : '') }, h('span', null, label), el);
+  };
+  const form = h('div', { class: 'form2' },
+    field('Name', 'name', { span: true, ph: 'e.g. LM358 dual op-amp' }),
+    field('Part number', 'mpn', { mono: true }), field('Manufacturer', 'manufacturer'),
+    field('Category', 'category', { tag: 'select' }), field('Package', 'package', { ph: 'DIP-8, TO-92, module…' }),
+    field('Value', 'value', { ph: '10k, 100n… for passives' }), field('In stock', 'stock', { inputmode: 'numeric', ph: 'Empty = not counted' }),
+    field('Where it lives', 'location', { span: true, ph: 'Drawer, box or bin' }),
+    field('Description', 'description', { tag: 'textarea', rows: 2, span: true }),
+    field('Pins in pin-number order, one per line', 'pins', { tag: 'textarea', rows: 5, mono: true, ph: '1 OUT A\n2 IN− A\n…' }),
+    field('Specs, one per line as “name: value”', 'specs', { tag: 'textarea', rows: 5, ph: 'Supply voltage: 3–32 V' }),
+    field('Datasheet link', 'datasheet', { span: true, ph: 'https://…', type: 'url' }),
+    field('Notes', 'notes', { tag: 'textarea', rows: 2, span: true }));
+  const formWrap = h('div', { hidden: !existing && !prefill ? true : null }, form);
+  const showForm = () => { formWrap.hidden = false; manualBtn.hidden = true; };
+  const manualBtn = h('button', { class: 'linkbtn', hidden: existing ? true : null, onClick: showForm }, 'Enter the details yourself');
+
+  /* lookup */
+  const mk = h('input', { class: 'inp lk-inp', placeholder: 'LM358N, NE555P, BC547, 1N4007…', 'aria-label': 'Part number or marking', autofocus: !existing, autocapitalize: 'characters', autocomplete: 'off', spellcheck: 'false' });
+  mk.value = prefill || (existing && existing.mpn) || '';
+  const ctx = h('input', { class: 'inp', placeholder: 'Anything else you can see? e.g. “blue board, 8 pins” (optional)', 'aria-label': 'Extra context' });
+  const out = h('div', { role: 'status', 'aria-live': 'polite' });
+  const idBtn = h('button', { class: 'btn primary', onClick: () => runLookup() }, icon('scan', 17), 'Identify');
+  const photoIn = h('input', { type: 'file', accept: 'image/jpeg,image/png,image/webp,image/gif', hidden: true, onChange: e => { const fl = e.target.files && e.target.files[0]; e.target.value = ''; if (fl) runLookup(fl); } });
+  const photoBtn = h('button', { class: 'btn', hidden: S.imgOK ? null : true, onClick: () => photoIn.click() }, icon('camera', 17), 'Photo');
+  mk.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); runLookup(); } });
+  let ctl = null;
+  async function runLookup(img) {
+    const marking = mk.value.trim();
+    if (!marking && !img) { mk.focus(); out.replaceChildren(h('p', { class: 'dim', style: 'margin:0' }, 'Type the number printed on the part first.')); return; }
+    if (!S.sample) { out.replaceChildren(h('p', { class: 'dim', style: 'margin:0' }, 'Lookup isn’t available in this view. Fill in the details below.')); showForm(); return; }
+    if (ctl) ctl.abort(); ctl = new AbortController(); const my = ctl;
+    out.replaceChildren(h('div', { class: 'lk-busy' }, h('span', { class: 'spin' }), img ? 'Reading the photo…' : `Looking up ${marking}…`, h('button', { class: 'btn sm quiet', onClick: () => my.abort() }, 'Stop')));
+    idBtn.disabled = true; photoBtn.disabled = true;
+    try {
+      const opts = { signal: my.signal }; if (img) opts.images = [img];
+      const r = await S.sample.json(lookupPrompt(marking, ctx.value.trim(), !!img), opts);
+      if (my === ctl) showResult(r, marking);
+    } catch (e) { if (e && e.code === 'cancelled') out.replaceChildren(); else { out.replaceChildren(h('div', { class: 'lk-res miss' }, h('p', null, sampleErrCopy(e)))); showForm(); } }
+    finally { idBtn.disabled = false; photoBtn.disabled = false; }
+  }
+  function showResult(r, marking) {
+    if (!r || typeof r !== 'object' || r.found === false) {
+      out.replaceChildren(h('div', { class: 'lk-res miss' }, h('b', null, 'Couldn’t identify it'), r && r.note ? h('p', null, str(r.note)) : null, h('p', { class: 'dim sm' }, 'Check the marking for typos, or fill in what you know below.')));
+      showForm(); return;
+    }
+    const vals = { name: str(r.name), mpn: str(r.mpn) || marking, manufacturer: str(r.manufacturer), category: guessCat(r.category), package: str(r.package), value: str(r.value), description: str(r.description) };
+    for (const [k, v] of Object.entries(vals)) if (v) els[k].value = v;
+    const pins = Array.isArray(r.pins) ? r.pins.map(str).filter(Boolean).slice(0, 64) : [];
+    if (pins.length) els.pins.value = pins.join('\n');
+    const specs = Array.isArray(r.specs) ? r.specs.filter(s => s && str(s.k)).slice(0, 8).map(s => `${str(s.k)}: ${str(s.v)}`) : [];
+    if (specs.length) els.specs.value = specs.join('\n');
+    const dup = partList().find(x => x.id !== id && x.mpn && vals.mpn && x.mpn.toLowerCase() === vals.mpn.toLowerCase());
+    const conf = ['high', 'medium', 'low'].includes(r.confidence) ? r.confidence : null;
+    const alts = Array.isArray(r.alternatives) ? r.alternatives.map(str).filter(Boolean).slice(0, 4) : [];
+    out.replaceChildren(h('div', { class: 'lk-res' },
+      h('div', { class: 'lk-title' }, h('b', null, vals.name || vals.mpn), conf ? h('span', { class: 'conf ' + conf }, { high: 'Confident match', medium: 'Likely match', low: 'Best guess' }[conf]) : null),
+      vals.description ? h('p', null, vals.description) : null,
+      str(r.note) ? h('p', { class: 'dim sm' }, str(r.note)) : null,
+      alts.length ? h('p', { class: 'dim sm' }, 'Could also be: ' + alts.join(', ')) : null,
+      h('p', { class: 'dim sm' }, 'Details are filled in below. Check them against the part before you save.'),
+      dup ? h('div', { class: 'lk-dup' }, `Already in your library as “${dup.name}”.`, h('button', { class: 'btn sm', onClick: () => { m.close(); if (onSaved) onSaved(dup.id); else partDialog({ id: dup.id }); } }, onSaved ? 'Use that one' : 'Open it')) : null));
+    showForm();
+  }
+  const lookup = h('div', { class: 'lookup' },
+    h('h3', null, existing ? 'Fill in from the part number' : 'What’s printed on it?'),
+    h('div', { class: 'lk-row' }, mk, idBtn, photoBtn, photoIn), ctx, out, manualBtn);
+
+  function readForm() {
+    const stockRaw = els.stock.value.trim();
+    return {
+      name: els.name.value.trim(), mpn: els.mpn.value.trim(), manufacturer: els.manufacturer.value.trim(), category: els.category.value,
+      package: els.package.value.trim(), value: els.value.value.trim(), description: els.description.value.trim(),
+      pins: els.pins.value.split('\n').map(s => s.trim()).filter(Boolean).slice(0, 64),
+      specs: els.specs.value.split('\n').map(l => { const i = l.indexOf(':'); return i > 0 ? { k: l.slice(0, i).trim(), v: l.slice(i + 1).trim() } : (l.trim() ? { k: l.trim(), v: '' } : null); }).filter(Boolean).slice(0, 12),
+      stock: stockRaw === '' ? null : Math.max(0, parseInt(stockRaw, 10) || 0),
+      location: els.location.value.trim(), datasheet: els.datasheet.value.trim(), notes: els.notes.value.trim()
+    };
+  }
+  async function save() {
+    const data = readForm();
+    if (!data.name) data.name = data.mpn;
+    if (!data.name) { showForm(); els.name.focus(); toast('Give the part a name or number'); return; }
+    if (existing) { patchPart(id, data); m.close(); toast('Part saved'); if (onSaved) onSaved(id); return; }
+    const nid = uid8(), now = Date.now(), doc = { ...data, created: now, updated: now };
+    S.parts.set(nid, doc); m.close();
+    try { await partCol().doc(nid).set(doc); } catch (e) { S.parts.delete(nid); writeFailed(e); schedRender(); return; }
+    if (onSaved) onSaved(nid); else toast(`Added ${data.name} to your library`);
+    schedRender();
+  }
+  async function del() {
+    const used = projectList().filter(p => (p.bom || []).some(b => b.partId === id));
+    const ok = await confirmDialog({ title: 'Delete this part?', text: `“${existing.name}” will be removed from your library${used.length ? ` and from the parts list of ${used.length} project${used.length > 1 ? 's' : ''}` : ''}.` });
+    if (!ok) return;
+    m.close();
+    used.forEach(p => patchProject(p.id, { bom: curBom(p.id).filter(b => b.partId !== id) }));
+    S.parts.delete(id); wq.delete(partCol().doc(id).path); schedRender();
+    try { await partCol().doc(id).delete(); toast('Part deleted'); } catch (e) { writeFailed(e); }
+  }
+  els.category.value = f.category && CATS.includes(f.category) ? f.category : 'Other';
+  const ds = existing && /^https?:\/\//.test(existing.datasheet || '') ? h('a', { href: existing.datasheet, target: '_blank', rel: 'noopener noreferrer', class: 'btn sm' }, icon('file', 16), 'Open datasheet') : null;
+  m = openModal({ title: existing ? existing.name : 'Add a part', wide: true, body: [lookup, formWrap, ds ? h('div', null, ds) : null],
+    footer: [existing ? h('button', { class: 'btn quiet danger-text', onClick: del }, icon('trash', 16), 'Delete') : null, h('span', { class: 'grow' }),
+      h('button', { class: 'btn quiet', onClick: () => m.close() }, 'Cancel'), h('button', { class: 'btn primary', onClick: save }, existing ? 'Save part' : (onSaved ? 'Save and add to list' : 'Save to library'))],
+    onClose: () => { if (ctl) ctl.abort(); } });
+  if (prefill && S.sample) setTimeout(() => runLookup(), 80);
+}
+
+/* ---- files ---- */
+const NATIVE = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif', webp: 'image/webp', svg: 'image/svg+xml', mp4: 'video/mp4', webm: 'video/webm', pdf: 'application/pdf', csv: 'text/csv', md: 'text/markdown', json: 'application/json', txt: 'text/plain' };
+const TEXTY = new Set(['text/csv', 'text/markdown', 'application/json', 'text/plain']);
+const MIME_GUESS = { stl: 'model/stl', step: 'model/step', stp: 'model/step', '3mf': 'model/3mf', zip: 'application/zip', ino: 'text/x-arduino', py: 'text/x-python', c: 'text/x-c', cpp: 'text/x-c++', h: 'text/x-c', gcode: 'text/x-gcode', f3d: 'application/octet-stream' };
+function bytesToB64(buf) { const u = new Uint8Array(buf); let s = ''; for (let i = 0; i < u.length; i += 0x8000) s += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000)); return btoa(s); }
+function b64ToBytes(b64) { const s = atob(b64); const u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return u; }
+async function prepareUpload(file) {
+  const ext = extOf(file.name); const native = NATIVE[ext];
+  const orig = native || file.type || MIME_GUESS[ext] || 'application/octet-stream';
+  if (!file.size) throw { code: 'empty' };
+  if (native && !TEXTY.has(native)) { if (file.size > (native === 'image/svg+xml' ? 2 : 20) * 1048576) throw { code: 'too_large' }; return { blob: file, type: native, enc: 'raw', orig }; }
+  if (file.size > 15 * 1048576) throw { code: 'too_large' };
+  const buf = await file.arrayBuffer();
+  try { const txt = new TextDecoder('utf-8', { fatal: true }).decode(buf); return native ? { blob: file, type: native, enc: 'raw', orig } : { blob: new Blob([txt], { type: 'text/plain' }), type: 'text/plain', enc: 'text', orig }; }
+  catch (e) { return { blob: new Blob([bytesToB64(buf)], { type: 'text/plain' }), type: 'text/plain', enc: 'b64', orig }; }
+}
+function uploadErrCopy(e, name) {
+  const c = e && e.code;
+  return ({ too_large: `${name} is too big. Files up to 15 MB work (images, videos and PDFs up to 20 MB).`, empty: `${name} is empty.`, quota_or_state: 'File storage is full. Delete some files to make room.', rate_limited: 'Uploading too fast. Wait a moment, then try again.', unsupported_type: `${name} couldn’t be stored.` })[c] || `${name} didn’t upload. Try again.`;
+}
+async function refreshUsage() { if (!S.assets) return; try { const r = await S.assets.list(); S.usage = r.usage; schedRender(); } catch (e) {} }
+async function uploadFiles(pid, list) {
+  if (!list.length || !S.assets || S.uploading) return;
+  let ok = 0;
+  for (let i = 0; i < list.length; i++) {
+    const file = list[i];
+    S.uploading = list.length > 1 ? `Uploading ${i + 1} of ${list.length}: ${file.name}` : `Uploading ${file.name}…`; schedRender();
+    try {
+      const prep = await prepareUpload(file);
+      let res;
+      try { res = await S.assets.upload(prep.blob, { type: prep.type }); }
+      catch (e) { if (e && e.code === 'store_unavailable') { await sleep(800); res = await S.assets.upload(prep.blob, { type: prep.type }); } else throw e; }
+      const rec = { id: uid8(), assetId: res.id, name: file.name, type: prep.orig, size: file.size, enc: prep.enc, added: Date.now() };
+      patchProject(pid, { files: [...((S.projects.get(pid) || {}).files || []), rec] }); ok++;
+    } catch (e) { console.warn(e); toast(uploadErrCopy(e, file.name)); if (e && (e.code === 'rate_limited' || e.code === 'quota_or_state' || e.code === 'not_granted' || e.code === 'capability_disabled')) break; await sleep(1200); }
+  }
+  S.uploading = null; schedRender(); refreshUsage();
+  if (ok) toast(ok === 1 ? 'File uploaded' : `${ok} files uploaded`);
+}
+function FilesTab(p) {
+  const files = p.files || [];
+  if (!S.assets) return EmptyBlock('Uploads aren’t available in this view', 'Open Bench from your own Claude account on claude.ai or in the Claude app to add files.');
+  const input = h('input', { type: 'file', multiple: true, hidden: true, onChange: e => { const fl = [...e.target.files]; e.target.value = ''; uploadFiles(p.id, fl); } });
+  const drop = h('div', { class: 'drop' },
+    h('button', { class: 'btn primary', disabled: !!S.uploading, onClick: () => input.click() }, S.uploading ? h('span', { class: 'spin' }) : icon('upload', 17), S.uploading ? 'Uploading' : 'Upload files'), input,
+    h('span', { class: 'dim' }, S.uploading || 'Photos, datasheets, firmware, STL and print files, up to 15 MB each. You can also drop files here.'),
+    S.usage ? h('span', { class: 'usage' }, `${fmtBytes(S.usage.bytes)} of ${fmtBytes(S.usage.maxBytes)} used`) : null);
+  drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('over'); });
+  drop.addEventListener('dragleave', () => drop.classList.remove('over'));
+  drop.addEventListener('drop', e => { e.preventDefault(); drop.classList.remove('over'); uploadFiles(p.id, [...(e.dataTransfer && e.dataTransfer.files || [])]); });
+  return h('div', null, drop,
+    files.length ? h('div', { class: 'fgrid' }, [...files].reverse().map(f => FileTile(p, f))) : EmptyBlock('No files yet', 'Keep datasheets, build photos, firmware and print files right next to the project.'));
+}
+function FileTile(p, f) {
+  const isImg = f.enc === 'raw' && /^image\//.test(f.type);
+  const ext = extOf(f.name);
+  return h('button', { class: 'ftile', onClick: () => filePreview(p.id, f.id) },
+    h('span', { class: 'fthumb' }, isImg ? h('img', { src: '/_blob/' + f.assetId, alt: '', loading: 'lazy' }) : h('span', { class: 'fext' }, ext ? '.' + ext.slice(0, 6) : 'file')),
+    h('span', { class: 'fmeta' }, h('span', { class: 'fname', title: f.name }, f.name), h('span', { class: 'fsize' }, `${fmtBytes(f.size)}, ${shortDate(f.added)}`)));
+}
+async function downloadFile(f) {
+  if (!S.downloads) { toast('Downloads aren’t available in this view.'); return; }
+  try {
+    const r = await fetch('/_blob/' + f.assetId); if (!r.ok) throw { code: 'fetch' };
+    let data;
+    if (f.enc === 'b64') data = new Blob([b64ToBytes((await r.text()).trim())], { type: f.type || 'application/octet-stream' });
+    else if (f.enc === 'text') data = new Blob([await r.text()], { type: 'text/plain' });
+    else data = await r.blob();
+    await S.downloads.save({ filename: f.name, data });
+  } catch (e) {
+    const c = e && e.code; if (c === 'declined') return; console.warn(e);
+    toast(c === 'rejected_extension' ? 'This file type can’t be downloaded from here.' : c === 'too_large' ? 'That file is too large to download from here.' : 'Download didn’t work. Try again.');
+  }
+}
+async function deleteFile(pid, fid) {
+  const f = ((S.projects.get(pid) || {}).files || []).find(x => x.id === fid); if (!f) return;
+  try { await S.assets.delete(f.assetId); } catch (e) { console.warn(e); toast('The file couldn’t be deleted. Try again.'); return; }
+  patchProject(pid, { files: ((S.projects.get(pid) || {}).files || []).filter(x => x.id !== fid) });
+  refreshUsage(); toast('File deleted');
+}
+function filePreview(pid, fid) {
+  const f = ((S.projects.get(pid) || {}).files || []).find(x => x.id === fid); if (!f) return;
+  const url = '/_blob/' + f.assetId; let view;
+  if (f.enc === 'raw' && /^image\//.test(f.type)) view = h('img', { class: 'pv-img', src: url, alt: f.name });
+  else if (f.enc === 'raw' && /^video\//.test(f.type)) view = h('video', { class: 'pv-img', src: url, controls: true, playsinline: true });
+  else if (f.enc === 'raw' && f.type === 'application/pdf') view = h('iframe', { class: 'pv-pdf', src: url, title: f.name });
+  else if (f.enc === 'text' || (f.enc === 'raw' && TEXTY.has(f.type))) {
+    view = h('pre', { class: 'pv-text' }, 'Loading…');
+    fetch(url).then(r => r.text()).then(t => { view.textContent = t.length > 150000 ? t.slice(0, 150000) + '\n\n… preview cut off here. Download the file to see all of it.' : t; }).catch(() => { view.textContent = 'The preview didn’t load.'; });
+  } else view = h('div', { class: 'pv-none' }, h('span', { class: 'fext big' }, '.' + (extOf(f.name) || 'file')), h('p', { class: 'dim', style: 'margin:0' }, 'There’s no preview for this kind of file. Download it to open it.'));
+  let m;
+  m = openModal({ title: f.name, wide: true, body: [view, h('div', { class: 'dim sm' }, `${fmtBytes(f.size)}, added ${shortDate(f.added)}`)],
+    footer: [
+      h('button', { class: 'btn quiet danger-text', onClick: async () => { if (await confirmDialog({ title: 'Delete this file?', text: `“${f.name}” will be removed from the project and from storage. This can’t be undone.` })) { await deleteFile(pid, fid); m.close(); } } }, icon('trash', 16), 'Delete'),
+      h('span', { class: 'grow' }),
+      h('button', { class: 'btn', onClick: async () => { const n = await promptDialog({ title: 'Rename file', label: 'File name', value: f.name, ok: 'Rename' }); if (n && n.trim()) { patchProject(pid, { files: ((S.projects.get(pid) || {}).files || []).map(x => x.id === fid ? { ...x, name: n.trim() } : x) }); m.close(); } } }, icon('edit', 16), 'Rename'),
+      S.downloads ? h('button', { class: 'btn primary', onClick: () => downloadFile(f) }, icon('download', 16), 'Download') : null] });
+}
+
+/* ---- sketches tab ---- */
+function subscribeSketches(pid) {
+  if (!S.db || (S.sketchSub && S.sketchSub.pid === pid)) return;
+  if (S.sketchSub) S.sketchSub.un();
+  S.sketches = new Map(); S.sketchesLoaded = false;
+  const un = sketchCol().where('projectId', '==', pid).onSnapshot(snap => {
+    S.sketches = new Map(snap.docs.map(d => [d.id, withPending(sketchCol().doc(d.id).path, d.data())])); S.sketchesLoaded = true; schedRender();
+  }, onDbErr);
+  S.sketchSub = { pid, un };
+}
+async function newSketch(pid) {
+  const id = uid8(), now = Date.now();
+  const n = S.sketches.size + 1;
+  const doc = { projectId: pid, name: n > 1 ? `Sketch ${n}` : 'Main circuit', comps: [], wires: [], strokes: [], created: now, updated: now };
+  S.sketches.set(id, doc);
+  try { await sketchCol().doc(id).set(doc); } catch (e) { S.sketches.delete(id); writeFailed(e); schedRender(); return; }
+  openEditor(id);
+}
+function SketchesTab(p) {
+  const list = [...S.sketches.entries()].map(([id, s]) => ({ id, ...s })).sort((a, b) => (b.updated || 0) - (a.updated || 0));
+  const add = h('button', { class: 'btn primary sm', onClick: () => newSketch(p.id) }, icon('plus', 16), 'New sketch');
+  return h('div', null,
+    list.length ? h('div', { class: 'bar' }, h('span', { class: 'dim' }, 'Wire up symbols and this project’s parts, or draw freehand.'), h('span', { class: 'grow' }), add) : null,
+    !S.sketchesLoaded ? h('div', { class: 'loading' }, 'Loading sketches…') :
+    list.length ? h('div', { class: 'sgrid' }, list.map(s => h('div', { class: 'scard' },
+      h('button', { class: 'sthumb', 'aria-label': `Open ${s.name || 'sketch'}`, onClick: () => openEditor(s.id), html: thumbSVG(s) }),
+      h('div', { class: 'smeta' }, h('div', { style: 'flex:1;min-width:0' }, h('div', { class: 'fname' }, s.name || 'Untitled sketch'), h('div', { class: 'fsize' }, relTime(s.updated))),
+        h('button', { class: 'ibtn', 'aria-label': `Options for ${s.name || 'sketch'}`, onClick: () => sketchMenu(s) }, icon('more')))))) :
+    EmptyBlock('No sketches yet', 'Sketch how the circuit goes together: place symbols or the parts on this project’s list, then wire their pins.', h('button', { class: 'btn primary', onClick: () => newSketch(p.id) }, icon('plus'), 'New sketch')));
+}
+function sketchMenu(s) {
+  let m;
+  const opt = (ic, label, sub, fn) => h('button', { class: 'opt', onClick: () => { m.close(); fn(); } }, icon(ic, 20), h('span', null, label, sub ? h('small', null, sub) : null));
+  m = openModal({ title: s.name || 'Sketch', body: h('div', { class: 'opts' },
+    opt('edit', 'Open', null, () => openEditor(s.id)),
+    opt('text', 'Rename', null, async () => { const n = await promptDialog({ title: 'Rename sketch', label: 'Name', value: s.name || '', ok: 'Rename' }); if (n && n.trim()) { S.sketches.set(s.id, { ...S.sketches.get(s.id), name: n.trim() }); queueWrite(sketchCol().doc(s.id), { name: n.trim(), updated: Date.now() }); schedRender(); } }),
+    opt('copy', 'Duplicate', null, async () => { const src = S.sketches.get(s.id); const id = uid8(), now = Date.now(); const doc = { ...clone(src), name: (src.name || 'Sketch') + ' copy', created: now, updated: now }; S.sketches.set(id, doc); schedRender(); try { await sketchCol().doc(id).set(doc); toast('Sketch duplicated'); } catch (e) { writeFailed(e); } }),
+    opt('trash', 'Delete', 'This can’t be undone', async () => { if (await confirmDialog({ title: 'Delete this sketch?', text: `“${s.name || 'Sketch'}” will be deleted.` })) { S.sketches.delete(s.id); wq.delete(sketchCol().doc(s.id).path); schedRender(); try { await sketchCol().doc(s.id).delete(); toast('Sketch deleted'); } catch (e) { writeFailed(e); } } })) });
+}
+function NotesTab(p) {
+  return h('div', null,
+    boundInput({ tag: 'textarea', key: 'notes:' + p.id, value: p.notes, class: 'inp notes-ta', 'aria-label': 'Project notes', placeholder: 'Ideas, measurements, links, what went wrong and how you fixed it…', onCommit: v => patchProject(p.id, { notes: v }) }),
+    h('p', { class: 'dim sm' }, 'Notes save as you type.'));
+}
+
+/* ---- project dialogs ---- */
+function projectDialog(pid) {
+  const p = pid ? S.projects.get(pid) : null; let m;
+  const name = h('input', { class: 'inp', placeholder: 'e.g. Tilt-to-focus cube', autofocus: true }); name.value = p ? p.name || '' : '';
+  const status = h('select', { class: 'inp' }, STATUSES.map(([k, l]) => h('option', { value: k }, l))); status.value = p ? p.status || 'idea' : 'planning';
+  const desc = h('textarea', { class: 'inp', rows: 3, placeholder: 'What is it, and what should it do?' }); desc.value = p ? p.description || '' : '';
+  const save = async () => {
+    const n = name.value.trim(); if (!n) { name.focus(); toast('Give the project a name'); return; }
+    const data = { name: n, status: status.value, description: desc.value.trim() };
+    m.close();
+    if (p) { patchProject(pid, data); return; }
+    const id = uid8(), now = Date.now();
+    const doc = { ...data, notes: '', steps: [], bom: [], files: [], created: now, updated: now };
+    S.projects.set(id, doc); go({ view: 'project', pid: id, tab: 'steps' });
+    try { await projCol().doc(id).set(doc); } catch (e) { S.projects.delete(id); writeFailed(e); go({ view: 'projects' }); }
+  };
+  name.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); save(); } });
+  m = openModal({ title: p ? 'Edit project' : 'New project',
+    body: [h('label', { class: 'field' }, h('span', null, 'Name'), name), h('label', { class: 'field' }, h('span', null, 'Status'), status), h('label', { class: 'field' }, h('span', null, 'Description'), desc)],
+    footer: [p ? h('button', { class: 'btn quiet danger-text', onClick: async () => { m.close(); await deleteProject(pid); } }, icon('trash', 16), 'Delete project') : null, h('span', { class: 'grow' }),
+      h('button', { class: 'btn quiet', onClick: () => m.close() }, 'Cancel'), h('button', { class: 'btn primary', onClick: save }, p ? 'Save' : 'Create project')] });
+}
+const newProjectDialog = () => projectDialog(null);
+async function deleteProject(pid) {
+  const p = S.projects.get(pid); if (!p) return;
+  const nf = (p.files || []).length;
+  const ok = await confirmDialog({ title: 'Delete this project?', text: `“${p.name}” will be deleted with its steps, parts list, notes${nf ? `, ${nf} file${nf > 1 ? 's' : ''}` : ''} and sketches. Parts stay in your library. This can’t be undone.`, ok: 'Delete project' });
+  if (!ok) return;
+  wq.delete(projCol().doc(pid).path); S.projects.delete(pid); go({ view: 'projects' });
+  try {
+    for (const f of p.files || []) { try { await S.assets.delete(f.assetId); } catch (e) { console.warn(e); } }
+    const sk = await sketchCol().where('projectId', '==', pid).get();
+    for (const d of sk.docs) { await sketchCol().doc(d.id).delete(); }
+    await projCol().doc(pid).delete(); refreshUsage(); toast('Project deleted');
+  } catch (e) { writeFailed(e); }
+}
+
+/* ---- parts library ---- */
+function PartsView() {
+  const all = partList(); const counts = {};
+  all.forEach(x => { const c = x.category || 'Other'; counts[c] = (counts[c] || 0) + 1; });
+  if (S.partFilter.cat !== 'all' && !counts[S.partFilter.cat]) S.partFilter.cat = 'all';
+  const q = S.partFilter.q.trim().toLowerCase();
+  const list = all.filter(x => (S.partFilter.cat === 'all' || (x.category || 'Other') === S.partFilter.cat) && (!q || [x.name, x.mpn, x.manufacturer, x.value, x.package, x.location, x.description].join(' ').toLowerCase().includes(q))).sort(byName);
+  const counted = all.filter(x => typeof x.stock === 'number');
+  return h('div', { class: 'page' },
+    h('header', { class: 'pagehead' },
+      h('div', null, h('h1', null, 'Parts library'), h('div', { class: 'sub' }, all.length ? `${all.length} part${all.length > 1 ? 's' : ''}, ${counted.length} counted` : 'Every part you own or plan to use')),
+      h('div', { class: 'actions' }, h('button', { class: 'btn primary', onClick: () => partDialog() }, icon('plus'), 'Add part'))),
+    all.length ? h('div', { class: 'toolbar' },
+      searchBox('lq', S.partFilter.q, v => { S.partFilter.q = v; render(); }, 'Search parts'),
+      h('div', { class: 'chips scroll' }, chip('All', all.length, S.partFilter.cat === 'all', () => { S.partFilter.cat = 'all'; render(); }),
+        CATS.filter(c => counts[c]).map(c => chip(c, counts[c], S.partFilter.cat === c, () => { S.partFilter.cat = c; render(); })))) : null,
+    !S.loaded.parts ? h('div', { class: 'loading' }, 'Loading parts…') :
+    all.length === 0 ? EmptyBlock('Your library is empty', 'Add a part by typing the number printed on it. It gets identified and filled in for you, pins included.', h('button', { class: 'btn primary', onClick: () => partDialog() }, icon('scan'), 'Add a part')) :
+    list.length === 0 ? h('div', { class: 'empty' }, h('p', null, 'No parts match.')) :
+    h('div', { class: 'lib' }, list.map(LibRow)));
+}
+function LibRow(x) {
+  return h('div', { class: 'lib-row' },
+    h('button', { class: 'lib-main', onClick: () => partDialog({ id: x.id }) }, h('span', { class: 'pick-name' }, x.name),
+      h('span', { class: 'psub' }, x.mpn ? h('span', { class: 'mono' }, x.mpn) : null, h('span', { class: 'm-only' }, x.category || 'Other'), x.description ? h('span', { class: 'clamp' }, x.description) : null)),
+    h('div', { class: 'lib-col' }, h('span', null, x.package || '—'), x.manufacturer ? h('span', { class: 'psub' }, x.manufacturer) : null),
+    h('div', { class: 'lib-col' }, h('span', null, x.category || 'Other'), x.location ? h('span', { class: 'psub' }, x.location) : null),
+    h('div', { class: 'lib-stock' }, typeof x.stock === 'number' ? Stepper(() => (S.parts.get(x.id) || {}).stock || 0, v => patchPart(x.id, { stock: v }), 0, `${x.name} in stock`, 'lstk:' + x.id) :
+      h('button', { class: 'btn sm', onClick: () => patchPart(x.id, { stock: 0 }) }, 'Count it')));
+}
+
+/* ---- backup ---- */
+async function exportBackup() {
+  if (!S.downloads) { toast('Downloads aren’t available in this view.'); return; }
+  let sketches = [];
+  try { const s = await sketchCol().get(); sketches = s.docs.map(d => ({ id: d.id, ...d.data() })); } catch (e) {}
+  const data = { app: 'Bench', version: 1, exported: new Date().toISOString(), projects: projectList(), parts: partList(), sketches };
+  try { await S.downloads.save({ filename: `bench-backup-${new Date().toISOString().slice(0, 10)}.json`, data: JSON.stringify(data, null, 2) }); }
+  catch (e) { if (!e || e.code !== 'declined') toast('The backup didn’t download. Try again.'); }
+}
+function onDbErr(e) { console.warn('db', e); if (e && e.code === 'revoked') { S.err = 'revoked'; render(); } }
+</script>
+<script>
+'use strict';
+/* ================= circuit symbols ================= */
+const G = 20;
+const snap = v => Math.round(v / G) * G;
+const F = 'fill="currentColor" stroke="none"';
+const SYM = {
+  resistor: { name: 'Resistor', pfx: 'R', val: '10k', pins: [['1', -40, 0], ['2', 40, 0]], bb: [-40, -12, 80, 24], d: 'M-40 0H-20M20 0H40', x: '<rect x="-20" y="-8" width="40" height="16"/>' },
+  capacitor: { name: 'Capacitor', pfx: 'C', val: '100n', pins: [['1', -40, 0], ['2', 40, 0]], bb: [-40, -16, 80, 32], d: 'M-40 0H-5M5 0H40M-5 -14V14M5 -14V14' },
+  cap_pol: { name: 'Electrolytic', pfx: 'C', val: '10µ', pins: [['+', -40, 0], ['−', 40, 0]], bb: [-40, -16, 80, 32], d: 'M-40 0H-5M7 0H40M-5 -14V14M11 -14Q4 0 11 14M-18 -12h7M-14.5 -15.5v7' },
+  inductor: { name: 'Inductor', pfx: 'L', val: '10µH', pins: [['1', -40, 0], ['2', 40, 0]], bb: [-40, -10, 80, 16], d: 'M-40 0H-24a6 6 0 0 1 12 0a6 6 0 0 1 12 0a6 6 0 0 1 12 0a6 6 0 0 1 12 0H40' },
+  diode: { name: 'Diode', pfx: 'D', val: '1N4007', pins: [['A', -40, 0], ['K', 40, 0]], bb: [-40, -14, 80, 28], d: 'M-40 0H-10M10 0H40M10 -12V12M-10 -12L10 0L-10 12Z' },
+  led: { name: 'LED', pfx: 'D', val: 'red', pins: [['A', -40, 0], ['K', 40, 0]], bb: [-40, -26, 80, 40], d: 'M-40 0H-10M10 0H40M10 -12V12M-10 -12L10 0L-10 12ZM0 -15l8 -8M10 -11l8 -8M8 -23l-4.5 .8M8 -23l-.8 4.5M18 -19l-4.5 .8M18 -19l-.8 4.5' },
+  npn: { name: 'NPN transistor', pfx: 'Q', val: 'BC547', pins: [['B', -40, 0], ['C', 20, -40], ['E', 20, 40]], bb: [-40, -40, 66, 80], d: 'M-40 0H-8M-8 -16V16M-8 -7L20 -24V-40M-8 7L20 24V40', x: `<path d="M20 24L10.2 22.7L14.4 15.9Z" ${F}/><circle cx="6" cy="0" r="25"/>` },
+  pnp: { name: 'PNP transistor', pfx: 'Q', val: 'BC557', pins: [['B', -40, 0], ['E', 20, -40], ['C', 20, 40]], bb: [-40, -40, 66, 80], d: 'M-40 0H-8M-8 -16V16M-8 -7L20 -24V-40M-8 7L20 24V40', x: `<path d="M1.8 -13L11.6 -14.2L7.4 -21Z" ${F}/><circle cx="6" cy="0" r="25"/>` },
+  nmos: { name: 'N-MOSFET', pfx: 'Q', val: 'IRLZ44N', pins: [['G', -40, 0], ['D', 20, -40], ['S', 20, 40]], bb: [-40, -40, 66, 80], d: 'M-40 0H-12M-12 -16V16M-6 -18V-8M-6 -4V4M-6 8V18M-6 -13H20V-40M-6 13H20V40M-6 0H20V13', x: `<path d="M-5 0L3 -4.5V4.5Z" ${F}/>` },
+  opamp: { name: 'Op-amp', pfx: 'U', val: 'LM358', pins: [['−', -40, -20], ['+', -40, 20], ['out', 60, 0]], bb: [-40, -36, 100, 72], d: 'M-20 -36L40 0L-20 36ZM-40 -20H-20M-40 20H-20M40 0H60M-15 -20h8M-15 20h8M-11 16v8' },
+  switch: { name: 'Switch', pfx: 'SW', val: '', pins: [['1', -40, 0], ['2', 40, 0]], bb: [-40, -16, 80, 22], d: 'M-40 0H-18M18 0H40M-15 -1L14 -13', x: '<circle cx="-16" cy="0" r="2.4"/><circle cx="16" cy="0" r="2.4"/>' },
+  button: { name: 'Push button', pfx: 'SW', val: '', pins: [['1', -40, 0], ['2', 40, 0]], bb: [-40, -22, 80, 28], d: 'M-40 0H-18M18 0H40M-18 -9H18M0 -9V-19M-7 -19H7', x: '<circle cx="-16" cy="0" r="2.4"/><circle cx="16" cy="0" r="2.4"/>' },
+  pot: { name: 'Potentiometer', pfx: 'RV', val: '10k', pins: [['1', -40, 0], ['2', 40, 0], ['W', 0, -40]], bb: [-40, -40, 80, 52], d: 'M-40 0H-20M20 0H40M0 -40V-17', x: `<rect x="-20" y="-8" width="40" height="16"/><path d="M-4.5 -17L0 -9L4.5 -17Z" ${F}/>` },
+  battery: { name: 'Battery', pfx: 'BT', val: '9V', pins: [['+', 0, -40], ['−', 0, 40]], bb: [-18, -40, 44, 80], d: 'M0 -40V-6M-16 -6H16M0 6V40M15 -20h7M18.5 -23.5v7', x: '<path d="M-8 6H8" stroke-width="4"/>' },
+  motor: { name: 'Motor', pfx: 'M', val: '', pins: [['1', 0, -40], ['2', 0, 40]], bb: [-19, -40, 38, 80], d: 'M0 -40V-18M0 18V40', x: `<circle r="18"/><text y="5.5" text-anchor="middle" font-size="16" font-weight="600" font-family="${FONT}" ${F}>M</text>` },
+  vcc: { name: 'Supply', pfx: '', val: '5V', pins: [['', 0, 20]], bb: [-14, -4, 28, 24], d: 'M0 20V0M-12 0H12' },
+  gnd: { name: 'Ground', pfx: '', val: '', pins: [['', 0, -20]], bb: [-14, -20, 28, 32], d: 'M0 -20V0M-14 0H14M-9 5H9M-4 10H4' },
+  node: { pins: [['', 0, 0]], bb: [-6, -6, 12, 12] }
+};
+const PALETTE = [['resistor', 'Resistor'], ['capacitor', 'Capacitor'], ['cap_pol', 'Electrolytic'], ['inductor', 'Inductor'], ['diode', 'Diode'], ['led', 'LED'], ['npn', 'NPN'], ['pnp', 'PNP'], ['nmos', 'MOSFET'], ['opamp', 'Op-amp'], ['switch', 'Switch'], ['button', 'Button'], ['pot', 'Pot'], ['battery', 'Battery'], ['motor', 'Motor'], ['vcc', 'Supply'], ['gnd', 'Ground'], ['block', 'IC / module']];
+function rot(x, y, r) { switch (((r % 4) + 4) % 4) { case 1: return [-y, x]; case 2: return [-x, -y]; case 3: return [y, -x]; default: return [x, y]; } }
+function rotBB(bb, r) {
+  const pts = [[bb[0], bb[1]], [bb[0] + bb[2], bb[1]], [bb[0], bb[1] + bb[3]], [bb[0] + bb[2], bb[1] + bb[3]]].map(([x, y]) => rot(x, y, r));
+  return [Math.min(...pts.map(p => p[0])), Math.min(...pts.map(p => p[1])), Math.max(...pts.map(p => p[0])), Math.max(...pts.map(p => p[1]))];
+}
+function blockGeom(c) {
+  const pins = c.pins && c.pins.length ? c.pins.map(String) : ['1', '2', '3', '4', '5', '6', '7', '8'];
+  const n = pins.length, nl = Math.ceil(n / 2), nr = n - nl, rows = Math.max(nl, 1);
+  const y0 = -Math.floor((rows - 1) / 2) * G;
+  const maxL = Math.max(1, ...pins.slice(0, nl).map(p => p.length)), maxR = Math.max(1, ...pins.slice(nl).map(p => p.length));
+  const nameLen = Math.min(22, String(c.v || '').length);
+  const need = Math.max((maxL + maxR) * 5.8 + 26, nameLen * 6.6 + 16);
+  const halfW = Math.max(40, Math.ceil(need / 2 / G) * G);
+  const P = pins.map((nm, i) => i < nl ? [nm, -halfW - 20, y0 + i * G, 'l', i + 1] : [nm, halfW + 20, y0 + (n - 1 - i) * G, 'r', i + 1]);
+  const top = y0 - 32, bot = y0 + (rows - 1) * G + 18;
+  return { pins: P, halfW, top, bot, bb: [-halfW - 20, top, 2 * halfW + 40, bot - top] };
+}
+function localPins(c) {
+  if (c.t === 'block') return blockGeom(c).pins.map(([n, x, y]) => ({ n, x, y }));
+  const s = SYM[c.t]; if (!s || c.t === 'text') return [];
+  return s.pins.map(([n, x, y]) => ({ n, x, y }));
+}
+function worldPins(c) { return localPins(c).map(p => { const [rx, ry] = rot(p.x, p.y, c.r || 0); return { n: p.n, x: c.x + rx, y: c.y + ry }; }); }
+function pinPos(ref, cm) { const c = cm.get(ref.c); if (!c) return null; const lp = localPins(c)[ref.p]; if (!lp) return null; const [rx, ry] = rot(lp.x, lp.y, c.r || 0); return { x: c.x + rx, y: c.y + ry }; }
+function wirePts(w, cm) {
+  const a = pinPos(w.a, cm), b = pinPos(w.b, cm); if (!a || !b) return null;
+  if (a.x === b.x || a.y === b.y) return [a, b];
+  return [a, w.f ? { x: a.x, y: b.y } : { x: b.x, y: a.y }, b];
+}
+const penColor = c => c === 'red' ? '#D9533B' : c === 'blue' ? '#3E7BD6' : 'currentColor';
+const T = (x, y, s, o = {}) => `<text x="${x}" y="${y}" text-anchor="${o.a || 'middle'}" font-size="${o.size || 11}" font-weight="${o.w || 500}"${o.op ? ` opacity="${o.op}"` : ''} font-family="${FONT}" ${F}>${esc(s)}</text>`;
+function blockBody(c, g) {
+  let s = `<rect x="${-g.halfW}" y="${g.top}" width="${2 * g.halfW}" height="${g.bot - g.top}" rx="2"/>`;
+  for (const [nm, px, py, side, num] of g.pins) {
+    const inner = side === 'l' ? -g.halfW : g.halfW;
+    s += `<path d="M${px} ${py}H${inner}"/>`;
+    s += T(side === 'l' ? -g.halfW + 5 : g.halfW - 5, py + 3.5, nm, { a: side === 'l' ? 'start' : 'end', size: 9.5 });
+    s += T((px + inner) / 2, py - 3.5, num, { size: 8, op: '.6' });
+  }
+  const v = String(c.v || ''); s += T(0, g.top + 15, v.length > 22 ? v.slice(0, 21) + '…' : v, { size: 11, w: 600 });
+  return s;
+}
+function wireCounts(d) { const m = new Map(); for (const w of d.wires || []) for (const e of [w.a, w.b]) { m.set(e.c, (m.get(e.c) || 0) + 1); const k = e.c + ':' + e.p; m.set(k, (m.get(k) || 0) + 1); } return m; }
+function labelMarkup(c, rb) {
+  const x = c.x, y = c.y, L = c.l || '', V = c.v || '', r = ((c.r || 0) % 4 + 4) % 4;
+  if (c.t === 'gnd') return '';
+  if (c.t === 'vcc') { if (!V) return ''; return r === 0 ? T(x, y - 7, V, { w: 600 }) : r === 1 ? T(x + 7, y + 4, V, { a: 'start', w: 600 }) : r === 2 ? T(x, y + 17, V, { w: 600 }) : T(x - 7, y + 4, V, { a: 'end', w: 600 }); }
+  if (c.t === 'block') return L ? T(x + rb[0] + 20, y + rb[1] - 6, L, { a: 'start', size: 12, w: 600 }) : '';
+  const wdt = rb[2] - rb[0], hgt = rb[3] - rb[1];
+  if (wdt >= hgt) return (L ? T(x, y + rb[1] - 6, L, { w: 600 }) : '') + (V ? T(x, y + rb[3] + 14, V) : '');
+  return (L ? T(x + rb[2] + 6, y - 2, L, { a: 'start', w: 600 }) : '') + (V ? T(x + rb[2] + 6, y + 12, V, { a: 'start' }) : '');
+}
+function compMarkup(c, sel, live, wc) {
+  const tr = `translate(${c.x} ${c.y})`;
+  const da = live ? ` data-k="c" data-id="${c.id}"` : '';
+  const cls = live ? ` class="cmp${sel ? ' sel' : ''}"` : '';
+  if (c.t === 'text') {
+    const t = c.v || 'Text', w = Math.max(24, t.length * 8.4);
+    return `<g${cls}${da} transform="${tr}">${T(0, 5, t, { a: 'start', size: 15 })}${live ? `<rect class="hit" x="-6" y="-13" width="${w + 12}" height="27"/>` : ''}${sel && live ? `<rect class="selbox" x="-6" y="-13" width="${w + 12}" height="27"/>` : ''}</g>`;
+  }
+  if (c.t === 'node') {
+    const n = wc.get(c.id) || 0;
+    return `<g${cls}${da} transform="${tr}">${n >= 3 ? `<circle r="4" ${F}/>` : ''}${live && (sel || n === 0 || E.mode === 'wire') ? '<circle r="3.6" class="node-ghost"/>' : ''}${live ? '<circle class="hit" r="10"/>' : ''}</g>`;
+  }
+  let body, bb;
+  if (c.t === 'block') { const g = blockGeom(c); bb = g.bb; body = blockBody(c, g); }
+  else { const s = SYM[c.t]; if (!s) return ''; bb = s.bb; body = `<path d="${s.d}"/>${s.x || ''}`; }
+  const rb = rotBB(bb, c.r || 0);
+  return `<g${cls}${da}><g transform="${tr} rotate(${(c.r || 0) * 90})">${body}${live ? `<rect class="hit" x="${bb[0]}" y="${bb[1]}" width="${bb[2]}" height="${bb[3]}"/>` : ''}${sel && live ? `<rect class="selbox" x="${bb[0] - 5}" y="${bb[1] - 5}" width="${bb[2] + 10}" height="${bb[3] + 10}"/>` : ''}</g>${labelMarkup(c, rb)}</g>`;
+}
+function wireMarkup(w, cm, sel, live) {
+  const pts = wirePts(w, cm); if (!pts) return '';
+  const d = 'M' + pts.map(p => `${p.x} ${p.y}`).join('L');
+  return `<g${live ? ` data-k="w" data-id="${w.id}"` : ''}${live && sel ? ' class="sel"' : ''}><path d="${d}"/>${live ? `<path class="whit" d="${d}"/>` : ''}</g>`;
+}
+function junctionDots(d, cm, wc) {
+  let s = '';
+  for (const c of d.comps || []) { if (c.t === 'node' || c.t === 'text') continue; localPins(c).forEach((_, i) => { if ((wc.get(c.id + ':' + i) || 0) >= 2) { const p = pinPos({ c: c.id, p: i }, cm); if (p) s += `<circle cx="${p.x}" cy="${p.y}" r="4" ${F}/>`; } }); }
+  return s;
+}
+function smoothPath(p) {
+  if (!p || p.length < 2) return '';
+  if (p.length < 4) return `M${p[0]} ${p[1]}l.01 0`;
+  let d = `M${p[0]} ${p[1]}`;
+  for (let i = 2; i < p.length - 2; i += 2) d += `Q${p[i]} ${p[i + 1]} ${(p[i] + p[i + 2]) / 2} ${(p[i + 1] + p[i + 3]) / 2}`;
+  return d + `L${p[p.length - 2]} ${p[p.length - 1]}`;
+}
+function strokeMarkup(s, sel, live) {
+  const d = smoothPath(s.p); if (!d) return '';
+  return `<g${live ? ` data-k="s" data-id="${s.id}"` : ''}>${sel && live ? `<path class="str-sel" d="${d}"/>` : ''}<path d="${d}" stroke="${penColor(s.c)}" stroke-width="2.4"/>${live ? `<path class="whit" d="${d}"/>` : ''}</g>`;
+}
+function contentMarkup(d) {
+  const cm = new Map((d.comps || []).map(c => [c.id, c])), wc = wireCounts(d);
+  return `<g>${(d.strokes || []).map(s => strokeMarkup(s, false, false)).join('')}</g><g>${(d.wires || []).map(w => wireMarkup(w, cm, false, false)).join('')}${junctionDots(d, cm, wc)}</g><g>${(d.comps || []).map(c => compMarkup(c, false, false, wc)).join('')}</g>`;
+}
+function bounds(d) {
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  const add = (x, y) => { if (x < x0) x0 = x; if (y < y0) y0 = y; if (x > x1) x1 = x; if (y > y1) y1 = y; };
+  for (const c of d.comps || []) {
+    if (c.t === 'text') { add(c.x - 6, c.y - 14); add(c.x + (c.v || 'Text').length * 8.4 + 6, c.y + 14); continue; }
+    if (c.t === 'node') { add(c.x - 5, c.y - 5); add(c.x + 5, c.y + 5); continue; }
+    const bb = c.t === 'block' ? blockGeom(c).bb : (SYM[c.t] || {}).bb; if (!bb) continue;
+    const rb = rotBB(bb, c.r || 0), vert = (rb[2] - rb[0]) < (rb[3] - rb[1]) && c.t !== 'block';
+    add(c.x + rb[0], c.y + rb[1] - 18); add(c.x + rb[2] + (vert ? 46 : 0), c.y + rb[3] + 18);
+  }
+  for (const s of d.strokes || []) for (let i = 0; i < s.p.length; i += 2) add(s.p[i], s.p[i + 1]);
+  if (x0 === Infinity) return null;
+  return { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
+}
+function thumbSVG(s) {
+  const b = bounds(s); if (!b) return '<span class="dim sm">Empty sketch</span>';
+  const pad = 22;
+  return `<svg viewBox="${b.x - pad} ${b.y - pad} ${b.w + pad * 2} ${b.h + pad * 2}" preserveAspectRatio="xMidYMid meet" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${contentMarkup(s)}</svg>`;
+}
+function symbolPreview(t) {
+  if (t === 'block') return `<svg viewBox="-50 -32 100 64" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><rect x="-26" y="-24" width="52" height="48" rx="2"/><path d="M-44 -12H-26M-44 0H-26M-44 12H-26M26 -12H44M26 0H44M26 12H44"/></svg>`;
+  const s = SYM[t], bb = s.bb, p = 8;
+  return `<svg viewBox="${bb[0] - p} ${bb[1] - p} ${bb[2] + p * 2} ${bb[3] + p * 2}" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="${s.d}"/>${s.x || ''}</svg>`;
+}
+function symbolForPart(x) {
+  const t = ((x.name || '') + ' ' + (x.description || '') + ' ' + (x.mpn || '')).toLowerCase(), np = (x.pins || []).length;
+  switch (x.category) {
+    case 'Resistor': return /potentiometer|\bpot\b|trimmer/.test(t) ? 'pot' : 'resistor';
+    case 'Capacitor': return /electrolytic|elko|tantalum/.test(t) ? 'cap_pol' : 'capacitor';
+    case 'Inductor': return 'inductor';
+    case 'Diode': return np > 2 ? null : 'diode';
+    case 'LED': return np > 2 || /rgb|ws2812|neopixel|strip/.test(t) ? null : 'led';
+    case 'Transistor': return /mosfet|\bfet\b/.test(t) ? 'nmos' : /pnp/.test(t) ? 'pnp' : 'npn';
+    case 'Switch': return np > 2 ? null : /toggle|slide|rocker|spst|spdt/.test(t) ? 'switch' : 'button';
+    case 'Motor': return np > 2 || /servo|stepper/.test(t) ? null : 'motor';
+    case 'Power': return /batter|cell|lipo|18650|aa\b/.test(t) && np <= 2 ? 'battery' : null;
+    default: return null;
+  }
+}
+
+/* ================= editor ================= */
+let E = null;
+const isPCB = () => getComputedStyle(document.documentElement).getPropertyValue('--pcb').trim() === '1';
+function openEditor(sid) {
+  const s = S.sketches.get(sid); if (!s || E) return;
+  E = { sid, pid: s.projectId, name: s.name || 'Untitled sketch', data: { comps: clone(s.comps || []), wires: clone(s.wires || []), strokes: clone(s.strokes || []) },
+    k: 1, tx: 0, ty: 0, mode: 'select', sel: null, pend: null, cursor: null, ptrs: new Map(), drag: null, pan: null, pinch: null, ignore: false, stroke: null,
+    hist: [], fut: [], saveT: null, dirty: false, pen: 'ink', lastTap: null, palOpen: false };
+  buildEditor();
+  document.addEventListener('keydown', edKey);
+  requestAnimationFrame(() => { fit(); renderEd(); });
+}
+function closeEditor() { if (!E) return; flushSave(); document.removeEventListener('keydown', edKey); E.root.remove(); E = null; schedRender(); }
+function buildEditor() {
+  const root = h('div', { class: 'ed', role: 'dialog', 'aria-label': 'Circuit sketch' });
+  const name = h('input', { class: 'ed-name', 'aria-label': 'Sketch name' }); name.value = E.name;
+  name.addEventListener('change', () => { E.name = name.value.trim() || 'Untitled sketch'; markDirty(); });
+  name.addEventListener('keydown', e => { if (e.key === 'Enter') name.blur(); });
+  E.saveEl = h('span', { class: 'ed-save' }, 'Saved');
+  E.undoBtn = h('button', { class: 'ibtn', 'aria-label': 'Undo', title: 'Undo (Ctrl+Z)', onClick: undo }, icon('undo'));
+  E.redoBtn = h('button', { class: 'ibtn', 'aria-label': 'Redo', title: 'Redo (Ctrl+Shift+Z)', onClick: redo }, icon('redo'));
+  const top = h('header', { class: 'ed-top' }, h('button', { class: 'ibtn', 'aria-label': 'Close sketch', title: 'Back to project', onClick: closeEditor }, icon('back')), name, E.saveEl, h('span', { class: 'grow' }), E.undoBtn, E.redoBtn,
+    h('button', { class: 'btn sm', onClick: exportMenu, 'aria-label': 'Export' }, icon('download', 16), h('span', { class: 'hide-sm' }, 'Export')));
+  const tool = (mode, label, ic, keyHint) => h('button', { class: 'tool', 'data-mode': mode, 'aria-pressed': 'false', title: `${label} (${keyHint})`, onClick: () => setMode(mode) }, icon(ic, 22), h('span', null, label));
+  E.toolsEl = h('nav', { class: 'ed-tools', 'aria-label': 'Tools' }, tool('select', 'Select', 'cursor', 'V'), tool('wire', 'Wire', 'wire', 'W'), tool('pen', 'Draw', 'pen', 'P'), tool('text', 'Text', 'text', 'T'), h('span', { class: 'tool-sep' }),
+    h('button', { class: 'tool add', title: 'Add symbols and parts (A)', onClick: () => togglePalette() }, icon('plus', 22), h('span', null, 'Add')));
+  const svg = document.createElementNS(SVGNS, 'svg');
+  svg.setAttribute('class', 'cv');
+  const pcb = isPCB();
+  svg.innerHTML = `<defs><pattern id="g1" width="20" height="20" patternUnits="userSpaceOnUse"><path class="gl" d="M20 0H0V20"/></pattern><pattern id="g5" width="100" height="100" patternUnits="userSpaceOnUse"><rect width="100" height="100" fill="url(#g1)"/><path class="gl2" d="M100 0H0V100"/></pattern><pattern id="gp" x="-10" y="-10" width="20" height="20" patternUnits="userSpaceOnUse"><circle class="gh" cx="10" cy="10" r="3.4"/></pattern></defs><g class="vp"><rect x="-20000" y="-20000" width="40000" height="40000" fill="url(#${pcb ? 'gp' : 'g5'})"/><g class="l-str" fill="none" stroke-linecap="round" stroke-linejoin="round"></g><g class="l-wire" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></g><g class="l-cmp" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></g><g class="l-ovl"></g></g>`;
+  E.svg = svg; E.vp = svg.querySelector('.vp');
+  E.L = { s: svg.querySelector('.l-str'), w: svg.querySelector('.l-wire'), c: svg.querySelector('.l-cmp'), o: svg.querySelector('.l-ovl') };
+  svg.addEventListener('pointerdown', onDown); svg.addEventListener('pointermove', onMove);
+  svg.addEventListener('pointerup', onUp); svg.addEventListener('pointercancel', onUp);
+  svg.addEventListener('lostpointercapture', e => { if (E && E.ptrs.has(e.pointerId)) onUp(e); });
+  svg.addEventListener('wheel', onWheel, { passive: false });
+  svg.addEventListener('contextmenu', e => e.preventDefault());
+  E.hintEl = h('div', { class: 'ed-hint', 'aria-live': 'polite' });
+  E.selbar = h('div', { class: 'ed-selbar', hidden: true, role: 'toolbar', 'aria-label': 'Selection' });
+  E.pens = h('div', { class: 'ed-pens', hidden: true, role: 'group', 'aria-label': 'Pen colour' }, ['ink', 'red', 'blue'].map(c => h('button', { class: 'pen-c', 'data-c': c, 'aria-label': { ink: 'Ink', red: 'Red', blue: 'Blue' }[c] + ' pen', style: `--pc:${c === 'ink' ? 'var(--ink)' : penColor(c)}`, onClick: () => { E.pen = c; renderChrome(); } })));
+  const zoom = h('div', { class: 'ed-zoom' }, h('button', { class: 'ibtn', 'aria-label': 'Zoom in', onClick: () => zoomBy(1.25) }, icon('zin')), h('button', { class: 'ibtn', 'aria-label': 'Fit sketch to screen', onClick: fit }, icon('fit')), h('button', { class: 'ibtn', 'aria-label': 'Zoom out', onClick: () => zoomBy(0.8) }, icon('zout')));
+  E.pal = h('aside', { class: 'ed-pal', hidden: true, 'aria-label': 'Add to sketch' });
+  root.append(top, h('div', { class: 'ed-body' }, E.toolsEl, h('div', { class: 'ed-stage' }, svg, E.hintEl, E.selbar, E.pens, zoom), E.pal));
+  document.getElementById('editor').append(root); E.root = root;
+}
+const compMap = () => new Map(E.data.comps.map(c => [c.id, c]));
+const findComp = id => E.data.comps.find(c => c.id === id);
+const isSel = (k, id) => !!(E.sel && E.sel.k === k && E.sel.id === id);
+function renderEd() { if (!E) return; renderLayers(); drawOverlay(); renderChrome(); }
+function renderLayers() {
+  const d = E.data, cm = compMap(), wc = wireCounts(d);
+  E.L.s.innerHTML = d.strokes.map(s => strokeMarkup(s, isSel('s', s.id), true)).join('');
+  E.L.w.innerHTML = d.wires.map(w => wireMarkup(w, cm, isSel('w', w.id), true)).join('') + junctionDots(d, cm, wc);
+  E.L.c.innerHTML = d.comps.map(c => compMarkup(c, isSel('c', c.id), true, wc)).join('');
+}
+function drawOverlay() {
+  let s = '';
+  if (E.mode === 'wire') {
+    for (const c of E.data.comps) { if (c.t === 'text') continue; worldPins(c).forEach((p, i) => { const on = E.pend && E.pend.c === c.id && E.pend.p === i; s += `<circle class="pin${on ? ' on' : ''}" cx="${p.x}" cy="${p.y}" r="${on ? 5.5 : 4}"/>`; }); }
+    if (E.pend && E.cursor) {
+      const a = pinPos(E.pend, compMap());
+      if (a) { const np = nearestPin(E.cursor, 18 / E.k); const b = np ? { x: np.x, y: np.y } : { x: snap(E.cursor.x), y: snap(E.cursor.y) }; const mid = pinVertical(E.pend) ? `${a.x} ${b.y}` : `${b.x} ${a.y}`; s += `<path class="rubber" d="M${a.x} ${a.y}L${mid}L${b.x} ${b.y}"/>`; }
+    }
+  }
+  if (E.stroke) s += `<path d="${smoothPath(E.stroke.p)}" fill="none" stroke="${penColor(E.stroke.c)}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>`;
+  E.L.o.innerHTML = s;
+}
+function renderChrome() {
+  E.toolsEl.querySelectorAll('[data-mode]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.mode === E.mode)));
+  E.svg.setAttribute('class', 'cv m-' + E.mode);
+  E.undoBtn.disabled = !E.hist.length; E.redoBtn.disabled = !E.fut.length;
+  const empty = !E.data.comps.length && !E.data.strokes.length;
+  const hint = E.mode === 'wire' ? (E.pend ? 'Tap another pin to connect. Tap empty space to add a corner.' : 'Tap a pin to start a wire.')
+    : E.mode === 'pen' ? 'Draw with a finger or the mouse. Two fingers pan and zoom.'
+    : E.mode === 'text' ? 'Tap where the label should go.'
+    : empty ? 'Tap Add to place symbols or this project’s parts.' : '';
+  E.hintEl.textContent = hint; E.hintEl.hidden = !hint || !!E.sel;
+  E.pens.hidden = E.mode !== 'pen';
+  E.pens.querySelectorAll('.pen-c').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.c === E.pen)));
+  const sel = E.sel;
+  if (!sel || E.mode !== 'select') { E.selbar.hidden = true; return; }
+  const B = (label, ic, fn) => h('button', { onClick: fn }, icon(ic, 19), h('span', null, label));
+  const btns = [];
+  if (sel.k === 'c') {
+    const c = findComp(sel.id); if (!c) { E.sel = null; E.selbar.hidden = true; return; }
+    if (c.t !== 'node' && c.t !== 'text') btns.push(B('Rotate', 'rotate', rotateSel));
+    if (c.t !== 'node' && c.t !== 'gnd') btns.push(B(c.t === 'text' ? 'Edit' : 'Label', 'edit', editSel));
+    if (c.t !== 'node') btns.push(B('Duplicate', 'copy', dupSel));
+  } else if (sel.k === 'w') btns.push(B('Flip bend', 'flip', flipSel));
+  btns.push(B('Delete', 'trash', delSel));
+  E.selbar.replaceChildren(...btns); E.selbar.hidden = false;
+}
+function setMode(m) { E.mode = m; E.pend = null; E.cursor = null; if (m !== 'select') E.sel = null; if (E.palOpen && window.matchMedia('(max-width:820px)').matches) togglePalette(false); renderEd(); }
+
+/* ---- view transform ---- */
+function applyView() { E.vp.setAttribute('transform', `translate(${E.tx} ${E.ty}) scale(${E.k})`); }
+function toWorld(cx, cy) { const r = E.svg.getBoundingClientRect(); return { x: (cx - r.left - E.tx) / E.k, y: (cy - r.top - E.ty) / E.k }; }
+function zoomAt(px, py, k) { k = clamp(k, 0.2, 4); const wx = (px - E.tx) / E.k, wy = (py - E.ty) / E.k; E.k = k; E.tx = px - wx * k; E.ty = py - wy * k; applyView(); }
+function zoomBy(f) { const r = E.svg.getBoundingClientRect(); zoomAt(r.width / 2, r.height / 2, E.k * f); }
+function onWheel(e) { e.preventDefault(); const r = E.svg.getBoundingClientRect(); const f = Math.exp(-e.deltaY * (e.ctrlKey ? 0.01 : 0.0015)); zoomAt(e.clientX - r.left, e.clientY - r.top, E.k * f); }
+function fit() {
+  if (!E) return; const r = E.svg.getBoundingClientRect(); const b = bounds(E.data);
+  if (!b) { E.k = 1; E.tx = Math.round(r.width / 2); E.ty = Math.round(r.height / 2); }
+  else { const pad = 50; const k = clamp(Math.min((r.width - pad * 2) / Math.max(b.w, 40), (r.height - pad * 2) / Math.max(b.h, 40)), 0.25, 1.6); E.k = k; E.tx = r.width / 2 - (b.x + b.w / 2) * k; E.ty = r.height / 2 - (b.y + b.h / 2) * k; }
+  applyView();
+}
+function viewCenter() { const r = E.svg.getBoundingClientRect(); return toWorld(r.left + r.width / 2, r.top + r.height / 2); }
+
+/* ---- pointer handling ---- */
+function nearestPin(w, thr) {
+  let best = null, bd = thr * thr;
+  for (const c of E.data.comps) { if (c.t === 'text') continue; const ps = worldPins(c); for (let i = 0; i < ps.length; i++) { const dx = ps[i].x - w.x, dy = ps[i].y - w.y, d = dx * dx + dy * dy; if (d < bd) { bd = d; best = { c: c.id, p: i, x: ps[i].x, y: ps[i].y }; } } }
+  return best;
+}
+function onDown(e) {
+  if (e.button && e.button !== 0) return;
+  try { E.svg.setPointerCapture(e.pointerId); } catch (er) {}
+  E.ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (E.ptrs.size === 2) { startPinch(); return; }
+  if (E.ptrs.size > 2 || E.ignore) return;
+  const w = toWorld(e.clientX, e.clientY);
+  const thr = (e.pointerType === 'touch' ? 22 : 14) / E.k;
+  const panStart = extra => ({ sx: e.clientX, sy: e.clientY, tx: E.tx, ty: E.ty, moved: false, w, ...extra });
+  if (E.mode === 'pen') { E.stroke = { id: uid8(), c: E.pen, p: [Math.round(w.x), Math.round(w.y)] }; drawOverlay(); return; }
+  if (E.mode === 'wire') {
+    const pin = nearestPin(w, thr);
+    if (pin) { E.pan = panStart({ pin }); return; }
+    E.pan = panStart({ wireTap: !!E.pend }); return;
+  }
+  if (E.mode === 'text') { E.pan = panStart({ textTap: true }); return; }
+  const tgt = e.target.closest && e.target.closest('[data-k]');
+  if (tgt) {
+    const k = tgt.dataset.k, id = tgt.dataset.id;
+    const again = E.lastTap && E.lastTap.id === id && Date.now() - E.lastTap.t < 380;
+    E.sel = { k, id }; E.lastTap = { id, t: Date.now() };
+    if (k === 'c') { const c = findComp(id); E.drag = { id, sx: w.x, sy: w.y, ox: c.x, oy: c.y, pre: snapState(), moved: false, again }; }
+    renderEd(); return;
+  }
+  if (E.sel) { E.sel = null; renderEd(); }
+  E.pan = panStart({});
+}
+function onMove(e) {
+  if (!E) return;
+  if (!E.ptrs.has(e.pointerId)) { if (E.mode === 'wire' && E.pend && e.pointerType === 'mouse') { E.cursor = toWorld(e.clientX, e.clientY); drawOverlay(); } return; }
+  E.ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (E.pinch) { updatePinch(); return; }
+  if (E.ignore) return;
+  const w = toWorld(e.clientX, e.clientY);
+  if (E.stroke) {
+    const p = E.stroke.p, lx = p[p.length - 2], ly = p[p.length - 1];
+    if (Math.hypot(w.x - lx, w.y - ly) * E.k >= 2.5) { p.push(Math.round(w.x), Math.round(w.y)); drawOverlay(); }
+    return;
+  }
+  if (E.drag) {
+    const c = findComp(E.drag.id); if (!c) return;
+    const nx = snap(E.drag.ox + w.x - E.drag.sx), ny = snap(E.drag.oy + w.y - E.drag.sy);
+    if (nx !== c.x || ny !== c.y) { c.x = nx; c.y = ny; E.drag.moved = true; renderLayers(); }
+    return;
+  }
+  if (E.pan) {
+    const dx = e.clientX - E.pan.sx, dy = e.clientY - E.pan.sy;
+    if (!E.pan.moved && Math.abs(dx) + Math.abs(dy) > 6) E.pan.moved = true;
+    if (E.pan.moved) { E.tx = E.pan.tx + dx; E.ty = E.pan.ty + dy; applyView(); }
+  }
+  if (E.mode === 'wire' && E.pend) { E.cursor = w; drawOverlay(); }
+}
+function onUp(e) {
+  if (!E || !E.ptrs.has(e.pointerId)) return;
+  E.ptrs.delete(e.pointerId);
+  if (E.pinch) { if (E.ptrs.size < 2) E.pinch = null; if (!E.ptrs.size) E.ignore = false; return; }
+  if (E.ignore) { if (!E.ptrs.size) E.ignore = false; return; }
+  if (E.stroke) {
+    const s = E.stroke; E.stroke = null;
+    if (s.p.length >= 4) { const pre = snapState(); E.data.strokes.push(s); commit(pre); }
+    renderEd(); return;
+  }
+  if (E.drag) {
+    const d = E.drag; E.drag = null;
+    if (d.moved) { commit(d.pre); renderEd(); }
+    else if (d.again) { E.lastTap = null; editSel(); }
+    return;
+  }
+  if (E.pan) {
+    const p = E.pan; E.pan = null;
+    if (p.moved) return;
+    if (p.pin) handleWirePin(p.pin);
+    else if (p.wireTap) addCorner(p.w);
+    else if (E.mode === 'wire' && E.pend) { E.pend = null; renderEd(); }
+    else if (p.textTap) addText(p.w);
+  }
+}
+function startPinch() {
+  const [a, b] = [...E.ptrs.values()];
+  if (E.stroke) E.stroke = null;
+  if (E.drag) { if (E.drag.moved) commit(E.drag.pre); E.drag = null; }
+  E.pan = null; E.ignore = true;
+  E.pinch = { d0: Math.hypot(a.x - b.x, a.y - b.y) || 1, m0: { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }, k0: E.k, tx0: E.tx, ty0: E.ty };
+  renderEd();
+}
+function updatePinch() {
+  const [a, b] = [...E.ptrs.values()]; if (!b) return;
+  const r = E.svg.getBoundingClientRect(), P = E.pinch;
+  const m = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+  const k = clamp(P.k0 * Math.hypot(a.x - b.x, a.y - b.y) / P.d0, 0.2, 4);
+  const wx = (P.m0.x - r.left - P.tx0) / P.k0, wy = (P.m0.y - r.top - P.ty0) / P.k0;
+  E.k = k; E.tx = m.x - r.left - wx * k; E.ty = m.y - r.top - wy * k; applyView();
+}
+
+/* ---- edits ---- */
+const snapState = () => JSON.stringify(E.data);
+function commit(pre) { E.hist.push(pre); if (E.hist.length > 80) E.hist.shift(); E.fut = []; markDirty(); }
+function undo() { if (!E.hist.length) return; E.fut.push(snapState()); E.data = JSON.parse(E.hist.pop()); E.sel = null; E.pend = null; markDirty(); renderEd(); }
+function redo() { if (!E.fut.length) return; E.hist.push(snapState()); E.data = JSON.parse(E.fut.pop()); E.sel = null; E.pend = null; markDirty(); renderEd(); }
+function markDirty() { E.dirty = true; E.saveEl.textContent = 'Saving…'; clearTimeout(E.saveT); E.saveT = setTimeout(flushSave, 900); }
+function flushSave() {
+  if (!E || !E.dirty) return; clearTimeout(E.saveT); E.dirty = false;
+  const payload = clone({ name: E.name, comps: E.data.comps, wires: E.data.wires, strokes: E.data.strokes }); payload.updated = Date.now();
+  if (JSON.stringify(payload).length > 240000) { E.saveEl.textContent = 'Too big to save'; toast('This sketch is too big to save. Remove some freehand drawing, or split it into two sketches.'); return; }
+  S.sketches.set(E.sid, { ...(S.sketches.get(E.sid) || {}), ...payload });
+  const ed = E;
+  queueWrite(sketchCol().doc(E.sid), payload).then(() => { if (E === ed && !E.dirty) E.saveEl.textContent = 'Saved'; });
+}
+function nextDesignator(pfx, used) {
+  used = used || new Set(E.data.comps.map(c => c.l).filter(Boolean));
+  let n = 1; while (used.has(pfx + n)) n++; return pfx + n;
+}
+function pinVertical(ref) { const c = findComp(ref.c); if (!c || c.t === 'node') return false; const lp = localPins(c)[ref.p]; if (!lp) return false; const [rx, ry] = rot(lp.x, lp.y, c.r || 0); return Math.abs(ry) > Math.abs(rx); }
+function handleWirePin(pin) {
+  if (!E.pend) { E.pend = { c: pin.c, p: pin.p }; E.cursor = { x: pin.x, y: pin.y }; renderEd(); return; }
+  if (E.pend.c === pin.c && E.pend.p === pin.p) { E.pend = null; renderEd(); return; }
+  const dupe = E.data.wires.some(w => (w.a.c === E.pend.c && w.a.p === E.pend.p && w.b.c === pin.c && w.b.p === pin.p) || (w.b.c === E.pend.c && w.b.p === E.pend.p && w.a.c === pin.c && w.a.p === pin.p));
+  if (!dupe) { const pre = snapState(); E.data.wires.push({ id: uid8(), a: { ...E.pend }, b: { c: pin.c, p: pin.p }, f: pinVertical(E.pend) }); commit(pre); }
+  E.pend = null; renderEd();
+}
+function addCorner(w) {
+  const pre = snapState();
+  const x = snap(w.x), y = snap(w.y);
+  let node = E.data.comps.find(c => c.t === 'node' && c.x === x && c.y === y);
+  if (!node) { node = { id: uid8(), t: 'node', x, y, r: 0 }; E.data.comps.push(node); }
+  E.data.wires.push({ id: uid8(), a: { ...E.pend }, b: { c: node.id, p: 0 }, f: pinVertical(E.pend) });
+  E.pend = { c: node.id, p: 0 }; commit(pre); renderEd();
+}
+async function addText(w) {
+  const v = await promptDialog({ title: 'Add a label', label: 'Text', ok: 'Add', placeholder: 'e.g. 5 V from USB' });
+  if (!E || !v || !v.trim()) return;
+  const pre = snapState(); const c = { id: uid8(), t: 'text', x: snap(w.x), y: snap(w.y), r: 0, v: v.trim() };
+  E.data.comps.push(c); commit(pre); E.mode = 'select'; E.sel = { k: 'c', id: c.id }; renderEd();
+}
+function pruneNodes() { const used = new Set(); E.data.wires.forEach(w => { used.add(w.a.c); used.add(w.b.c); }); E.data.comps = E.data.comps.filter(c => c.t !== 'node' || used.has(c.id)); }
+function delSel() {
+  const sel = E.sel; if (!sel) return; const pre = snapState(), d = E.data;
+  if (sel.k === 'c') { d.comps = d.comps.filter(c => c.id !== sel.id); d.wires = d.wires.filter(w => w.a.c !== sel.id && w.b.c !== sel.id); }
+  else if (sel.k === 'w') d.wires = d.wires.filter(w => w.id !== sel.id);
+  else d.strokes = d.strokes.filter(s => s.id !== sel.id);
+  pruneNodes(); E.sel = null; commit(pre); renderEd();
+}
+function rotateSel() { const c = E.sel && findComp(E.sel.id); if (!c || c.t === 'node' || c.t === 'text') return; const pre = snapState(); c.r = ((c.r || 0) + 1) % 4; commit(pre); renderEd(); }
+function flipSel() { const w = E.sel && E.data.wires.find(x => x.id === E.sel.id); if (!w) return; const pre = snapState(); w.f = !w.f; commit(pre); renderEd(); }
+function dupSel() {
+  const c = E.sel && findComp(E.sel.id); if (!c || c.t === 'node') return;
+  const pre = snapState(); const n = { ...clone(c), id: uid8(), x: c.x + 40, y: c.y + 40 };
+  const m = /^([A-Za-z]+)\d+$/.exec(c.l || ''); if (m) n.l = nextDesignator(m[1]);
+  E.data.comps.push(n); E.sel = { k: 'c', id: n.id }; commit(pre); renderEd();
+}
+function editSel() {
+  const c = E.sel && findComp(E.sel.id); if (!c || c.t === 'node' || c.t === 'gnd') return;
+  if (c.t === 'text') { promptDialog({ title: 'Edit label', label: 'Text', value: c.v || '', ok: 'Save' }).then(v => { if (!E || v == null || !v.trim()) return; const pre = snapState(); c.v = v.trim(); commit(pre); renderEd(); }); return; }
+  let m;
+  const L = h('input', { class: 'inp mono', autofocus: true }); L.value = c.l || '';
+  const V = h('input', { class: 'inp' }); V.value = c.v || '';
+  const save = () => { const pre = snapState(); c.l = L.value.trim(); c.v = V.value.trim(); m.close(); commit(pre); renderEd(); };
+  [L, V].forEach(x => x.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); save(); } }));
+  const nm = c.t === 'block' ? 'Part' : (SYM[c.t] || {}).name || 'Part';
+  m = openModal({ title: `Edit ${nm.toLowerCase()}`, body: [
+      c.t !== 'vcc' ? h('label', { class: 'field' }, h('span', null, 'Label'), L) : null,
+      h('label', { class: 'field' }, h('span', null, c.t === 'vcc' ? 'Voltage or net name' : c.t === 'block' ? 'Name shown in the box' : 'Value'), V),
+      c.t === 'block' && c.partId && S.parts.get(c.partId) ? h('p', { class: 'dim sm', style: 'margin:0' }, `Pins come from “${S.parts.get(c.partId).name}” in your library.`) : null],
+    footer: [h('button', { class: 'btn quiet', onClick: () => m.close() }, 'Cancel'), h('button', { class: 'btn primary', onClick: save }, 'Save')] });
+}
+function place(t, o = {}) {
+  const pre = snapState(); const ctr = viewCenter();
+  let x = snap(ctr.x), y = snap(ctr.y);
+  while (E.data.comps.some(c => c.x === x && c.y === y)) { x += 40; y += 40; }
+  const s = SYM[t];
+  const c = { id: uid8(), t, x, y, r: 0, l: '', v: '' };
+  if (t === 'block') { c.pins = o.pins && o.pins.length ? o.pins : ['1', '2', '3', '4', '5', '6', '7', '8']; c.l = o.l || nextDesignator('U'); c.v = o.v || 'IC'; }
+  else { c.l = o.l != null ? o.l : (s.pfx ? nextDesignator(s.pfx) : ''); c.v = o.v != null ? o.v : s.val; }
+  if (o.partId) c.partId = o.partId;
+  E.data.comps.push(c); E.sel = { k: 'c', id: c.id }; E.mode = 'select'; E.pend = null;
+  commit(pre); if (E.palOpen) togglePalette(false); renderEd();
+}
+function placePart(part) {
+  const sym = symbolForPart(part);
+  if (sym) place(sym, { v: part.value || part.mpn || part.name, partId: part.id });
+  else place('block', { pins: part.pins && part.pins.length ? part.pins : ['1', '2', '3', '4'], v: part.mpn || part.name, partId: part.id });
+  const bom = curBom(E.pid);
+  if (S.projects.has(E.pid) && !bom.some(b => b.partId === part.id)) { addToBom(E.pid, part.id, true); toast(`Placed ${part.name} and added it to the parts list`); }
+}
+function insertSketch(src) {
+  const comps = clone(src.comps || []), wires = clone(src.wires || []), strokes = clone(src.strokes || []);
+  const b = bounds({ comps, wires, strokes }); if (!b) { toast('That sketch is empty.'); return; }
+  const pre = snapState(); const ctr = viewCenter();
+  const dx = snap(ctr.x - (b.x + b.w / 2)), dy = snap(ctr.y - (b.y + b.h / 2));
+  const idm = new Map(), used = new Set(E.data.comps.map(c => c.l).filter(Boolean));
+  for (const c of comps) {
+    const nid = uid8(); idm.set(c.id, nid); c.id = nid; c.x += dx; c.y += dy;
+    const m = /^([A-Za-z]+)(\d+)$/.exec(c.l || ''); if (m && used.has(c.l)) c.l = nextDesignator(m[1], used); if (c.l) used.add(c.l);
+  }
+  const ws = wires.map(w => ({ ...w, id: uid8(), a: { ...w.a, c: idm.get(w.a.c) }, b: { ...w.b, c: idm.get(w.b.c) } })).filter(w => w.a.c && w.b.c);
+  for (const s of strokes) { s.id = uid8(); s.p = s.p.map((v, i) => i % 2 ? v + dy : v + dx); }
+  E.data.comps.push(...comps); E.data.wires.push(...ws); E.data.strokes.push(...strokes);
+  E.sel = null; commit(pre); togglePalette(false); renderEd(); toast(`Combined “${src.name || 'sketch'}” into this one`);
+}
+
+/* ---- palette ---- */
+function togglePalette(force) { E.palOpen = typeof force === 'boolean' ? force : !E.palOpen; E.pal.hidden = !E.palOpen; if (E.palOpen) renderPalette(); }
+function renderPalette() {
+  const p = S.projects.get(E.pid) || {};
+  const partBtn = x => h('button', { class: 'pick', onClick: () => placePart(x) },
+    h('span', { class: 'pick-main' }, h('span', { class: 'pick-name' }, x.name), h('span', { class: 'psub' }, x.mpn ? h('span', { class: 'mono' }, x.mpn) : null, h('span', null, symbolForPart(x) ? SYM[symbolForPart(x)].name : (x.pins || []).length ? `${x.pins.length}-pin block` : 'Block, no pins saved'))), icon('plus', 18));
+  const bomParts = (p.bom || []).map(b => S.parts.get(b.partId) && { id: b.partId, ...S.parts.get(b.partId) }).filter(x => x && x.category !== 'Mechanical');
+  const libList = h('div', { class: 'pal-list' });
+  const drawLib = q => {
+    const ql = (q || '').trim().toLowerCase();
+    const res = partList().filter(x => x.category !== 'Mechanical' && (!ql || [x.name, x.mpn, x.category, x.value].join(' ').toLowerCase().includes(ql))).sort(byName).slice(0, 40);
+    libList.hidden = !res.length && !ql;
+    libList.replaceChildren(...(res.length ? res.map(partBtn) : [h('div', { class: 'pick-empty' }, ql ? 'Nothing matches.' : 'Your library is empty.')]));
+  };
+  const libQ = h('input', { class: 'inp', type: 'search', placeholder: 'Search your library', 'aria-label': 'Search your library', onInput: e => drawLib(e.target.value) });
+  const combine = h('div', null, h('button', { class: 'btn sm', onClick: async () => {
+    combine.replaceChildren(h('div', { class: 'lk-busy' }, h('span', { class: 'spin' }), 'Loading sketches…'));
+    try {
+      const snapAll = await sketchCol().get();
+      const others = snapAll.docs.filter(d => d.id !== E.sid).map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.updated || 0) - (a.updated || 0));
+      combine.replaceChildren(others.length ? h('div', { class: 'pal-list' }, others.map(s => h('button', { class: 'pick', onClick: () => insertSketch(s) },
+        h('span', { class: 'pick-main' }, h('span', { class: 'pick-name' }, s.name || 'Untitled sketch'), h('span', { class: 'psub' }, h('span', null, (S.projects.get(s.projectId) || {}).name || 'Other project'), h('span', null, `${(s.comps || []).filter(c => c.t !== 'node').length} parts`))), icon('plus', 18))))
+        : h('p', { class: 'dim sm', style: 'margin:0' }, 'There are no other sketches yet.'));
+    } catch (e) { combine.replaceChildren(h('p', { class: 'dim sm', style: 'margin:0' }, 'Sketches didn’t load. Try again.')); }
+  } }, 'Choose a sketch'));
+  E.pal.replaceChildren(
+    h('div', { class: 'pal-h' }, h('b', null, 'Add to sketch'), h('button', { class: 'ibtn', 'aria-label': 'Close', onClick: () => togglePalette(false) }, icon('x'))),
+    h('div', { class: 'pal-b' },
+      h('h4', null, 'Parts on this project’s list'),
+      bomParts.length ? h('div', { class: 'pal-list' }, bomParts.map(partBtn)) : h('p', { class: 'dim sm', style: 'margin:0' }, 'Parts on the project’s list show up here, with their real pins.'),
+      h('h4', null, 'Symbols'),
+      h('div', { class: 'symgrid' }, PALETTE.map(([t, l]) => h('button', { class: 'sym', onClick: () => place(t) }, h('span', { class: 'sym-ic', html: symbolPreview(t) }), l))),
+      h('h4', null, 'From your library'), libQ, libList,
+      h('h4', null, 'Combine sketches'),
+      h('p', { class: 'dim sm', style: 'margin:0' }, 'Copy another sketch into this one, for example a power supply or a sensor board you drew before.'), combine));
+  drawLib('');
+}
+
+/* ---- keyboard ---- */
+function edKey(e) {
+  if (!E || modalStack.length) return;
+  const t = e.target; if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+  const mod = e.ctrlKey || e.metaKey, k = e.key.toLowerCase();
+  if (mod && k === 'z') { e.preventDefault(); e.shiftKey ? redo() : undo(); return; }
+  if (mod && k === 'y') { e.preventDefault(); redo(); return; }
+  if (mod) return;
+  if (e.key === 'Delete' || e.key === 'Backspace') { if (E.sel) { e.preventDefault(); delSel(); } return; }
+  if (e.key === 'Escape') { if (E.pend) { E.pend = null; renderEd(); } else if (E.palOpen) togglePalette(false); else if (E.sel) { E.sel = null; renderEd(); } else if (E.mode !== 'select') setMode('select'); else closeEditor(); return; }
+  if (k === 'r' && E.sel && E.sel.k === 'c') { rotateSel(); return; }
+  if (k === 'f' && E.sel && E.sel.k === 'w') { flipSel(); return; }
+  if (k === 'v') setMode('select'); else if (k === 'w') setMode('wire'); else if (k === 'p') setMode('pen'); else if (k === 't') setMode('text'); else if (k === 'a') togglePalette();
+}
+
+/* ---- export ---- */
+function exportSVG() {
+  const b = bounds(E.data) || { x: -100, y: -100, w: 200, h: 200 }, pad = 40;
+  const vb = [Math.floor(b.x - pad), Math.floor(b.y - pad), Math.ceil(b.w + pad * 2), Math.ceil(b.h + pad * 2)];
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" viewBox="${vb.join(' ')}" width="${vb[2]}" height="${vb[3]}"><rect x="${vb[0]}" y="${vb[1]}" width="${vb[2]}" height="${vb[3]}" fill="#ffffff"/><g fill="none" stroke="#1A2920" color="#1A2920" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${contentMarkup(E.data)}</g></svg>`;
+}
+async function svgToPng(svg) {
+  const img = new Image();
+  await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg); });
+  const w = img.naturalWidth || img.width, hh = img.naturalHeight || img.height;
+  const scale = clamp(4000 / Math.max(w, hh), 0.5, 2.5);
+  const c = document.createElement('canvas'); c.width = Math.round(w * scale); c.height = Math.round(hh * scale);
+  c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+  return await new Promise((res, rej) => c.toBlob(b => b ? res(b) : rej(new Error('png')), 'image/png'));
+}
+function exportMenu() {
+  flushSave();
+  const base = (E.name || 'sketch').replace(/[\\/:*?"<>|]+/g, '').trim() || 'sketch';
+  let m;
+  const opt = (ic, label, sub, fn, show = true) => show ? h('button', { class: 'opt', onClick: async () => { m.close(); try { await fn(); } catch (e) { console.warn(e); if (!e || e.code !== 'declined') toast(e && e.code === 'rejected_extension' ? 'That file type can’t be saved from here.' : 'Export didn’t work in this browser. Try SVG instead.'); } } }, icon(ic, 20), h('span', null, label, h('small', null, sub))) : null;
+  m = openModal({ title: 'Export sketch', body: h('div', { class: 'opts' },
+    opt('image', 'Save as image to project files', 'Adds a PNG to this project’s Files tab', async () => {
+      const png = await svgToPng(exportSVG()); const res = await S.assets.upload(png, { type: 'image/png' });
+      const pid = E.pid; const rec = { id: uid8(), assetId: res.id, name: base + '.png', type: 'image/png', size: png.size, enc: 'raw', added: Date.now() };
+      patchProject(pid, { files: [...((S.projects.get(pid) || {}).files || []), rec] }); refreshUsage(); toast('Image saved to project files');
+    }, !!S.assets && S.projects.has(E.pid)),
+    opt('download', 'Download PNG', 'Picture for sharing or printing', async () => { await S.downloads.save({ filename: base + '.png', data: await svgToPng(exportSVG()) }); }, !!S.downloads),
+    opt('download', 'Download SVG', 'Sharp at any size, opens in Inkscape or a browser', async () => { await S.downloads.save({ filename: base + '.svg', data: exportSVG() }); }, !!S.downloads)) });
+}
+
+/* ================= boot ================= */
+async function boot() {
+  render();
+  if (!window.claude || typeof window.claude.use !== 'function') { S.err = 'noclaude'; render(); return; }
+  let db, user;
+  try { [db, user] = await Promise.all([claude.use('db'), claude.use('user')]); } catch (e) { db = null; }
+  if (!db || !user) { S.err = 'nodb'; render(); return; }
+  let id = null; try { id = await user.id(); } catch (e) {}
+  if (!id) { S.err = 'nodb'; render(); return; }
+  S.db = db; S.uid = id;
+  projCol().onSnapshot(snap => {
+    S.projects = new Map(snap.docs.map(d => [d.id, withPending(projCol().doc(d.id).path, d.data())]));
+    S.loaded.projects = true; schedRender();
+  }, onDbErr);
+  partCol().onSnapshot(snap => {
+    S.parts = new Map(snap.docs.map(d => [d.id, withPending(partCol().doc(d.id).path, d.data())]));
+    S.loaded.parts = true; schedRender();
+  }, onDbErr);
+  if (S.route.view === 'project' && S.route.pid) subscribeSketches(S.route.pid);
+  S.ready = true; render();
+  claude.use('assets').then(a => { S.assets = a; schedRender(); if (a) refreshUsage(); }).catch(() => {});
+  claude.use('downloads').then(d => { S.downloads = d; schedRender(); }).catch(() => {});
+  claude.use('sample').then(async s => { S.sample = s; if (s) { try { const l = await s.limits(); S.imgOK = !!(l && l.images); } catch (e) {} } }).catch(() => {});
+}
+boot();
+</script>
+</body>
+</html>
