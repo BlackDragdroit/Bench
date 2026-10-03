@@ -904,9 +904,12 @@ function guessCat(c) {
 function lookupPrompt(marking, context, fromPhoto) {
   return [
     'You identify electronic components for a hobbyist\'s parts inventory.',
-    fromPhoto ? `The attached photo shows a component. Read the markings printed on it${marking ? ` (the user also typed: "${marking}")` : ''} and identify it.` : `The user typed this part number or marking, as printed on the part: "${marking}".`,
-    context ? `Extra context from the user: "${context}".` : '',
-    'Markings on small parts are often abbreviated (SMD codes, date codes, manufacturer prefixes). If several parts match, choose the most likely one for hobby electronics and list the others as alternatives.',
+    fromPhoto ? `The attached photo shows a component. Read the markings printed on it${marking ? ` (the user also typed: "${marking}")` : ''} and identify it.` :
+      marking ? `The user typed this part number or marking, as printed on the part: "${marking}".` :
+      `The user has no part number and only describes the part they have or need: "${context}". Suggest the single most common, easy-to-get part for hobby electronics that fits, with a real part number.`,
+    context && (marking || fromPhoto) ? `Extra context from the user: "${context}".` : '',
+    marking || fromPhoto ? 'Markings on small parts are often abbreviated (SMD codes, date codes, manufacturer prefixes). If several parts match, choose the most likely one for hobby electronics and list the others as alternatives.' :
+      'Many parts may fit a description. Pick the most typical one, list other good fits as alternatives, and set confidence to medium or low unless the description clearly names one part.',
     '',
     'Reply with only a JSON object and no other text:',
     `{"found": true, "name": "short descriptive name, e.g. LM358 dual op-amp", "mpn": "full part number", "manufacturer": "", "category": "exactly one of: ${CATS.join(', ')}", "package": "e.g. DIP-8, TO-92, SOT-23, module", "value": "for passives, e.g. 10k or 100n; otherwise empty", "description": "one plain sentence on what it is for", "pins": ["pin names in pin-number order, e.g. OUT A, IN- A, IN+ A, GND, ...; for boards and modules list the header pins in order; empty array for two-lead parts or if unsure"], "specs": [{"k": "Supply voltage", "v": "3–32 V"}], "alternatives": ["other parts the marking could be"], "confidence": "high, medium or low", "note": "short caveat, or empty"}`,
@@ -953,30 +956,30 @@ function partDialog({ id, prefill = '', onSaved } = {}) {
   /* lookup */
   const mk = h('input', { class: 'inp lk-inp', placeholder: 'LM358N, NE555P, BC547, 1N4007…', 'aria-label': 'Part number or marking', autofocus: !existing, autocapitalize: 'characters', autocomplete: 'off', spellcheck: 'false' });
   mk.value = prefill || (existing && existing.mpn) || '';
-  const ctx = h('input', { class: 'inp', placeholder: 'Anything else you can see? e.g. “blue board, 8 pins” (optional)', 'aria-label': 'Extra context' });
+  const ctx = h('input', { class: 'inp', placeholder: 'Extra details, or describe the part if there’s no number, e.g. “logic-level MOSFET for a 12 V LED strip”', 'aria-label': 'Extra details or description' });
   const out = h('div', { role: 'status', 'aria-live': 'polite' });
   const idBtn = h('button', { class: 'btn primary', onClick: () => runLookup() }, icon('scan', 17), 'Identify');
   const photoIn = h('input', { type: 'file', accept: 'image/jpeg,image/png,image/webp,image/gif', hidden: true, onChange: e => { const fl = e.target.files && e.target.files[0]; e.target.value = ''; if (fl) runLookup(fl); } });
   const photoBtn = h('button', { class: 'btn', hidden: S.imgOK ? null : true, onClick: () => photoIn.click() }, icon('camera', 17), 'Photo');
-  mk.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); runLookup(); } });
+  for (const el of [mk, ctx]) el.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); runLookup(); } });
   let ctl = null;
   async function runLookup(img) {
-    const marking = mk.value.trim();
-    if (!marking && !img) { mk.focus(); out.replaceChildren(h('p', { class: 'dim', style: 'margin:0' }, 'Type the number printed on the part first.')); return; }
+    const marking = mk.value.trim(), context = ctx.value.trim();
+    if (!marking && !img && !context) { mk.focus(); out.replaceChildren(h('p', { class: 'dim', style: 'margin:0' }, 'Type the number printed on the part, or describe the part below.')); return; }
     if (!S.sample) { out.replaceChildren(h('p', { class: 'dim', style: 'margin:0' }, 'Lookup isn’t available in this view. Fill in the details below.')); showForm(); return; }
     if (ctl) ctl.abort(); ctl = new AbortController(); const my = ctl;
-    out.replaceChildren(h('div', { class: 'lk-busy' }, h('span', { class: 'spin' }), img ? 'Reading the photo…' : `Looking up ${marking}…`, h('button', { class: 'btn sm quiet', onClick: () => my.abort() }, 'Stop')));
+    out.replaceChildren(h('div', { class: 'lk-busy' }, h('span', { class: 'spin' }), img ? 'Reading the photo…' : marking ? `Looking up ${marking}…` : 'Finding a part that fits…', h('button', { class: 'btn sm quiet', onClick: () => my.abort() }, 'Stop')));
     idBtn.disabled = true; photoBtn.disabled = true;
     try {
       const opts = { signal: my.signal }; if (img) opts.images = [img];
-      const r = await S.sample.json(lookupPrompt(marking, ctx.value.trim(), !!img), opts);
-      if (my === ctl) showResult(r, marking);
+      const r = await S.sample.json(lookupPrompt(marking, context, !!img), opts);
+      if (my === ctl) showResult(r, marking, !marking && !img);
     } catch (e) { if (e && e.code === 'cancelled') out.replaceChildren(); else { out.replaceChildren(h('div', { class: 'lk-res miss' }, h('p', null, sampleErrCopy(e)))); showForm(); } }
     finally { idBtn.disabled = false; photoBtn.disabled = false; }
   }
-  function showResult(r, marking) {
+  function showResult(r, marking, fromText) {
     if (!r || typeof r !== 'object' || r.found === false) {
-      out.replaceChildren(h('div', { class: 'lk-res miss' }, h('b', null, 'Couldn’t identify it'), r && r.note ? h('p', null, str(r.note)) : null, h('p', { class: 'dim sm' }, 'Check the marking for typos, or fill in what you know below.')));
+      out.replaceChildren(h('div', { class: 'lk-res miss' }, h('b', null, fromText ? 'Couldn’t find a fitting part' : 'Couldn’t identify it'), r && r.note ? h('p', null, str(r.note)) : null, h('p', { class: 'dim sm' }, fromText ? 'Add more detail to the description, or fill in what you know below.' : 'Check the marking for typos, or fill in what you know below.')));
       showForm(); return;
     }
     const vals = { name: str(r.name), mpn: str(r.mpn) || marking, manufacturer: str(r.manufacturer), category: guessCat(r.category), package: str(r.package), value: str(r.value), description: str(r.description) };
