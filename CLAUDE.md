@@ -2,8 +2,11 @@
 
 Bench ist ein Projektplaner für Elektronik-Bastelprojekte (Schritte, Teileliste mit
 Teilebibliothek, Dateien, Schaltungsskizzen). Die erste Version läuft als Claude-Artifact
-und liegt hier als `bench.html` (eine einzige Datei, Vanilla JS, keine Abhängigkeiten außer
+und liegt hier als `public/bench.html` (eine einzige Datei, Vanilla JS, keine Abhängigkeiten außer
 Google Fonts). Ziel: dieselbe App unabhängig von Claude auf meinem Coolify betreiben.
+
+**Stand (2026-10-03):** Alle sechs Schritte umgesetzt und deployt auf https://bench.glaucus.at
+(Coolify-Projekt „Bench“, App `bench`, Datenbank `bench-db`). Aufbau siehe `README.md`.
 
 ## Ziel
 
