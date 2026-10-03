@@ -4,6 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Bench</title>
+<meta name="theme-color" content="#E7EDE1" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0D2318" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Bench">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<script src="/config.js"></script>
+<script src="/runtime.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -178,7 +187,7 @@ select.inp{appearance:none;background-image:linear-gradient(45deg,transparent 50
   .prow-meta{grid-column:2;flex-wrap:wrap;gap:6px 14px;padding:0 16px 13px}
   .prow-meta .st{min-width:0}
 }
-.backup-row{display:flex;justify-content:center;margin-top:26px}
+.backup-row{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:26px}
 
 /* ---------- project view ---------- */
 .crumb{margin:0 0 12px -10px}
@@ -341,6 +350,9 @@ select.inp{appearance:none;background-image:linear-gradient(45deg,transparent 50
 .notice{max-width:520px;margin:12vh auto 0;padding:0 24px}
 .notice h1{font:700 30px/1.1 var(--font-head);margin:14px 0 8px}
 .notice p{color:var(--ink-2)}
+.notice .btn{text-decoration:none;margin-top:8px}
+.ftile.missing{opacity:.65}
+.ftile.missing .fsize{color:var(--warn)}
 .opts{display:flex;flex-direction:column;gap:8px}
 .opt{display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:6px;background:var(--paper);text-align:left;font-weight:600}
 .opt:hover{border-color:var(--ink)}
@@ -688,18 +700,21 @@ function View() {
       nav('parts', 'Parts library', S.parts.size, 'chip'),
       h('div', { class: 'side-foot' },
         S.usage ? h('div', { class: 'usage' }, `Files: ${fmtBytes(S.usage.bytes)} of ${fmtBytes(S.usage.maxBytes)}`, h('span', { class: 'meter' }, h('i', { style: `width:${Math.min(100, S.usage.bytes / Math.max(1, S.usage.maxBytes) * 100).toFixed(1)}%` }))) : null,
-        S.downloads ? h('button', { class: 'btn sm quiet', style: 'justify-content:flex-start', title: 'Projects, parts and sketches as a JSON file (uploaded files aren’t included)', onClick: exportBackup }, icon('download', 16), 'Export backup') : null)),
+        S.downloads ? h('button', { class: 'btn sm quiet', style: 'justify-content:flex-start', title: 'Projects, parts and sketches as a JSON file (uploaded files aren’t included)', onClick: exportBackup }, icon('download', 16), 'Export backup') : null,
+        h('button', { class: 'btn sm quiet', style: 'justify-content:flex-start', title: 'Load a bench-backup-….json file. Entries with the same ID are replaced.', onClick: importBackupDialog }, icon('upload', 16), 'Import backup'),
+        h('form', { method: 'post', action: '/logout', style: 'display:contents' }, h('button', { class: 'btn sm quiet', style: 'justify-content:flex-start', type: 'submit' }, icon('back', 16), 'Sign out')))),
     h('main', { class: 'main' }, main),
     h('nav', { class: 'bottomnav', 'aria-label': 'Sections' }, bnav('projects', 'Projects', 'folder'), bnav('parts', 'Parts', 'chip')));
 }
 function Notice() {
   const msgs = {
-    noclaude: ['Open this in Claude', 'Bench keeps your projects in your Claude account, so it only works when opened from claude.ai or the Claude app.'],
-    nodb: ['Sign in to open your bench', 'Your projects are stored with your Claude account. Open this page in claude.ai or the Claude app while signed in.'],
-    revoked: ['Bench lost its connection', 'Access to storage was withdrawn while the page was open. Reload the page to reconnect.']
+    noclaude: ['Bench didn’t start', 'Part of the app didn’t load. Reload the page.'],
+    nodb: ['Sign in to open your bench', 'Your session has ended. Sign in again to get back to your projects.'],
+    revoked: ['Bench lost its connection', 'The server stopped accepting changes while the page was open. Reload the page to reconnect.']
   };
   const [t, p] = msgs[S.err] || msgs.nodb;
-  return h('div', { class: 'notice' }, h('div', { class: 'brand', style: 'padding:0' }, logo(), 'Bench'), h('h1', null, t), h('p', null, p));
+  return h('div', { class: 'notice' }, h('div', { class: 'brand', style: 'padding:0' }, logo(), 'Bench'), h('h1', null, t), h('p', null, p),
+    S.err === 'nodb' ? h('a', { class: 'btn primary', href: '/login' }, 'Sign in') : h('button', { class: 'btn primary', onClick: () => location.reload() }, 'Reload'));
 }
 
 function ProjectsView() {
@@ -722,7 +737,10 @@ function ProjectsView() {
     all.length === 0 ? EmptyBlock('Start your first project', 'Give it a name, then add the steps, the parts it needs, files and circuit sketches as you go.', h('button', { class: 'btn primary', onClick: newProjectDialog }, icon('plus'), 'New project')) :
     list.length === 0 ? h('div', { class: 'empty' }, h('p', null, 'No projects match that filter.')) :
     h('div', { class: 'plist' }, list.map(ProjectRow)),
-    S.downloads && all.length ? h('div', { class: 'backup-row' }, h('button', { class: 'btn sm quiet', onClick: exportBackup }, icon('download', 16), 'Export a backup')) : null);
+    h('div', { class: 'backup-row' },
+      S.downloads && all.length ? h('button', { class: 'btn sm quiet', onClick: exportBackup }, icon('download', 16), 'Export a backup') : null,
+      h('button', { class: 'btn sm quiet', onClick: importBackupDialog }, icon('upload', 16), 'Import a backup'),
+      h('form', { method: 'post', action: '/logout', style: 'display:contents' }, h('button', { class: 'btn sm quiet m-only', type: 'submit' }, 'Sign out'))));
 }
 function ProjectRow(p) {
   const st = stepsStat(p), short = bomShort(p), k = p.status || 'idea';
@@ -1028,19 +1046,19 @@ const TEXTY = new Set(['text/csv', 'text/markdown', 'application/json', 'text/pl
 const MIME_GUESS = { stl: 'model/stl', step: 'model/step', stp: 'model/step', '3mf': 'model/3mf', zip: 'application/zip', ino: 'text/x-arduino', py: 'text/x-python', c: 'text/x-c', cpp: 'text/x-c++', h: 'text/x-c', gcode: 'text/x-gcode', f3d: 'application/octet-stream' };
 function bytesToB64(buf) { const u = new Uint8Array(buf); let s = ''; for (let i = 0; i < u.length; i += 0x8000) s += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000)); return btoa(s); }
 function b64ToBytes(b64) { const s = atob(b64); const u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return u; }
+// Der eigene Server speichert jede Datei unverändert. Ältere Einträge mit
+// enc 'text' oder 'b64' (aus der Claude-Version) werden weiter gelesen.
+const MAX_UPLOAD_MB = (window.BENCH_CONFIG && window.BENCH_CONFIG.maxUploadMB) || 50;
 async function prepareUpload(file) {
   const ext = extOf(file.name); const native = NATIVE[ext];
   const orig = native || file.type || MIME_GUESS[ext] || 'application/octet-stream';
   if (!file.size) throw { code: 'empty' };
-  if (native && !TEXTY.has(native)) { if (file.size > (native === 'image/svg+xml' ? 2 : 20) * 1048576) throw { code: 'too_large' }; return { blob: file, type: native, enc: 'raw', orig }; }
-  if (file.size > 15 * 1048576) throw { code: 'too_large' };
-  const buf = await file.arrayBuffer();
-  try { const txt = new TextDecoder('utf-8', { fatal: true }).decode(buf); return native ? { blob: file, type: native, enc: 'raw', orig } : { blob: new Blob([txt], { type: 'text/plain' }), type: 'text/plain', enc: 'text', orig }; }
-  catch (e) { return { blob: new Blob([bytesToB64(buf)], { type: 'text/plain' }), type: 'text/plain', enc: 'b64', orig }; }
+  if (file.size > MAX_UPLOAD_MB * 1048576) throw { code: 'too_large' };
+  return { blob: file, type: orig, enc: 'raw', orig };
 }
 function uploadErrCopy(e, name) {
   const c = e && e.code;
-  return ({ too_large: `${name} is too big. Files up to 15 MB work (images, videos and PDFs up to 20 MB).`, empty: `${name} is empty.`, quota_or_state: 'File storage is full. Delete some files to make room.', rate_limited: 'Uploading too fast. Wait a moment, then try again.', unsupported_type: `${name} couldn’t be stored.` })[c] || `${name} didn’t upload. Try again.`;
+  return ({ too_large: `${name} is too big. Files up to ${MAX_UPLOAD_MB} MB work.`, empty: `${name} is empty.`, quota_or_state: 'File storage is full. Delete some files to make room.', rate_limited: 'Uploading too fast. Wait a moment, then try again.', unsupported_type: `${name} couldn’t be stored.` })[c] || `${name} didn’t upload. Try again.`;
 }
 async function refreshUsage() { if (!S.assets) return; try { const r = await S.assets.list(); S.usage = r.usage; schedRender(); } catch (e) {} }
 async function uploadFiles(pid, list) {
@@ -1067,7 +1085,7 @@ function FilesTab(p) {
   const input = h('input', { type: 'file', multiple: true, hidden: true, onChange: e => { const fl = [...e.target.files]; e.target.value = ''; uploadFiles(p.id, fl); } });
   const drop = h('div', { class: 'drop' },
     h('button', { class: 'btn primary', disabled: !!S.uploading, onClick: () => input.click() }, S.uploading ? h('span', { class: 'spin' }) : icon('upload', 17), S.uploading ? 'Uploading' : 'Upload files'), input,
-    h('span', { class: 'dim' }, S.uploading || 'Photos, datasheets, firmware, STL and print files, up to 15 MB each. You can also drop files here.'),
+    h('span', { class: 'dim' }, S.uploading || `Photos, datasheets, firmware, STL and print files, up to ${MAX_UPLOAD_MB} MB each. You can also drop files here.`),
     S.usage ? h('span', { class: 'usage' }, `${fmtBytes(S.usage.bytes)} of ${fmtBytes(S.usage.maxBytes)} used`) : null);
   drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('over'); });
   drop.addEventListener('dragleave', () => drop.classList.remove('over'));
@@ -1076,14 +1094,15 @@ function FilesTab(p) {
     files.length ? h('div', { class: 'fgrid' }, [...files].reverse().map(f => FileTile(p, f))) : EmptyBlock('No files yet', 'Keep datasheets, build photos, firmware and print files right next to the project.'));
 }
 function FileTile(p, f) {
-  const isImg = f.enc === 'raw' && /^image\//.test(f.type);
+  const isImg = !f.missing && f.enc === 'raw' && /^image\//.test(f.type);
   const ext = extOf(f.name);
-  return h('button', { class: 'ftile', onClick: () => filePreview(p.id, f.id) },
+  return h('button', { class: 'ftile' + (f.missing ? ' missing' : ''), onClick: () => filePreview(p.id, f.id) },
     h('span', { class: 'fthumb' }, isImg ? h('img', { src: '/_blob/' + f.assetId, alt: '', loading: 'lazy' }) : h('span', { class: 'fext' }, ext ? '.' + ext.slice(0, 6) : 'file')),
-    h('span', { class: 'fmeta' }, h('span', { class: 'fname', title: f.name }, f.name), h('span', { class: 'fsize' }, `${fmtBytes(f.size)}, ${shortDate(f.added)}`)));
+    h('span', { class: 'fmeta' }, h('span', { class: 'fname', title: f.name }, f.name), h('span', { class: 'fsize' }, f.missing ? 'Missing, upload it again' : `${fmtBytes(f.size)}, ${shortDate(f.added)}`)));
 }
 async function downloadFile(f) {
   if (!S.downloads) { toast('Downloads aren’t available in this view.'); return; }
+  if (f.missing) { toast('This file wasn’t in the backup. Upload it again.'); return; }
   try {
     const r = await fetch('/_blob/' + f.assetId); if (!r.ok) throw { code: 'fetch' };
     let data;
@@ -1098,17 +1117,18 @@ async function downloadFile(f) {
 }
 async function deleteFile(pid, fid) {
   const f = ((S.projects.get(pid) || {}).files || []).find(x => x.id === fid); if (!f) return;
-  try { await S.assets.delete(f.assetId); } catch (e) { console.warn(e); toast('The file couldn’t be deleted. Try again.'); return; }
+  if (!f.missing) try { await S.assets.delete(f.assetId); } catch (e) { console.warn(e); toast('The file couldn’t be deleted. Try again.'); return; }
   patchProject(pid, { files: ((S.projects.get(pid) || {}).files || []).filter(x => x.id !== fid) });
   refreshUsage(); toast('File deleted');
 }
 function filePreview(pid, fid) {
   const f = ((S.projects.get(pid) || {}).files || []).find(x => x.id === fid); if (!f) return;
   const url = '/_blob/' + f.assetId; let view;
-  if (f.enc === 'raw' && /^image\//.test(f.type)) view = h('img', { class: 'pv-img', src: url, alt: f.name });
+  if (f.missing) view = h('div', { class: 'pv-none' }, h('span', { class: 'fext big' }, '.' + (extOf(f.name) || 'file')), h('p', { class: 'dim', style: 'margin:0' }, 'This file came from a backup, and backups don’t contain uploaded files. Delete this entry and upload the file again.'));
+  else if (f.enc === 'raw' && /^image\//.test(f.type)) view = h('img', { class: 'pv-img', src: url, alt: f.name });
   else if (f.enc === 'raw' && /^video\//.test(f.type)) view = h('video', { class: 'pv-img', src: url, controls: true, playsinline: true });
   else if (f.enc === 'raw' && f.type === 'application/pdf') view = h('iframe', { class: 'pv-pdf', src: url, title: f.name });
-  else if (f.enc === 'text' || (f.enc === 'raw' && TEXTY.has(f.type))) {
+  else if (f.enc === 'text' || (f.enc === 'raw' && (TEXTY.has(f.type) || /^text\//.test(f.type)))) {
     view = h('pre', { class: 'pv-text' }, 'Loading…');
     fetch(url).then(r => r.text()).then(t => { view.textContent = t.length > 150000 ? t.slice(0, 150000) + '\n\n… preview cut off here. Download the file to see all of it.' : t; }).catch(() => { view.textContent = 'The preview didn’t load.'; });
   } else view = h('div', { class: 'pv-none' }, h('span', { class: 'fext big' }, '.' + (extOf(f.name) || 'file')), h('p', { class: 'dim', style: 'margin:0' }, 'There’s no preview for this kind of file. Download it to open it.'));
@@ -1242,6 +1262,27 @@ async function exportBackup() {
   const data = { app: 'Bench', version: 1, exported: new Date().toISOString(), projects: projectList(), parts: partList(), sketches };
   try { await S.downloads.save({ filename: `bench-backup-${new Date().toISOString().slice(0, 10)}.json`, data: JSON.stringify(data, null, 2) }); }
   catch (e) { if (!e || e.code !== 'declined') toast('The backup didn’t download. Try again.'); }
+}
+function importBackupDialog() {
+  const inp = h('input', { type: 'file', accept: 'application/json,.json', hidden: true });
+  inp.addEventListener('change', async () => {
+    const file = inp.files && inp.files[0]; inp.remove(); if (!file) return;
+    let data; try { data = JSON.parse(await file.text()); } catch (e) { data = null; }
+    if (!data || typeof data !== 'object' || (data.app && data.app !== 'Bench')) { toast('That file isn’t a Bench backup.'); return; }
+    const n = k => (Array.isArray(data[k]) ? data[k].length : 0);
+    const nf = (data.projects || []).reduce((a, p) => a + ((p && p.files) || []).length, 0);
+    const when = data.exported ? ` from ${shortDate(Date.parse(data.exported))}` : '';
+    const ok = await confirmDialog({ title: 'Import this backup?', danger: false, ok: 'Import',
+      text: `${n('projects')} projects, ${n('parts')} parts and ${n('sketches')} sketches${when}. Anything with the same ID here is replaced.${nf ? ` Backups don’t contain uploaded files, so ${nf} file${nf > 1 ? 's are' : ' is'} marked as missing.` : ''}` });
+    if (!ok) return;
+    try {
+      const r = await fetch('/api/import', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+      if (r.status === 401) { location.href = '/login'; return; }
+      if (!r.ok) throw new Error('import ' + r.status);
+      toast('Backup imported'); setTimeout(() => location.reload(), 900);
+    } catch (e) { console.warn(e); toast('The import didn’t work. Check the file and try again.'); }
+  });
+  document.body.append(inp); inp.click();
 }
 function onDbErr(e) { console.warn('db', e); if (e && e.code === 'revoked') { S.err = 'revoked'; render(); } }
 </script>
@@ -1829,6 +1870,7 @@ async function boot() {
   claude.use('sample').then(async s => { S.sample = s; if (s) { try { const l = await s.limits(); S.imgOK = !!(l && l.images); } catch (e) {} } }).catch(() => {});
 }
 boot();
+if ('serviceWorker' in navigator) window.addEventListener('load', () => { navigator.serviceWorker.register('/sw.js').catch(e => console.warn('sw', e)); });
 </script>
 </body>
 </html>

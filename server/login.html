@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bench – Sign in</title>
+<meta name="theme-color" content="#E7EDE1" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0D2318" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap">
+<style>
+:root{--paper:#E7EDE1;--paper-2:#F3F6EF;--ink:#1A2920;--ink-2:#4A5C50;--line:#BCCAB5;--accent:#1D5A39;--on-accent:#F3F6EF;--danger:#A3392A;--grid:rgba(40,92,58,.085);color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--paper:#0D2318;--paper-2:#122D1F;--ink:#E4ECE3;--ink-2:#A6BAAB;--line:#2A4B3B;--accent:#D6B860;--on-accent:#13281C;--danger:#EE8B74;--grid:rgba(214,184,96,.055);color-scheme:dark}}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{min-height:100vh;min-height:100dvh;display:grid;place-items:center;padding:24px 16px;background:var(--paper);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px;
+  color:var(--ink);font:16px/1.5 "Barlow",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.card{width:100%;max-width:360px;background:var(--paper-2);border:1px solid var(--line);border-radius:10px;padding:28px 24px;box-shadow:0 1px 0 rgba(26,41,32,.05),0 14px 34px -14px rgba(26,41,32,.35)}
+.brand{display:flex;align-items:center;gap:10px;font:700 24px/1 "Barlow Semi Condensed","Barlow",sans-serif;margin-bottom:22px}
+.brand svg{color:var(--accent)}
+label{display:block;font-weight:600;font-size:14px;color:var(--ink-2);margin-bottom:6px}
+input{width:100%;font:inherit;padding:11px 12px;border:1px solid var(--line);border-radius:7px;background:var(--paper);color:var(--ink)}
+input:focus{outline:2px solid var(--accent);outline-offset:1px}
+button{margin-top:16px;width:100%;font:600 16px/1 "Barlow",sans-serif;padding:12px;border:0;border-radius:7px;background:var(--accent);color:var(--on-accent);cursor:pointer}
+.err{color:var(--danger);font-size:14px;margin:12px 0 0}
+</style>
+</head>
+<body>
+<form class="card" method="post" action="/login">
+  <div class="brand"><svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><path d="M2 9h5M2 14h5M2 19h5M21 9h5M21 14h5M21 19h5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><rect x="6.5" y="4.5" width="15" height="19" rx="1.8" fill="currentColor"/><circle cx="10.2" cy="8.4" r="1.6" fill="var(--paper-2)"/></svg>Bench</div>
+  <label for="pw">Password</label>
+  <input id="pw" name="password" type="password" autocomplete="current-password" required autofocus>
+  <!--ERROR-->
+  <button type="submit">Sign in</button>
+</form>
+</body>
+</html>

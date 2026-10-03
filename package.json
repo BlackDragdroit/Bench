@@ -1,0 +1,22 @@
+{
+  "name": "bench",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Bench – Projektplaner für Elektronik-Bastelprojekte, selbst gehostet",
+  "type": "module",
+  "main": "server/index.js",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --env-file=.env --watch server/index.js",
+    "import": "node --env-file-if-exists=.env scripts/import.js",
+    "test": "node --test \"test/**/*.test.js\""
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.131.0",
+    "express": "^5.2.1",
+    "pg": "^8.23.1"
+  }
+}
