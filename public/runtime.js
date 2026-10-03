@@ -33,7 +33,8 @@
   const COLL_MAP = [
     [/^data\/users\/[^/]+\/projects\/items$/, 'projects'],
     [/^data\/users\/[^/]+\/library\/parts$/, 'parts'],
-    [/^data\/users\/[^/]+\/sketches\/items$/, 'sketches']
+    [/^data\/users\/[^/]+\/sketches\/items$/, 'sketches'],
+    [/^data\/users\/[^/]+\/drop\/items$/, 'drops']
   ];
   function tableOf(path) {
     for (const [re, t] of COLL_MAP) if (re.test(path)) return t;

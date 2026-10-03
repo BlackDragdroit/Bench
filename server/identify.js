@@ -35,14 +35,15 @@ export function extractJson(text) {
 }
 
 // body: { prompt: string, images?: [{ type, data (base64) }] }
-export async function identify(body, signal) {
+// Schickt einen Prompt (optional mit Bildern) an die Messages API und gibt das
+// JSON-Objekt aus der Antwort zurück.
+async function completeJson({ prompt, images = [], model, maxTokens, maxPrompt, signal, tag }) {
   if (!identifyAvailable()) throw fail(503, 'not_granted');
-  const prompt = typeof body?.prompt === 'string' ? body.prompt : '';
-  if (!prompt.trim()) throw fail(400, 'invalid_argument');
-  if (prompt.length > 20000) throw fail(413, 'prompt_too_large');
+  if (typeof prompt !== 'string' || !prompt.trim()) throw fail(400, 'invalid_argument');
+  if (prompt.length > maxPrompt) throw fail(413, 'prompt_too_large');
 
   const content = [];
-  for (const img of Array.isArray(body.images) ? body.images.slice(0, 4) : []) {
+  for (const img of Array.isArray(images) ? images.slice(0, 4) : []) {
     if (!img || !IMAGE_TYPES.has(img.type) || typeof img.data !== 'string') throw fail(400, 'image_rejected');
     if (img.data.length * 0.75 > MAX_IMAGE_BYTES) throw fail(413, 'image_rejected');
     content.push({ type: 'image', source: { type: 'base64', media_type: img.type, data: img.data } });
@@ -52,22 +53,34 @@ export async function identify(body, signal) {
   let res;
   try {
     res = await getClient().messages.create(
-      { model: MODEL, max_tokens: 4096, messages: [{ role: 'user', content }] },
+      { model, max_tokens: maxTokens, messages: [{ role: 'user', content }] },
       { signal });
   } catch (e) {
     if (e instanceof Anthropic.APIUserAbortError) throw fail(499, 'cancelled');
     if (e instanceof Anthropic.RateLimitError) throw fail(429, 'rate_limited');
     if (e instanceof Anthropic.BadRequestError) {
-      console.warn('identify: bad request', e.message);
+      console.warn(`${tag}: bad request`, e.message);
       throw fail(400, content.length > 1 ? 'image_rejected' : 'invalid_argument');
     }
     if (e instanceof Anthropic.AuthenticationError || e instanceof Anthropic.PermissionDeniedError) {
-      console.error('identify: API-Key ungültig oder ohne Berechtigung');
+      console.error(`${tag}: API-Key ungültig oder ohne Berechtigung`);
       throw fail(503, 'not_granted');
     }
-    console.error('identify:', e?.status || '', e?.message || e);
+    console.error(`${tag}:`, e?.status || '', e?.message || e);
     throw fail(502, 'upstream');
   }
   const text = res.content.filter(b => b.type === 'text').map(b => b.text).join('\n');
   return extractJson(text);
+}
+
+// Teilesuche
+export function identify(body, signal) {
+  return completeJson({ prompt: body?.prompt, images: body?.images, model: MODEL, maxTokens: 4096, maxPrompt: 20000, signal, tag: 'identify' });
+}
+
+// Drop: würfelt Projektideen und schreibt das Geschmacksprofil. Eigenes Modell,
+// weil hier Ideen gefragt sind; Standard wie in Random Drop.
+const DROP_MODEL = process.env.DROP_MODEL || 'claude-sonnet-4-6';
+export function dropGenerate(body, signal) {
+  return completeJson({ prompt: body?.prompt, model: DROP_MODEL, maxTokens: 3000, maxPrompt: 40000, signal, tag: 'drop' });
 }

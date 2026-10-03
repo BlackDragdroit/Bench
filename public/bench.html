@@ -25,7 +25,7 @@
   --accent:#1D5A39; --on-accent:#F3F6EF;
   --gold:#94700F; --sel:#2563C9;
   --danger:#A3392A; --ok:#2C7444; --warn:#A35F0C;
-  --s-idea:#7D877F; --s-planning:#C9A200; --s-building:#D2691C; --s-testing:#2E66BC; --s-done:#2C7A45; --s-paused:#7A51A8;
+  --s-idea:#7D877F; --s-planning:#C9A200; --s-building:#D2691C; --s-testing:#2E66BC; --s-done:#2C7A45; --s-paused:#7A51A8; --d-cad:#C2462B; --d-bio:#B4407A;
   --shadow:0 1px 0 rgba(26,41,32,.05),0 14px 34px -14px rgba(26,41,32,.35);
   --scrim:rgba(18,30,22,.42);
   --pcb:0;
@@ -46,7 +46,7 @@
     --accent:#D6B860; --on-accent:#13281C;
     --gold:#D6B860; --sel:#7FB2FF;
     --danger:#EE8B74; --ok:#74C690; --warn:#E9A955;
-    --s-idea:#9AA69E; --s-planning:#E6C93C; --s-building:#F08C42; --s-testing:#6E9FEA; --s-done:#74C690; --s-paused:#AE8CDB;
+    --s-idea:#9AA69E; --s-planning:#E6C93C; --s-building:#F08C42; --s-testing:#6E9FEA; --s-done:#74C690; --s-paused:#AE8CDB; --d-cad:#F08A70; --d-bio:#E77DB0;
     --shadow:0 1px 0 rgba(0,0,0,.2),0 18px 40px -16px rgba(0,0,0,.6);
     --scrim:rgba(3,10,6,.62);
     --pcb:1; color-scheme:dark;
@@ -60,7 +60,7 @@
   --accent:#D6B860; --on-accent:#13281C;
   --gold:#D6B860; --sel:#7FB2FF;
   --danger:#EE8B74; --ok:#74C690; --warn:#E9A955;
-  --s-idea:#9AA69E; --s-planning:#E6C93C; --s-building:#F08C42; --s-testing:#6E9FEA; --s-done:#74C690; --s-paused:#AE8CDB;
+  --s-idea:#9AA69E; --s-planning:#E6C93C; --s-building:#F08C42; --s-testing:#6E9FEA; --s-done:#74C690; --s-paused:#AE8CDB; --d-cad:#F08A70; --d-bio:#E77DB0;
   --shadow:0 1px 0 rgba(0,0,0,.2),0 18px 40px -16px rgba(0,0,0,.6);
   --scrim:rgba(3,10,6,.62);
   --pcb:1; color-scheme:dark;
@@ -189,6 +189,61 @@ select.inp{appearance:none;background-image:linear-gradient(45deg,transparent 50
   .prow-meta .st{min-width:0}
 }
 .backup-row{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:26px}
+
+/* ---------- drop ---------- */
+.dpage{max-width:760px}
+.chip:disabled{opacity:.45;cursor:default}
+.chip svg{flex:none}
+.dhero{display:flex;flex-direction:column;align-items:flex-start;gap:4px;width:100%;padding:26px 24px;border:1.5px solid var(--ink);border-radius:6px;background:var(--accent);color:var(--on-accent);text-align:left;box-shadow:var(--shadow);background-image:linear-gradient(var(--grid-strong) 1px,transparent 1px),linear-gradient(90deg,var(--grid-strong) 1px,transparent 1px);background-size:20px 20px}
+.dhero strong{font:700 40px/1 var(--font-head)}
+.dhero small{font-size:15px;opacity:.85}
+.dhero:hover{filter:brightness(1.08)}
+.dscopes{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:10px}
+.dscope{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:14px 14px 13px;border:1.5px solid var(--line-strong);border-radius:6px;background:var(--paper-2);text-align:left}
+.dscope:hover{background:var(--paper-3)}
+.dscope strong{font:600 19px/1.15 var(--font-head)}
+.dscope small{color:var(--ink-3);font-size:13px}
+@media (max-width:820px){.dscopes{grid-template-columns:1fr 1fr}.dhero strong{font-size:34px}}
+.drolling{display:flex;flex-direction:column;gap:14px;padding:30px 4px}
+.dreel{height:40px;overflow:hidden;font:700 32px/40px var(--font-head)}
+.dreel span{display:block;animation:dreel 1.4s steps(7) infinite}
+@keyframes dreel{to{transform:translateY(-280px)}}
+@media (prefers-reduced-motion:reduce){.dreel span{animation:none}}
+.dcard{position:relative;display:flex;flex-direction:column;gap:12px;padding:18px 22px 18px 28px;border:1.5px solid var(--line-strong);border-radius:6px;background:var(--paper-2);box-shadow:var(--shadow);overflow:hidden}
+.dcard::before{content:"";position:absolute;left:0;top:0;bottom:0;width:7px;background:var(--c)}
+.dcard.reveal{animation:dpop .35s ease-out}
+@keyframes dpop{from{opacity:0;transform:translateY(10px) scale(.985)}}
+@media (prefers-reduced-motion:reduce){.dcard.reveal{animation:none}}
+.dcard-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:14px}
+.dcard h2{margin:0;font:700 32px/1.05 var(--font-head);overflow-wrap:anywhere}
+.dpitch{margin:0;font-size:16.5px}
+.dpayoff{margin:0;color:var(--ink-2)}
+.dsec h3,.dsettings h3{margin:0 0 6px;font:600 13px var(--font);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
+.duses,.dlist{margin:0;padding:0;list-style:none;border-top:1px solid var(--line)}
+.duses li,.dlist li{display:flex;align-items:baseline;gap:10px;padding:7px 0;border-bottom:1px solid var(--line)}
+.dlist li::before{content:"–";color:var(--ink-3)}
+.dq{min-width:2.4em;color:var(--ink-2)}
+.dsteps{margin:0;padding:0;list-style:none;counter-reset:ds}
+.dsteps li{counter-increment:ds;display:grid;grid-template-columns:2em 1fr;padding:5px 0}
+.dsteps li::before{content:counter(ds);font:500 13px/1.6 var(--font-mono);color:var(--ink-3)}
+.dgotcha{margin:0;padding:10px 14px;border-left:3px solid var(--warn);background:color-mix(in srgb,var(--warn) 10%,transparent);border-radius:0 4px 4px 0}
+.dgotcha b{display:block;font-size:13px;color:var(--warn)}
+.dtier{display:flex;align-items:center;gap:10px;font:600 15px var(--font-head);color:var(--ink-2)}
+.pips{display:inline-flex;gap:3px}
+.pips i{width:12px;height:12px;border-radius:2px;border:1.5px solid var(--c)}
+.pips i.on{background:var(--c)}
+.drate{display:flex;flex-direction:column;gap:8px;padding-top:12px;border-top:1px dashed var(--line)}
+.drate-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.vote.down svg{transform:rotate(180deg)}
+.vote[aria-pressed="true"].up{background:var(--ok);border-color:var(--ok);color:var(--paper-2)}
+.vote[aria-pressed="true"].down{background:var(--danger);border-color:var(--danger);color:var(--paper-2)}
+.dactions{display:flex;gap:8px;flex-wrap:wrap}
+.dsettings{display:flex;flex-direction:column;gap:12px;margin-top:14px;padding:16px 18px;border:1.5px solid var(--line);border-radius:6px;background:var(--paper-2)}
+.daff{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;align-items:center;font-size:13.5px}
+.daff .meter{width:100%}
+.dfrom{display:flex;flex-direction:column;gap:6px;margin-top:14px;max-width:72ch}
+.dfrom>.conf{align-self:flex-start;display:inline-flex;align-items:center;gap:5px}
+.drate.compact{padding-top:0;border-top:0}
 
 /* ---------- project view ---------- */
 .crumb{margin:0 0 12px -10px}
@@ -483,7 +538,9 @@ const ICONS = {
   list:'<path d="M9 6h11M9 12h11M9 18h11M4.5 6h.5M4.5 12h.5M4.5 18h.5"/>',
   note:'<path d="M5 4h14v16H5z"/><path d="M8.5 9h7M8.5 13h7M8.5 17h4"/>',
   scan:'<path d="M4 8.5V4h4.5M15.5 4H20v4.5M20 15.5V20h-4.5M8.5 20H4v-4.5"/><path d="M7.5 12h9"/>',
-  image:'<rect x="3.5" y="5" width="17" height="14" rx="1.5"/><circle cx="9" cy="10" r="1.7"/><path d="M20.5 16l-5-5-8.5 8"/>'
+  image:'<rect x="3.5" y="5" width="17" height="14" rx="1.5"/><circle cx="9" cy="10" r="1.7"/><path d="M20.5 16l-5-5-8.5 8"/>',
+  dice:'<rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8.5 8.5h.01M15.5 8.5h.01M12 12h.01M8.5 15.5h.01M15.5 15.5h.01" stroke-width="3"/>',
+  thumb:'<path d="M7 10v11"/><path d="M15 5.9 14 10h5.8a2 2 0 0 1 1.9 2.6l-2.3 8a2 2 0 0 1-1.9 1.4H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.8a2 2 0 0 0 1.8-1.1L12 2a3.1 3.1 0 0 1 3 3.9Z"/>'
 };
 function icon(n, s = 18) {
   const t = document.createElement('template');
@@ -690,8 +747,9 @@ function View() {
     else if (!S.loaded.projects) main = h('div', { class: 'page loading' }, 'Loading project…');
     else { S.route = { view: 'projects', pid: null, tab: 'steps' }; main = ProjectsView(); }
   } else if (r.view === 'parts') main = PartsView();
+  else if (r.view === 'drop') main = DropView();
   else main = ProjectsView();
-  const cur = S.route.view === 'parts' ? 'parts' : 'projects';
+  const cur = S.route.view === 'parts' || S.route.view === 'drop' ? S.route.view : 'projects';
   const nav = (k, label, n, ic) => h('button', { class: 'nav', 'aria-current': cur === k ? 'page' : null, onClick: () => go({ view: k }) }, icon(ic), label, h('span', { class: 'count' }, n));
   const bnav = (k, label, ic) => h('button', { 'aria-current': cur === k ? 'page' : null, onClick: () => go({ view: k }) }, icon(ic, 22), label);
   return h('div', { class: 'shell' },
@@ -699,13 +757,14 @@ function View() {
       h('div', { class: 'brand' }, logo(), 'Bench'),
       nav('projects', 'Projects', S.projects.size, 'folder'),
       nav('parts', 'Parts library', S.parts.size, 'chip'),
+      nav('drop', 'Drop', null, 'dice'),
       h('div', { class: 'side-foot' },
         S.usage ? h('div', { class: 'usage' }, `Files: ${fmtBytes(S.usage.bytes)} of ${fmtBytes(S.usage.maxBytes)}`, h('span', { class: 'meter' }, h('i', { style: `width:${Math.min(100, S.usage.bytes / Math.max(1, S.usage.maxBytes) * 100).toFixed(1)}%` }))) : null,
         S.downloads ? h('button', { class: 'btn sm quiet', style: 'justify-content:flex-start', title: 'Projects, parts and sketches as a JSON file (uploaded files aren’t included)', onClick: exportBackup }, icon('download', 16), 'Export backup') : null,
         h('button', { class: 'btn sm quiet', style: 'justify-content:flex-start', title: 'Load a bench-backup-….json file. Entries with the same ID are replaced.', onClick: importBackupDialog }, icon('upload', 16), 'Import backup'),
         h('form', { method: 'post', action: '/logout', style: 'display:contents' }, h('button', { class: 'btn sm quiet', style: 'justify-content:flex-start', type: 'submit' }, icon('back', 16), 'Sign out')))),
     h('main', { class: 'main' }, main),
-    h('nav', { class: 'bottomnav', 'aria-label': 'Sections' }, bnav('projects', 'Projects', 'folder'), bnav('parts', 'Parts', 'chip')));
+    h('nav', { class: 'bottomnav', 'aria-label': 'Sections' }, bnav('projects', 'Projects', 'folder'), bnav('parts', 'Parts', 'chip'), bnav('drop', 'Drop', 'dice')));
 }
 function Notice() {
   const msgs = {
@@ -773,6 +832,7 @@ function ProjectView(pid) {
       h('div', null, h('span', { class: 'tb-l' }, 'Started'), h('div', { class: 'tb-v' }, shortDate(p.created))),
       h('div', null, h('span', { class: 'tb-l' }, 'Last change'), h('div', { class: 'tb-v' }, relTime(p.updated)))),
     p.description ? h('p', { class: 'pdesc' }, p.description) : null,
+    p.drop && p.drop.rollId ? DropFrom(p) : null,
     h('div', { class: 'tabs', role: 'tablist' }, tabs.map(([tk, l, n]) => h('button', { class: 'tab', role: 'tab', 'aria-selected': String(tab === tk), onClick: () => { S.route.tab = tk; saveRoute(); render(); } }, l, n != null ? h('span', { class: 'n' }, n) : null))),
     h('div', { role: 'tabpanel' }, tab === 'steps' ? StepsTab(p) : tab === 'parts' ? BomTab(p) : tab === 'files' ? FilesTab(p) : tab === 'sketches' ? SketchesTab(p) : NotesTab(p)));
 }
@@ -1263,7 +1323,7 @@ async function exportBackup() {
   if (!S.downloads) { toast('Downloads aren’t available in this view.'); return; }
   let sketches = [];
   try { const s = await sketchCol().get(); sketches = s.docs.map(d => ({ id: d.id, ...d.data() })); } catch (e) {}
-  const data = { app: 'Bench', version: 1, exported: new Date().toISOString(), projects: projectList(), parts: partList(), sketches };
+  const data = { app: 'Bench', version: 1, exported: new Date().toISOString(), projects: projectList(), parts: partList(), sketches, drop: S.drop || undefined };
   try { await S.downloads.save({ filename: `bench-backup-${new Date().toISOString().slice(0, 10)}.json`, data: JSON.stringify(data, null, 2) }); }
   catch (e) { if (!e || e.code !== 'declined') toast('The backup didn’t download. Try again.'); }
 }
@@ -1288,6 +1348,310 @@ function importBackupDialog() {
   });
   document.body.append(inp); inp.click();
 }
+/* ================= drop: roll a project ================= */
+// Übernommen aus Random Drop: Umfang wählen, Feld, Schwierigkeit und Absicht werden
+// gewürfelt, Bewertungen lenken spätere Würfe. Neu: "From my parts" baut nur aus der
+// Teilebibliothek, "Anything goes" ignoriert sie. "Take it on" legt ein Bench-Projekt an.
+const DROP_SCOPES = [
+  { id: 'daily', label: 'Daily drop', hint: 'one sitting', brief: '2 to 4 hours, finished in one sitting tonight', diff: [1, 3] },
+  { id: 'weekend', label: 'Weekend', hint: 'two days', brief: 'two days, with a night to sleep on it', diff: [2, 4] },
+  { id: 'weekly', label: 'Weekly', hint: 'evenings', brief: 'one week of evenings, 10 to 15 hours total', diff: [2, 5] },
+  { id: 'quick', label: 'Quick hit', hint: 'under an hour', brief: '45 minutes, one idea, one file, done', diff: [1, 2] },
+  { id: 'epic', label: 'Long haul', hint: 'weeks', brief: 'three to six weeks, ambitious, worth showing people', diff: [3, 5] }
+];
+const DROP_DOMAINS = [
+  { id: 'software', label: 'Software', color: 'var(--s-testing)', hw: false },
+  { id: 'electronics', label: 'Electronics', color: 'var(--s-building)', hw: true },
+  { id: 'embedded', label: 'Embedded', color: 'var(--s-paused)', hw: true },
+  { id: 'cad', label: 'CAD & print', color: 'var(--d-cad)', hw: false },
+  { id: 'signals', label: 'Data & signals', color: 'var(--s-done)', hw: true },
+  { id: 'biomed', label: 'Bio & medical', color: 'var(--d-bio)', hw: true },
+  { id: 'wildcard', label: 'Wildcard', color: 'var(--s-planning)', hw: true }
+];
+const DROP_TIERS = ['Warm-up', 'Steady', 'Tricky', 'Hard', 'Brutal'];
+const DROP_INTENTS = [
+  { id: 'learn', label: 'To learn', weight: 38, line: 'Point of it: teach them one concrete technique they don\'t have yet. The technique is the reason it exists.', payoff: 'the specific skill or idea this teaches' },
+  { id: 'useful', label: 'Useful', weight: 20, line: 'Point of it: solve a small real annoyance in their life, room or studies. Something that stays switched on and gets used after it\'s finished.', payoff: 'the annoyance this removes' },
+  { id: 'fun', label: 'For fun', weight: 20, line: 'Point of it: pure fun. It does NOT have to teach anything or be useful. It has to be satisfying to switch on — light, motion, sound, a game, a toy. Judge it on whether they\'d show it to someone in the room.', payoff: 'why it\'s satisfying to switch on' },
+  { id: 'showoff', label: 'Show-off', weight: 13, line: 'Point of it: it looks good sitting on a shelf or running on a screen. The kind of thing you hand someone and they immediately want a go. Lean into the aesthetics.', payoff: 'the moment that lands when someone else sees it' },
+  { id: 'absurd', label: 'Ridiculous', weight: 9, line: 'Point of it: it\'s a joke. A useless machine, a wildly over-engineered answer to a non-problem, a bit taken much too far in hardware or code. Commit to it completely — do not sneak in an educational justification.', payoff: 'the joke' }
+];
+const DROP_DEFAULT_KIT = 'Python, C, Arduino. Breadboard, jumper wires, multimeter, soldering iron. No oscilloscope. 3D printer sometimes.';
+const DISTILL_EVERY = 5;
+const DROP_DEFAULT = { kit: DROP_DEFAULT_KIT, mode: 'parts', feedback: [], taste: '', tasteAt: 0, sinceDistill: 0, lastDomains: [] };
+const D = { order: null, rolling: null, error: '', settingsOpen: false, reveal: false, distilling: false, learnMsg: '', ctl: null, distillT: null };
+
+const dropCol = () => S.db.collection(`data/users/${S.uid}/drop/items`);
+const dropState = () => ({ ...DROP_DEFAULT, ...(S.drop || {}) });
+function patchDrop(patch) { S.drop = { ...dropState(), ...patch }; queueWrite(dropCol().doc('state'), patch); }
+const dropDom = id => DROP_DOMAINS.find(d => d.id === id) || DROP_DOMAINS[0];
+const dropIntentLabel = id => (DROP_INTENTS.find(i => i.id === id) || {}).label || '?';
+const clipText = (s, n) => { s = String(s || '').trim().replace(/\s+/g, ' '); return s.length > n ? s.slice(0, n - 1) + '…' : s; };
+const randInt = (lo, hi) => lo + Math.floor(Math.random() * (hi - lo + 1));
+// Teile, die als vorhanden gelten: gezählt und > 0, oder nicht gezählt
+const usableParts = () => partList().filter(x => x.stock !== 0).sort((a, b) => (a.category || '').localeCompare(b.category || '') || byName(a, b));
+const dropAvailable = () => !!(window.BENCH_CONFIG && window.BENCH_CONFIG.identify);
+
+async function dropGenerate(prompt, signal) {
+  let r;
+  try { r = await fetch('/api/drop', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt }), signal }); }
+  catch (e) { if (e && e.name === 'AbortError') throw { code: 'cancelled' }; throw { code: 'offline' }; }
+  if (r.status === 401) { location.href = '/login'; throw { code: 'unauthenticated' }; }
+  let data = null; try { data = await r.json(); } catch (e) {}
+  if (!r.ok) throw { code: (data && data.code) || 'upstream', status: r.status };
+  return data;
+}
+function dropErrCopy(e) {
+  const c = e && e.code;
+  return ({ offline: 'No connection. Rolling needs the internet; your bench still works.', rate_limited: 'Too many rolls at once. Wait a moment and tap again.', not_granted: 'The server has no working Anthropic API key, so Drop can’t roll.', invalid_json: 'That didn’t come back as a project. Tap again.' })[c] || 'The roll didn’t land. Tap again.';
+}
+
+/* --- ratings: steer future rolls through odds, examples and a taste profile --- */
+const fbOf = rid => (dropState().feedback || []).find(f => f.pid === rid);
+function dropVote(rid, dir, facts) {
+  const fb = [...dropState().feedback]; const v = dir === 'up' ? 1 : -1;
+  const i = fb.findIndex(f => f.pid === rid);
+  if (i > -1 && fb[i].vote === v) { fb.splice(i, 1); patchDrop({ feedback: fb }); schedRender(); return; }   // nochmal tippen = zurücknehmen
+  const f = i > -1 ? fb.splice(i, 1)[0] : { pid: rid, comment: '', ...facts };
+  f.vote = v; f.at = Date.now();
+  fb.unshift(f);
+  patchDrop({ feedback: fb.slice(0, 200), sinceDistill: (dropState().sinceDistill || 0) + 1 });
+  scheduleDistill(); if (navigator.vibrate) navigator.vibrate(10); schedRender();
+}
+function dropComment(rid, text) {
+  const fb = dropState().feedback.map(f => f.pid === rid ? { ...f, comment: String(text).slice(0, 500) } : f);
+  patchDrop({ feedback: fb }); scheduleDistill();
+}
+// Gewichtung nach Aktualität, begrenzt: nichts verschwindet ganz, nichts dominiert
+function affinity(field, value) {
+  let score = 0;
+  (dropState().feedback || []).forEach((f, i) => { if (f[field] === value) score += f.vote * Math.pow(0.95, i) * (f.comment ? 1.3 : 1); });
+  return Math.min(2.5, Math.max(0.35, Math.exp(0.3 * score)));
+}
+function weightedPick(items, weightOf) {
+  const ws = items.map(weightOf), total = ws.reduce((a, b) => a + b, 0);
+  let r = Math.random() * total;
+  for (let i = 0; i < items.length; i++) { r -= ws[i]; if (r <= 0) return items[i]; }
+  return items[items.length - 1];
+}
+const feedbackLine = f => `${f.vote > 0 ? '+' : '-'} [${dropDom(f.domain).label}, ${dropIntentLabel(f.intent)}, difficulty ${f.difficulty}/5${f.mode === 'parts' ? ', from their parts' : ''}] ${clipText(f.title, 60)}: ${clipText(f.pitch, 140)}` + (f.comment ? ` | their comment: "${clipText(f.comment, 220)}"` : '');
+function feedbackBlock() {
+  const st = dropState(), fb = st.feedback || [];
+  const picked = [...fb.filter(f => f.vote > 0).slice(0, 8), ...fb.filter(f => f.vote < 0).slice(0, 8)].sort((a, b) => b.at - a.at);
+  let out = '';
+  if ((st.taste || '').trim()) out += `\nTheir taste, learned from earlier ratings (trust this):\n${clipText(st.taste, 1200)}\n`;
+  if (picked.length) out += `\nHow they rated recent briefs (+ liked, - disliked, newest first):\n${picked.map(feedbackLine).join('\n')}\n\nUse this as direction: lean toward the spirit of what they liked without copying it, and steer clear of what they disliked. Their comments outrank bare votes. The field, difficulty and intent rolled below still apply.\n`;
+  return out;
+}
+function scheduleDistill() {
+  clearTimeout(D.distillT);
+  // kurz warten, damit ein Kommentar direkt nach der Bewertung noch mitkommt
+  D.distillT = setTimeout(() => { if ((dropState().sinceDistill || 0) >= DISTILL_EVERY) distill(); }, 15000);
+}
+async function distill(manual) {
+  const st = dropState();
+  if (D.distilling || !(st.feedback || []).length || !dropAvailable()) return;
+  D.distilling = true; D.learnMsg = ''; schedRender();
+  try {
+    const prompt = `You keep a short taste profile for one person who uses an app that suggests side projects (software, electronics, embedded, CAD and 3D printing, data and signals, bio and medical). Below are their current profile and their ratings of suggested projects (+ liked, - disliked, newest first, sometimes with a comment).
+
+Current profile:
+${(st.taste || '').trim() || '(empty)'}
+
+Ratings:
+${st.feedback.slice(0, 40).map(feedbackLine).join('\n')}
+
+Rewrite the profile.
+- Max 120 words, plain text, a few short lines starting with "Likes:", "Dislikes:" or "Notes:".
+- Only state patterns the ratings actually support. Comments count more than bare votes; newer ratings outrank older ones.
+- The current profile may contain lines the person wrote themselves. Keep those unless newer ratings clearly contradict them.
+- Be concrete: kinds of projects, parts, techniques, difficulty, vibe. No filler.
+
+Output ONLY a JSON object: {"profile": "..."}`;
+    const r = await dropGenerate(prompt);
+    if (!r || typeof r.profile !== 'string' || !r.profile.trim()) throw new Error('empty');
+    drafts.delete('drop:taste');
+    patchDrop({ taste: r.profile.trim(), tasteAt: Date.now(), sinceDistill: 0 });
+  } catch (e) {
+    if (manual) D.learnMsg = 'Couldn’t update the profile just now. Your ratings are kept.';
+  } finally { D.distilling = false; schedRender(); }
+}
+
+/* --- generation --- */
+function partsBlock(list) {
+  return list.slice(0, 200).map(x => [x.id, x.name + (x.mpn && x.mpn !== x.name ? ` (${x.mpn})` : ''), [x.category, x.value, x.package].filter(Boolean).join(', '), typeof x.stock === 'number' ? `have ${x.stock}` : 'have some, not counted'].join(' | ')).join('\n');
+}
+function dropSchema(payoffSpec, fromParts) {
+  return `{
+  "title": "short, concrete, max 6 words",
+  "pitch": "one sentence: what the finished thing does",
+  "hours": "e.g. 3-4 h",
+  "payoff": "one sentence: ${payoffSpec}",
+${fromParts ? `  "uses": [{"id": "part id from their inventory", "qty": 1, "for": "its job in this build, max 8 words"}],
+  "extra": ["basic consumables only, max 3, or empty"],` : '  "parts": ["max 4 items that aren\'t obvious"],'}
+  "steps": ["4-5 milestones, short imperative sentences"],
+  "gotcha": "one sentence: the thing that will actually eat the time",
+  "stretch": ["2 extensions, one line each"]
+}`;
+}
+function buildDropPrompt(scope, domain, difficulty, intent, avoid, parts) {
+  const s = DROP_SCOPES.find(x => x.id === scope), fromParts = !!parts;
+  return `You write side-project briefs for one specific person. Output ONLY a JSON object matching this schema — no preamble, no markdown fences:
+
+${dropSchema(intent.payoff, fromParts)}
+
+The person: an engineering student who builds things for fun. Their skills and tools: ${dropState().kit || DROP_DEFAULT_KIT}
+${fromParts ? `
+Their parts inventory (id | part | category, value, package | how many):
+${partsBlock(parts)}
+` : ''}${feedbackBlock()}
+This brief:
+- Time budget: ${s.brief}. The estimate must be honest for someone working alone.
+- Field: ${domain.id === 'wildcard' ? 'your choice, but make it unexpected — something they\'d never pick off a list' : domain.label}.
+- Difficulty ${difficulty} of 5 (1 = comfortable, 5 = they will have to learn something genuinely new to finish). Hit that level exactly.
+- ${intent.line}
+- It must produce a thing that exists at the end: runs, blinks, moves, prints, plays, or answers a question. Never a reading list, never "learn about X".
+- Be specific. Name the actual algorithm, chip, part or method — not a category.
+- No AI wrappers, no todo apps, no weather dashboards.
+${fromParts ? `- Build it from their inventory. Every electronic component must come from the list above: put it in "uses" with its exact id and a quantity no higher than what they have. Only basic consumables (breadboard, jumper wires, solder, USB cable, a battery or power supply, screws, cardboard) may be added, in "extra". Nothing else may be bought. Use only parts the build really needs.
+` : ''}${avoid.length ? '- Nothing close to these, they already exist: ' + avoid.join('; ') : ''}
+
+JSON only.`;
+}
+async function dropRoll(scopeId) {
+  if (!navigator.onLine) { D.error = dropErrCopy({ code: 'offline' }); render(); return; }
+  const st = dropState(), parts = usableParts();
+  const fromParts = st.mode === 'parts' && parts.length > 0;
+  const s = DROP_SCOPES.find(x => x.id === scopeId);
+  // Felder der letzten zwei Würfe auslassen; aus eigenen Teilen nur Hardware-Felder
+  const base = DROP_DOMAINS.filter(d => !fromParts || d.hw);
+  const pool = base.filter(d => !(st.lastDomains || []).includes(d.id));
+  const domain = weightedPick(pool.length ? pool : base, d => affinity('domain', d.id));
+  const intent = weightedPick(DROP_INTENTS, i => i.weight * affinity('intent', i.id));
+  const difficulty = randInt(s.diff[0], s.diff[1]);
+  if (D.ctl) D.ctl.abort(); const ctl = D.ctl = new AbortController();
+  D.rolling = { scope: scopeId, fromParts }; D.error = ''; D.order = null; render();
+  try {
+    const avoid = [...new Set([...projectList().map(p => p.name), ...(st.feedback || []).map(f => f.title)].filter(Boolean))].slice(0, 20);
+    const raw = await dropGenerate(buildDropPrompt(scopeId, domain, difficulty, intent, avoid, fromParts ? parts : null), ctl.signal);
+    if (ctl !== D.ctl) return;
+    if (!raw || typeof raw !== 'object' || !str(raw.title)) throw { code: 'invalid_json' };
+    const uses = fromParts && Array.isArray(raw.uses) ? raw.uses.filter(u => u && S.parts.has(str(u.id))).map(u => ({ id: str(u.id), qty: Math.max(1, parseInt(u.qty, 10) || 1), for: str(u.for) })) : [];
+    D.order = { ...raw, uses, extra: Array.isArray(raw.extra) ? raw.extra.map(str).filter(Boolean) : [], id: 'd' + Date.now().toString(36), domain: domain.id, difficulty, scope: scopeId, intent: intent.id, mode: fromParts ? 'parts' : 'free' };
+    patchDrop({ lastDomains: [domain.id, (st.lastDomains || [])[0]].filter(Boolean) });
+    if (navigator.vibrate) navigator.vibrate(18);
+  } catch (e) {
+    if (e && e.code === 'cancelled') return;
+    console.warn('drop', e); D.error = dropErrCopy(e);
+  } finally {
+    if (ctl === D.ctl) { D.rolling = null; D.ctl = null; D.reveal = !!D.order; render(); }
+  }
+}
+const dropFacts = o => ({ title: o.title, pitch: o.pitch, domain: o.domain, intent: o.intent, difficulty: o.difficulty, scope: o.scope, mode: o.mode });
+async function takeDrop() {
+  const o = D.order; if (!o) return;
+  const scope = DROP_SCOPES.find(x => x.id === o.scope) || DROP_SCOPES[0], n = Number(o.difficulty) || 3;
+  const list = (title, items) => items.length ? `${title}\n${items.map(x => '- ' + x).join('\n')}` : '';
+  const notes = [
+    `From Drop: ${scope.label}, ${dropDom(o.domain).label}, ${dropIntentLabel(o.intent)}, ${DROP_TIERS[n - 1]} (${n}/5)${o.hours ? `, about ${str(o.hours)}` : ''}`,
+    o.payoff ? `Why: ${str(o.payoff)}` : '',
+    o.gotcha ? `What’ll bite you: ${str(o.gotcha)}` : '',
+    list(o.mode === 'parts' ? 'Also needed:' : 'You’ll need:', (o.mode === 'parts' ? o.extra : (o.parts || [])).map(str).filter(Boolean)),
+    list('If it goes well:', (o.stretch || []).map(str).filter(Boolean))
+  ].filter(Boolean).join('\n\n');
+  const id = uid8(), now = Date.now();
+  const doc = { name: str(o.title), status: 'planning', description: str(o.pitch), notes,
+    steps: (o.steps || []).map(str).filter(Boolean).map(text => ({ id: uid8(), text, done: false, note: '' })),
+    bom: (o.uses || []).map(u => ({ id: uid8(), partId: u.id, qty: u.qty, note: u.for })),
+    files: [], created: now, updated: now, drop: { rollId: o.id, ...dropFacts(o) } };
+  D.order = null;
+  S.projects.set(id, doc); go({ view: 'project', pid: id, tab: 'steps' });
+  try { await projCol().doc(id).set(doc); toast('Project created from Drop'); } catch (e) { S.projects.delete(id); writeFailed(e); go({ view: 'drop' }); }
+}
+
+/* --- views --- */
+function VoteBtns(rid, facts, compact) {
+  const f = fbOf(rid), v = f ? f.vote : 0;
+  const b = (dir, label, on) => h('button', { class: 'btn sm vote ' + dir + (compact ? ' quiet' : ''), 'aria-pressed': String(on), 'aria-label': label, title: label, onClick: () => dropVote(rid, dir, facts) }, icon('thumb', 16), compact ? null : label);
+  return [b('up', 'Like', v > 0), b('down', 'Not for me', v < 0)];
+}
+function RateBlock(rid, facts, compact) {
+  const f = fbOf(rid);
+  return h('div', { class: 'drate' + (compact ? ' compact' : '') },
+    h('div', { class: 'drate-row' }, h('span', { class: 'dim' }, f ? 'Noted. Future rolls lean on this.' : compact ? 'Rate this idea for Drop' : 'More like this, or not?'), h('span', { class: 'grow' }), VoteBtns(rid, facts, compact)),
+    f ? boundInput({ tag: 'textarea', class: 'inp', rows: 2, maxlength: 500, key: 'drop:c:' + rid, value: f.comment || '', placeholder: f.vote > 0 ? 'What hit? (optional)' : 'What’s off? Too easy, wrong vibe, parts you don’t have… (optional)', onCommit: v => dropComment(rid, v) }) : null);
+}
+function DropCard(o) {
+  const d = dropDom(o.domain), n = Number(o.difficulty) || 3;
+  const sec = (title, ...kids) => h('section', { class: 'dsec' }, h('h3', null, title), ...kids);
+  const uses = (o.uses || []).map(u => {
+    const p = S.parts.get(u.id) || {}; const have = typeof p.stock === 'number' ? p.stock : null;
+    return h('li', null, h('span', { class: 'dq mono' }, u.qty + '×'),
+      h('span', { class: 'grow' }, h('b', null, p.name || u.id), p.mpn && p.mpn !== p.name ? h('span', { class: 'mono dim' }, ' ' + p.mpn) : null, u.for ? h('span', { class: 'dim' }, ' · ' + u.for) : null),
+      have == null ? h('span', { class: 'pill unk' }, 'not counted') : have >= u.qty ? h('span', { class: 'pill ok' }, `have ${have}`) : h('span', { class: 'pill short' }, `only ${have}`));
+  });
+  const other = o.mode === 'parts' ? (o.extra || []) : (o.parts || []).map(str).filter(Boolean);
+  return h('article', { class: 'dcard' + (D.reveal ? ' reveal' : ''), style: `--c:${d.color}` },
+    h('div', { class: 'dcard-top' }, h('span', { class: 'status' }, d.label), h('span', { class: 'conf' }, dropIntentLabel(o.intent)), o.mode === 'parts' ? h('span', { class: 'conf' }, 'From your parts') : null, h('span', { class: 'grow' }), o.hours ? h('span', { class: 'mono dim' }, str(o.hours)) : null),
+    h('h2', null, str(o.title)),
+    h('p', { class: 'dpitch' }, str(o.pitch)),
+    o.payoff ? h('p', { class: 'dpayoff' }, str(o.payoff)) : null,
+    uses.length || other.length ? sec('You’ll need', uses.length ? h('ul', { class: 'duses' }, uses) : null, other.length ? h('ul', { class: 'dlist' }, other.map(x => h('li', null, x))) : null) : null,
+    (o.steps || []).length ? sec('Route', h('ol', { class: 'dsteps' }, o.steps.map(s => h('li', null, str(s))))) : null,
+    o.gotcha ? h('p', { class: 'dgotcha' }, h('b', null, 'What’ll bite you'), str(o.gotcha)) : null,
+    (o.stretch || []).length ? sec('If it goes well', h('ul', { class: 'dlist' }, o.stretch.map(s => h('li', null, str(s))))) : null,
+    h('div', { class: 'dtier' }, h('span', { class: 'pips', 'aria-hidden': 'true' }, [1, 2, 3, 4, 5].map(i => h('i', { class: i <= n ? 'on' : null }))), h('span', null, `${DROP_TIERS[n - 1]} · difficulty ${n} of 5`)),
+    RateBlock(o.id, dropFacts(o)),
+    h('div', { class: 'dactions' },
+      h('button', { class: 'btn primary', onClick: takeDrop }, icon('plus', 17), 'Take it on'),
+      h('button', { class: 'btn', onClick: () => dropRoll(o.scope) }, icon('rotate', 17), 'Reroll'),
+      h('button', { class: 'btn quiet', onClick: () => { D.order = null; render(); } }, 'Drop it')));
+}
+function DropSettings() {
+  const st = dropState(), fb = st.feedback || [], up = fb.filter(f => f.vote > 0).length;
+  const meta = fb.length ? `${up} liked, ${fb.length - up} disliked.` + (st.tasteAt ? ` Profile last rewritten: ${shortDate(st.tasteAt)}` : ` The profile gets written after ${DISTILL_EVERY} ratings.`) : 'Nothing yet. Rate a few rolls and this fills in.';
+  return h('div', { class: 'dsettings' },
+    h('label', { class: 'field' }, h('span', null, 'Your skills and tools (goes into every roll)'), boundInput({ tag: 'textarea', class: 'inp', rows: 3, key: 'drop:kit', value: st.kit, placeholder: DROP_DEFAULT_KIT, onCommit: v => patchDrop({ kit: v }) })),
+    h('h3', null, 'What Drop has learned'),
+    h('p', { class: 'dim sm', style: 'margin:0' }, meta),
+    fb.length ? h('div', { class: 'daff' }, DROP_DOMAINS.map(d => { const a = affinity('domain', d.id); return [h('span', null, d.label), h('span', { class: 'meter', title: `×${a.toFixed(2)} roll odds` }, h('i', { style: `width:${Math.round(a / 2.5 * 100)}%;background:${d.color}` }))]; })) : null,
+    boundInput({ tag: 'textarea', class: 'inp', rows: 5, key: 'drop:taste', value: st.taste, placeholder: `Your taste profile. Drop rewrites it from your ratings every ${DISTILL_EVERY} ratings, and you can edit it yourself.`, onCommit: v => patchDrop({ taste: v }) }),
+    h('div', { class: 'bar', style: 'margin:0' },
+      h('button', { class: 'btn sm', disabled: D.distilling || !fb.length, onClick: () => distill(true) }, D.distilling ? 'Learning…' : 'Rewrite from ratings'),
+      h('button', { class: 'btn sm quiet danger-text', disabled: !(fb.length || st.taste), onClick: async () => { if (await confirmDialog({ title: 'Forget all ratings?', text: 'This deletes all ratings and the taste profile. Rolls go back to pure chance.', ok: 'Forget all' })) { drafts.delete('drop:taste'); patchDrop({ feedback: [], taste: '', tasteAt: 0, sinceDistill: 0 }); render(); } } }, 'Forget all ratings')),
+    D.learnMsg ? h('p', { class: 'dim sm', style: 'margin:0' }, D.learnMsg) : null);
+}
+function DropView() {
+  const st = dropState(), parts = usableParts();
+  const head = h('header', { class: 'pagehead' }, h('div', null, h('h1', null, 'Drop'), h('div', { class: 'sub' }, 'Tap, get a project you can actually finish. Field and difficulty are rolled for you.')));
+  if (!dropAvailable()) return h('div', { class: 'page' }, head, EmptyBlock('Drop needs an API key', 'Rolling uses Claude through the server. Set ANTHROPIC_API_KEY in Coolify and redeploy.'));
+  let body;
+  if (D.rolling) {
+    const s = DROP_SCOPES.find(x => x.id === D.rolling.scope);
+    body = h('div', { class: 'drolling' }, h('div', { class: 'dreel', 'aria-hidden': 'true' }, DROP_DOMAINS.map(d => h('span', { style: `color:${d.color}` }, d.label))),
+      h('p', { class: 'lk-busy' }, h('span', { class: 'spin' }), `Rolling a ${s.label.toLowerCase()} project${D.rolling.fromParts ? ' from your parts' : ''}…`, h('button', { class: 'btn sm quiet', onClick: () => { if (D.ctl) D.ctl.abort(); D.ctl = null; D.rolling = null; render(); } }, 'Stop')));
+  } else if (D.order) body = DropCard(D.order);
+  else {
+    const fromParts = st.mode === 'parts' && parts.length > 0, hero = DROP_SCOPES[0];
+    body = [
+      h('div', { class: 'toolbar' }, h('div', { class: 'chips' },
+        h('button', { class: 'chip', 'aria-pressed': String(fromParts), disabled: !parts.length, title: parts.length ? 'Only parts from your library, plus basic consumables' : 'Add parts to your library first', onClick: () => { patchDrop({ mode: 'parts' }); render(); } }, icon('chip', 16), 'From my parts', h('span', { class: 'n' }, parts.length)),
+        h('button', { class: 'chip', 'aria-pressed': String(!fromParts), title: 'Ignores your parts library', onClick: () => { patchDrop({ mode: 'free' }); render(); } }, 'Anything goes'))),
+      h('p', { class: 'dim sm', style: 'margin:-6px 0 14px' }, fromParts ? 'Builds only from parts in your library (counted or not, but not ones at 0), plus wires and other basics.' : parts.length ? 'Ignores your library. Ideas may need parts you’d have to buy.' : 'Your library is empty, so ideas may need parts you’d have to buy.'),
+      h('button', { class: 'dhero', onClick: () => dropRoll(hero.id) }, h('strong', null, hero.label), h('small', null, 'Tap for tonight’s build')),
+      h('div', { class: 'dscopes' }, DROP_SCOPES.slice(1).map(s => h('button', { class: 'dscope', onClick: () => dropRoll(s.id) }, h('strong', null, s.label), h('small', null, s.hint)))),
+      D.error ? h('div', { class: 'lk-res miss', style: 'margin-top:16px' }, h('p', null, D.error)) : null,
+      h('button', { class: 'linkbtn', style: 'margin-top:22px', 'aria-expanded': String(D.settingsOpen), onClick: () => { D.settingsOpen = !D.settingsOpen; D.learnMsg = ''; render(); } }, D.settingsOpen ? 'Hide settings' : 'Your skills, and what Drop has learned'),
+      D.settingsOpen ? DropSettings() : null];
+  }
+  D.reveal = false;   // die Aufklapp-Animation läuft einmal pro Wurf
+  return h('div', { class: 'page dpage' }, head, body);
+}
+function DropFrom(p) {
+  // Bewerten auch später noch möglich, z. B. nach dem Bauen
+  return h('div', { class: 'dfrom' }, h('span', { class: 'conf' }, icon('dice', 14), 'From Drop'), RateBlock(p.drop.rollId, { title: p.name, pitch: p.description, ...p.drop }, true));
+}
+
 function onDbErr(e) { console.warn('db', e); if (e && e.code === 'revoked') { S.err = 'revoked'; render(); } }
 </script>
 <script>
@@ -1866,6 +2230,10 @@ async function boot() {
   partCol().onSnapshot(snap => {
     S.parts = new Map(snap.docs.map(d => [d.id, withPending(partCol().doc(d.id).path, d.data())]));
     S.loaded.parts = true; schedRender();
+  }, onDbErr);
+  dropCol().onSnapshot(snap => {
+    const d = snap.docs.find(x => x.id === 'state');
+    S.drop = d ? withPending(dropCol().doc('state').path, d.data()) : S.drop; schedRender();
   }, onDbErr);
   if (S.route.view === 'project' && S.route.pid) subscribeSketches(S.route.pid);
   S.ready = true; render();

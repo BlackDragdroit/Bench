@@ -34,6 +34,11 @@ export async function importBackup(pool, backup) {
         counts[coll]++;
       }
     }
+    // Drop-Daten (Bewertungen, Geschmacksprofil) gibt es erst in neueren Backups
+    if (backup.drop && typeof backup.drop === 'object' && !Array.isArray(backup.drop)) {
+      await setDoc(client, 'drops', 'state', backup.drop);
+      counts.drop = true;
+    }
     await client.query('COMMIT');
   } catch (e) {
     await client.query('ROLLBACK').catch(() => {});

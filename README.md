@@ -11,9 +11,23 @@ Dateien und Schaltungsskizzen. Selbst gehostete Version der ursprünglichen Clau
 | `public/runtime.js` | Ersatz für `window.claude.use(…)`: `db`, `user`, `assets`, `downloads`, `sample` über das eigene Backend |
 | `public/sw.js`, `public/manifest.webmanifest`, `public/icons/` | PWA (Homescreen-Installation) |
 | `server/index.js` | Express-Server: Login, REST-API, Uploads, Teilesuche, Import, `/healthz` |
-| `server/db.js` | PostgreSQL: Tabellen `projects`, `parts`, `sketches`, `assets` (werden beim Start angelegt) |
-| `server/identify.js` | Teilesuche über die Anthropic Messages API |
+| `server/db.js` | PostgreSQL: Tabellen `projects`, `parts`, `sketches`, `drops`, `assets` (werden beim Start angelegt) |
+| `server/identify.js` | Teilesuche und Drop über die Anthropic Messages API |
 | `server/importer.js`, `scripts/import.js` | Import einer Backup-Datei |
+
+## Drop
+
+Die Ansicht **Drop** (Seitenleiste bzw. untere Leiste am Handy) ist Random Drop, eingebaut in Bench:
+Umfang wählen, Feld, Schwierigkeit und Absicht werden gewürfelt, Bewertungen (Like / Not for me,
+mit Kommentar) lenken spätere Würfe und schreiben alle 5 Bewertungen ein Geschmacksprofil.
+
+- **From my parts:** baut nur aus der Teilebibliothek (Teile mit Bestand 0 zählen nicht), plus Kabel und Kleinkram.
+- **Anything goes:** ignoriert die Bibliothek.
+- **Take it on** legt ein Bench-Projekt an: Schritte, Stückliste aus der Bibliothek, Notizen (Warum, Stolperstein, Erweiterungen).
+  Auf der Projektseite lässt sich die Idee später noch bewerten.
+
+Bewertungen und Profil liegen in der Tabelle `drops` (ein Eintrag `state`) und sind im Backup enthalten.
+Modell über `DROP_MODEL`, Standard `claude-sonnet-4-6`.
 
 ## Lokal starten
 

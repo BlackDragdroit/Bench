@@ -1,7 +1,7 @@
 import pg from 'pg';
 
 // Die drei Sammlungen der App. Der Name ist zugleich der Tabellenname.
-export const COLLECTIONS = ['projects', 'parts', 'sketches'];
+export const COLLECTIONS = ['projects', 'parts', 'sketches', 'drops'];
 
 export function createPool(url = process.env.DATABASE_URL) {
   if (!url) throw new Error('DATABASE_URL fehlt');

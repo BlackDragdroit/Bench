@@ -8,7 +8,7 @@ import { Transform } from 'node:stream';
 import { fileURLToPath } from 'node:url';
 import * as db from './db.js';
 import * as auth from './auth.js';
-import { identify, identifyAvailable } from './identify.js';
+import { identify, identifyAvailable, dropGenerate } from './identify.js';
 import { importBackup } from './importer.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -190,6 +190,23 @@ app.post('/api/identify', express.json({ limit: '30mb' }), wrap(async (req, res)
   const ctl = new AbortController();
   res.on('close', () => { if (!res.writableEnded) ctl.abort(); });
   try { res.json(await identify(req.body, ctl.signal)); }
+  catch (e) {
+    if (e.code === 'cancelled') return;
+    res.status(e.status || 500).json({ code: e.code || 'upstream' });
+  }
+}));
+
+// ---------- Drop (Projektideen) ----------
+// Grobe Bremse wie in Random Drop: höchstens 20 Würfe pro Minute.
+const dropHits = [];
+app.post('/api/drop', express.json({ limit: '256kb' }), wrap(async (req, res) => {
+  const now = Date.now();
+  while (dropHits.length && now - dropHits[0] > 60000) dropHits.shift();
+  if (dropHits.length >= 20) return res.status(429).json({ code: 'rate_limited' });
+  dropHits.push(now);
+  const ctl = new AbortController();
+  res.on('close', () => { if (!res.writableEnded) ctl.abort(); });
+  try { res.json(await dropGenerate(req.body, ctl.signal)); }
   catch (e) {
     if (e.code === 'cancelled') return;
     res.status(e.status || 500).json({ code: e.code || 'upstream' });
