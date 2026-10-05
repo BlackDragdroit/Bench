@@ -1067,9 +1067,10 @@ function sampleErrCopy(e) {
     image_rejected: 'That photo couldn’t be read. Try a sharper JPEG or PNG.',
     prompt_too_large: 'That was too much text to look up.' })[c] || 'The lookup didn’t work this time. Try again, or fill in the details yourself.';
 }
-function partDialog({ id, prefill = '', onSaved } = {}) {
+function partDialog({ id, prefill = '', onSaved, copy } = {}) {
   const existing = id ? S.parts.get(id) : null;
-  const f = existing ? clone(existing) : { name: '', mpn: '', manufacturer: '', category: 'Other', package: '', value: '', description: '', pins: [], specs: [], stock: null, location: '', datasheet: '', notes: '' };
+  // Duplizieren: Kopie der Felder als neues Teil, Bestand bleibt offen
+  const f = existing ? clone(existing) : copy ? { ...clone(copy), stock: null } : { name: '', mpn: '', manufacturer: '', category: 'Other', package: '', value: '', description: '', pins: [], specs: [], stock: null, location: '', datasheet: '', notes: '' };
   const els = {}; let m;
   const field = (label, key, o = {}) => {
     let el;
@@ -1091,13 +1092,13 @@ function partDialog({ id, prefill = '', onSaved } = {}) {
     field('Specs, one per line as “name: value”', 'specs', { tag: 'textarea', rows: 5, ph: 'Supply voltage: 3–32 V' }),
     field('Datasheet link', 'datasheet', { span: true, ph: 'https://…', type: 'url' }),
     field('Notes', 'notes', { tag: 'textarea', rows: 2, span: true }));
-  const formWrap = h('div', { hidden: !existing && !prefill ? true : null }, form);
+  const formWrap = h('div', { hidden: !existing && !prefill && !copy ? true : null }, form);
   const showForm = () => { formWrap.hidden = false; manualBtn.hidden = true; };
-  const manualBtn = h('button', { class: 'linkbtn', hidden: existing ? true : null, onClick: showForm }, 'Enter the details yourself');
+  const manualBtn = h('button', { class: 'linkbtn', hidden: existing || copy ? true : null, onClick: showForm }, 'Enter the details yourself');
 
   /* lookup */
   const mk = h('input', { class: 'inp lk-inp', placeholder: 'LM358N, NE555P, BC547, 1N4007…', 'aria-label': 'Part number or marking', autofocus: !existing, autocapitalize: 'characters', autocomplete: 'off', spellcheck: 'false' });
-  mk.value = prefill || (existing && existing.mpn) || '';
+  mk.value = copy ? '' : prefill || (existing && existing.mpn) || '';
   const ctx = h('input', { class: 'inp', placeholder: 'Extra details, or describe the part if there’s no number, e.g. “logic-level MOSFET for a 12 V LED strip”', 'aria-label': 'Extra details or description' });
   const out = h('div', { role: 'status', 'aria-live': 'polite' });
   const idBtn = h('button', { class: 'btn primary', onClick: () => runLookup() }, icon('scan', 17), 'Identify');
@@ -1179,10 +1180,13 @@ function partDialog({ id, prefill = '', onSaved } = {}) {
   }
   els.category.value = f.category && CATS.includes(f.category) ? f.category : 'Other';
   const ds = existing && /^https?:\/\//.test(existing.datasheet || '') ? h('a', { href: existing.datasheet, target: '_blank', rel: 'noopener noreferrer', class: 'btn sm' }, icon('file', 16), 'Open datasheet') : null;
-  m = openModal({ title: existing ? existing.name : 'Add a part', wide: true, body: [lookup, formWrap, ds ? h('div', null, ds) : null],
-    footer: [existing ? h('button', { class: 'btn quiet danger-text', onClick: del }, icon('trash', 16), 'Delete') : null, h('span', { class: 'grow' }),
+  const dupe = () => { const data = readForm(); m.close(); partDialog({ copy: data, onSaved }); };
+  m = openModal({ title: existing ? existing.name : copy ? 'Duplicate part' : 'Add a part', wide: true,
+    body: copy ? [h('p', { class: 'dim', style: 'margin:0' }, `A copy of “${copy.name || copy.mpn || 'the part'}”. Change the value and name, then save it as a new part. Stock starts uncounted.`), formWrap] : [lookup, formWrap, ds ? h('div', null, ds) : null],
+    footer: [existing ? h('button', { class: 'btn quiet danger-text', onClick: del }, icon('trash', 16), 'Delete') : null, existing ? h('button', { class: 'btn quiet', onClick: dupe, title: 'Make a copy, e.g. the same pot with another value' }, icon('copy', 16), 'Duplicate') : null, h('span', { class: 'grow' }),
       h('button', { class: 'btn quiet', onClick: () => m.close() }, 'Cancel'), h('button', { class: 'btn primary', onClick: save }, existing ? 'Save part' : (onSaved ? 'Save and add to list' : 'Save to library'))],
     onClose: () => { if (ctl) ctl.abort(); } });
+  if (copy) setTimeout(() => { els.value.focus(); els.value.select(); }, 60);
   if (prefill && S.sample) setTimeout(() => runLookup(), 80);
 }
 

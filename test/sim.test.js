@@ -21,6 +21,11 @@ test('Werte lesen', () => {
   near(Sim.parseEng('100n'), 1e-7, 1e-12);
   assert.equal(Sim.parseEng('220'), 220);
   assert.equal(Sim.parseEng('1M'), 1e6);
+  assert.equal(Sim.parseEng('B1K'), 1000);
+  assert.equal(Sim.parseEng('A10k'), 10000);
+  assert.equal(Sim.parseEng('B 2K2'), 2200);
+  assert.equal(Sim.parseEng('10K lin'), 10000);
+  assert.equal(Sim.parseEng('B500'), 500);
   assert.equal(Sim.parseVolt('9V'), 9);
   assert.equal(Sim.parseVolt('3V3'), 3.3);
   assert.equal(Sim.parseVolt('2xAA'), 3);

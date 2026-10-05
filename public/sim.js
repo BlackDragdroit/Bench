@@ -21,6 +21,8 @@
   const MULT = { p: 1e-12, n: 1e-9, u: 1e-6, 'µ': 1e-6, m: 1e-3, k: 1e3, K: 1e3, M: 1e6, G: 1e9, R: 1, r: 1, 'Ω': 1, V: 1, v: 1, '': 1 };
   function parseEng(s) {
     s = String(s == null ? '' : s).trim().replace(',', '.');
+    // Poti-Kennbuchstabe vorne (A = log, B = linear, C = antilog), z. B. B10K, A1M
+    s = s.replace(/^[ABC]\s*(?=\d)/i, '');
     let m = /^(\d+)([pnuµmkKMGRrΩVv])(\d+)/.exec(s);           // 4k7, 3V3, 0R1
     if (m) return parseFloat(m[1] + '.' + m[3]) * MULT[m[2]];
     m = /^(-?\d*\.?\d+)\s*([pnuµmkKMG]?)/.exec(s);
