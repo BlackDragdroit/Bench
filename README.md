@@ -22,7 +22,8 @@ Die Ansicht **Drop** (Seitenleiste bzw. untere Leiste am Handy) ist Random Drop,
 Umfang wählen, Feld, Schwierigkeit und Absicht werden gewürfelt, Bewertungen (Like / Not for me,
 mit Kommentar) lenken spätere Würfe und schreiben alle 5 Bewertungen ein Geschmacksprofil.
 
-- **From my parts:** baut nur aus der Teilebibliothek (Teile mit Bestand 0 zählen nicht), plus Kabel und Kleinkram.
+- **From my parts:** baut aus der Teilebibliothek (Teile mit Bestand 0 zählen nicht) plus der Liste „Always on hand“
+  (Widerstände, Kondensatoren, LEDs, Kleinsignal-Dioden und -Transistoren, Taster, Kabel …), die in den Drop-Einstellungen änderbar ist.
 - **Anything goes:** ignoriert die Bibliothek.
 - **Take it on** legt ein Bench-Projekt an: Schritte, Stückliste aus der Bibliothek, Notizen (Warum, Stolperstein, Erweiterungen).
   Auf der Projektseite lässt sich die Idee später noch bewerten.

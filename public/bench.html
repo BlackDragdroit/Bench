@@ -1463,6 +1463,9 @@ const DROP_INTENTS = [
   { id: 'absurd', label: 'Ridiculous', weight: 9, line: 'Point of it: it\'s a joke. A useless machine, a wildly over-engineered answer to a non-problem, a bit taken much too far in hardware or code. Commit to it completely — do not sneak in an educational justification.', payoff: 'the joke' }
 ];
 const DISTILL_EVERY = 5;
+// Teile, die immer da sind und nicht in der Bibliothek stehen müssen (in den Einstellungen änderbar)
+const DROP_BASICS = ['Resistors, all common E12 values, ¼ W', 'Ceramic capacitors 10 pF – 1 µF', 'Electrolytic capacitors 1 µF – 1000 µF', 'LEDs 3 mm and 5 mm in common colours', 'Diodes 1N4148 and 1N4007', 'Small transistors BC547, BC557, 2N2222, 2N3906', 'Tactile push buttons', 'Pin headers', 'Jumper wires, breadboard, solder, USB cable'].join('\n');
+const onHand = () => { const b = (S.drop || {}).basics; return (b == null ? DROP_BASICS : String(b)).trim(); };
 const DROP_DEFAULT = { kit: '', mode: 'parts', scope: 'daily', feedback: [], taste: '', tasteAt: 0, sinceDistill: 0, lastDomains: [] };
 const D = { order: null, rolling: null, error: '', settingsOpen: false, reveal: false, distilling: false, learnMsg: '', ctl: null, distillT: null };
 
@@ -1574,7 +1577,7 @@ function dropSchema(payoffSpec, fromParts) {
   "hours": "e.g. 3-4 h",
   "payoff": "one sentence: ${payoffSpec}",
 ${fromParts ? `  "uses": [{"id": "part id from their inventory", "qty": 1, "for": "its job in this build, max 8 words"}],
-  "extra": ["basic consumables only, max 3, or empty"],` : '  "parts": ["max 4 items that aren\'t obvious"],'}
+  "extra": ["parts from their always-on-hand list with value and count, e.g. '220 Ω resistor ×2', plus basic consumables; max 8, or empty"],` : '  "parts": ["max 4 items that aren\'t obvious"],'}
   "steps": ["4-5 milestones, short imperative sentences"],
   "gotcha": "one sentence: the thing that will actually eat the time",
   "stretch": ["2 extensions, one line each"]
@@ -1588,9 +1591,11 @@ ${dropSchema(intent.payoff, fromParts)}
 
 The person: an engineering student who builds things for fun.${str(dropState().kit) ? ' Notes on their skills, tools or limits: ' + str(dropState().kit) : ''}
 ${fromParts ? `
-Their parts inventory (id | part | category, value, package | how many):
+${parts.length ? `Their parts inventory (id | part | category, value, package | how many):
 ${partsBlock(parts)}
-` : ''}${feedbackBlock()}
+` : 'Their parts inventory is empty.\n'}${onHand() ? `Always on hand, no need to be in the inventory, use freely:
+${onHand().split('\n').map(x => '- ' + x.trim()).filter(x => x.length > 2).join('\n')}
+` : ''}` : ''}${feedbackBlock()}
 This brief:
 - Time budget: ${s.brief}. The estimate must be honest for someone working alone.
 - Field: ${domain.id === 'wildcard' ? 'your choice, but make it unexpected — something they\'d never pick off a list' : domain.label}.
@@ -1599,7 +1604,7 @@ This brief:
 - It must produce a thing that exists at the end: runs, blinks, moves, prints, plays, or answers a question. Never a reading list, never "learn about X".
 - Be specific. Name the actual algorithm, chip, part or method — not a category.
 - No AI wrappers, no todo apps, no weather dashboards.
-${fromParts ? `- Build it from their inventory. Every electronic component must come from the list above: put it in "uses" with its exact id and a quantity no higher than what they have. Only basic consumables (breadboard, jumper wires, solder, USB cable, a battery or power supply, screws, cardboard) may be added, in "extra". Nothing else may be bought. Use only parts the build really needs.
+${fromParts ? `- Build it from what they have. Every electronic component must come from their inventory or their always-on-hand list. Inventory parts go in "uses" with the exact id and a quantity no higher than what they have. Always-on-hand parts go in "extra" with their value and count. Basic consumables (breadboard, jumper wires, solder, USB cable, a battery or power supply, screws, cardboard) may also go in "extra". Nothing else may be bought. Use only parts the build really needs.
 ` : ''}${avoid.length ? '- Nothing close to these, they already exist: ' + avoid.join('; ') : ''}
 
 JSON only.`;
@@ -1607,7 +1612,7 @@ JSON only.`;
 async function dropRoll(scopeId) {
   if (!navigator.onLine) { D.error = dropErrCopy({ code: 'offline' }); render(); return; }
   const st = dropState(), parts = usableParts();
-  const fromParts = st.mode === 'parts' && parts.length > 0;
+  const fromParts = st.mode === 'parts' && (parts.length > 0 || !!onHand());
   const s = DROP_SCOPES.find(x => x.id === scopeId);
   // Felder der letzten zwei Würfe auslassen; aus eigenen Teilen nur Hardware-Felder
   const base = DROP_DOMAINS.filter(d => !fromParts || d.hw);
@@ -1642,7 +1647,7 @@ async function takeDrop() {
     `From Drop: ${scope.label}, ${dropDom(o.domain).label}, ${dropIntentLabel(o.intent)}, ${DROP_TIERS[n - 1]} (${n}/5)${o.hours ? `, about ${str(o.hours)}` : ''}`,
     o.payoff ? `Why: ${str(o.payoff)}` : '',
     o.gotcha ? `What’ll bite you: ${str(o.gotcha)}` : '',
-    list(o.mode === 'parts' ? 'Also needed:' : 'You’ll need:', (o.mode === 'parts' ? o.extra : (o.parts || [])).map(str).filter(Boolean)),
+    list(o.mode === 'parts' ? 'Also needed (always on hand):' : 'You’ll need:', (o.mode === 'parts' ? o.extra : (o.parts || [])).map(str).filter(Boolean)),
     list('If it goes well:', (o.stretch || []).map(str).filter(Boolean))
   ].filter(Boolean).join('\n\n');
   const id = uid8(), now = Date.now();
@@ -1683,7 +1688,7 @@ function DropCard(o) {
     h('h2', null, str(o.title)),
     h('p', { class: 'dpitch' }, str(o.pitch)),
     o.payoff ? h('p', { class: 'dpayoff' }, str(o.payoff)) : null,
-    uses.length || other.length ? sec('You’ll need', uses.length ? h('ul', { class: 'duses' }, uses) : null, other.length ? h('ul', { class: 'dlist' }, other.map(x => h('li', null, x))) : null) : null,
+    uses.length || other.length ? sec('You’ll need', uses.length ? h('ul', { class: 'duses' }, uses) : null, other.length ? h('ul', { class: 'dlist' }, other.map(x => h('li', null, h('span', { class: 'grow' }, x), o.mode === 'parts' ? h('span', { class: 'pill ok' }, 'on hand') : null))) : null) : null,
     (o.steps || []).length ? sec('Route', h('ol', { class: 'dsteps' }, o.steps.map(s => h('li', null, str(s))))) : null,
     o.gotcha ? h('p', { class: 'dgotcha' }, h('b', null, 'What’ll bite you'), str(o.gotcha)) : null,
     (o.stretch || []).length ? sec('If it goes well', h('ul', { class: 'dlist' }, o.stretch.map(s => h('li', null, str(s))))) : null,
@@ -1699,6 +1704,8 @@ function DropSettings() {
   const meta = fb.length ? `${up} liked, ${fb.length - up} disliked.` + (st.tasteAt ? ` Profile last rewritten: ${shortDate(st.tasteAt)}` : ` The profile gets written after ${DISTILL_EVERY} ratings.`) : 'Nothing yet. Rate a few rolls and this fills in.';
   return h('div', { class: 'dsettings' },
     h('label', { class: 'field' }, h('span', null, 'Anything Drop should know about you (optional)'), boundInput({ tag: 'textarea', class: 'inp', rows: 3, key: 'drop:kit', value: st.kit, placeholder: 'Leave empty if nothing holds you back. Otherwise e.g. “no oscilloscope” or “only Python, no C”.', onCommit: v => patchDrop({ kit: v }) })),
+    h('label', { class: 'field' }, h('span', null, 'Always on hand: “From my parts” may use these without them being in your library'), boundInput({ tag: 'textarea', class: 'inp', rows: 6, key: 'drop:basics', value: onHand(), placeholder: 'One kind of part per line, e.g. “Resistors, all common E12 values”', onCommit: v => patchDrop({ basics: v }) })),
+    onHand() !== DROP_BASICS ? h('button', { class: 'linkbtn sm', style: 'align-self:flex-start', onClick: () => { drafts.delete('drop:basics'); patchDrop({ basics: null }); render(); } }, 'Reset to the default list') : null,
     h('h3', null, 'What Drop has learned'),
     h('p', { class: 'dim sm', style: 'margin:0' }, meta),
     fb.length ? h('div', { class: 'daff' }, DROP_DOMAINS.map(d => { const a = affinity('domain', d.id); return [h('span', null, d.label), h('span', { class: 'meter', title: `×${a.toFixed(2)} roll odds` }, h('i', { style: `width:${Math.round(a / 2.5 * 100)}%;background:${d.color}` }))]; })) : null,
@@ -1712,7 +1719,7 @@ function DropView() {
   const st = dropState(), parts = usableParts();
   const head = h('header', { class: 'pagehead' }, h('div', null, h('h1', null, 'Drop'), h('div', { class: 'sub' }, 'Pick a scope, hit roll, get a project you can actually finish.')));
   if (!dropAvailable()) return h('div', { class: 'page' }, head, EmptyBlock('Drop needs an API key', 'Rolling uses Claude through the server. Set ANTHROPIC_API_KEY in Coolify and redeploy.'));
-  const fromParts = st.mode === 'parts' && parts.length > 0;
+  const fromParts = st.mode === 'parts' && (parts.length > 0 || !!onHand());
   const scope = DROP_SCOPES.find(x => x.id === st.scope) || DROP_SCOPES[0];
   const busy = !!D.rolling, o = D.order;
   const stop = () => { if (D.ctl) D.ctl.abort(); D.ctl = null; D.rolling = null; render(); };
@@ -1722,21 +1729,21 @@ function DropView() {
   if (busy) { l1 = h('span', { class: 'lcd-reel', 'aria-hidden': 'true' }, DROP_DOMAINS.map(d => h('span', null, d.label.toUpperCase()))); l2 = `ROLLING ${DROP_SCOPES.find(x => x.id === D.rolling.scope).label.toUpperCase()}`; }
   else if (D.error) { l1 = 'ERR'; l2 = 'SEE BELOW'; }
   else if (o) { l1 = `${dropDom(o.domain).label} · ${DROP_TIERS[(Number(o.difficulty) || 3) - 1]}`.toUpperCase(); l2 = str(o.title).toUpperCase(); }
-  else { l1 = 'READY'; l2 = fromParts ? `${parts.length} PART${parts.length === 1 ? '' : 'S'} LOADED` : 'ANY PART GOES'; }
+  else { l1 = 'READY'; l2 = fromParts ? `${parts.length} PART${parts.length === 1 ? '' : 'S'}${onHand() ? ' + BASICS' : ''}` : 'ANY PART GOES'; }
   const panel = h('section', { class: 'dpanel', 'aria-label': 'Drop controls' },
     h('div', { class: 'silk dpanel-title' }, h('span', null, 'BENCH·DROP'), h('span', null, 'REV 2')),
     h('div', { class: 'lcd', role: 'status', 'aria-live': 'polite', 'aria-label': busy ? 'Rolling' : null },
       h('div', { class: 'lcd-line' }, l1), h('div', { class: 'lcd-line' }, l2, busy ? h('span', { class: 'lcd-cursor' }) : null)),
     h('div', { class: 'dmode' },
       h('span', { class: 'silk' + (fromParts ? ' on' : '') }, 'MY PARTS'),
-      h('button', { class: 'slide', role: 'switch', 'aria-checked': String(!fromParts), 'aria-label': 'Anything goes (ignore parts library)', disabled: busy || !parts.length, title: parts.length ? '' : 'Add parts to your library first', onClick: () => { patchDrop({ mode: fromParts ? 'free' : 'parts' }); render(); } }, h('i')),
+      h('button', { class: 'slide', role: 'switch', 'aria-checked': String(!fromParts), 'aria-label': 'Anything goes (ignore parts library)', disabled: busy || !(parts.length || onHand()), title: parts.length || onHand() ? '' : 'Add parts to your library first', onClick: () => { patchDrop({ mode: fromParts ? 'free' : 'parts' }); render(); } }, h('i')),
       h('span', { class: 'silk' + (fromParts ? '' : ' on') }, 'ANYTHING')),
     h('button', { class: 'rollbtn' + (busy ? ' stop' : ''), onClick: () => busy ? stop() : dropRoll(scope.id) }, h('span', null, busy ? 'STOP' : 'ROLL')),
     h('div', { class: 'dkeys', role: 'radiogroup', 'aria-label': 'Scope' }, DROP_SCOPES.map(s =>
       h('button', { class: 'dkey', role: 'radio', 'aria-checked': String(s.id === scope.id), disabled: busy, onClick: () => { patchDrop({ scope: s.id }); render(); } },
         h('i', { class: 'led' }), h('b', null, s.label), h('small', null, s.hint)))));
 
-  const hint = h('p', { class: 'dim sm dhint' }, fromParts ? 'Builds only from your library (parts at 0 don’t count), plus wires and other basics. ' : parts.length ? 'Ignores your library, so ideas may need parts you’d buy. ' : 'Your library is empty, so ideas may need parts you’d buy. ', 'Field, difficulty and vibe are rolled for you.');
+  const hint = h('p', { class: 'dim sm dhint' }, fromParts ? 'Builds from your library (parts at 0 don’t count) plus what’s always on hand, like resistors and LEDs. ' : parts.length ? 'Ignores your library, so ideas may need parts you’d buy. ' : 'Your library is empty, so ideas may need parts you’d buy. ', 'Field, difficulty and vibe are rolled for you.');
   const body = [panel, hint,
     D.error ? h('div', { class: 'lk-res miss' }, h('p', null, D.error)) : null,
     o && !busy ? DropCard(o) : null,
