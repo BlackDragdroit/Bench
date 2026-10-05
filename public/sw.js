@@ -1,7 +1,7 @@
 /* Bench service worker: macht die App installierbar und hält die Oberfläche
    für schlechten Empfang vor. Daten (/api) und Dateien (/_blob) gehen immer ans Netz. */
-const CACHE = 'bench-v1';
-const SHELL = ['/', '/runtime.js', '/config.js'];
+const CACHE = 'bench-v2';
+const SHELL = ['/', '/runtime.js', '/config.js', '/sim.js'];
 
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', e => {

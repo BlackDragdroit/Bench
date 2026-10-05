@@ -36,8 +36,9 @@ export function extractJson(text) {
 
 // body: { prompt: string, images?: [{ type, data (base64) }] }
 // Schickt einen Prompt (optional mit Bildern) an die Messages API und gibt das
-// JSON-Objekt aus der Antwort zurück.
-async function completeJson({ prompt, images = [], model, maxTokens, maxPrompt, signal, tag }) {
+// JSON-Objekt aus der Antwort zurück. `fallback` schaltet den serverseitigen
+// Ausweich-Fallback ein, falls das Modell die Anfrage ablehnt.
+async function completeJson({ prompt, images = [], model, maxTokens, maxPrompt, signal, tag, fallback = false, timeout }) {
   if (!identifyAvailable()) throw fail(503, 'not_granted');
   if (typeof prompt !== 'string' || !prompt.trim()) throw fail(400, 'invalid_argument');
   if (prompt.length > maxPrompt) throw fail(413, 'prompt_too_large');
@@ -52,9 +53,11 @@ async function completeJson({ prompt, images = [], model, maxTokens, maxPrompt, 
 
   let res;
   try {
-    res = await getClient().messages.create(
-      { model, max_tokens: maxTokens, messages: [{ role: 'user', content }] },
-      { signal });
+    const params = { model, max_tokens: maxTokens, messages: [{ role: 'user', content }] };
+    const opts = { signal, ...(timeout ? { timeout } : {}) };
+    res = fallback
+      ? await getClient().beta.messages.create({ ...params, betas: ['server-side-fallback-2026-07-01'], fallbacks: 'default' }, opts)
+      : await getClient().messages.create(params, opts);
   } catch (e) {
     if (e instanceof Anthropic.APIUserAbortError) throw fail(499, 'cancelled');
     if (e instanceof Anthropic.RateLimitError) throw fail(429, 'rate_limited');
@@ -69,8 +72,18 @@ async function completeJson({ prompt, images = [], model, maxTokens, maxPrompt, 
     console.error(`${tag}:`, e?.status || '', e?.message || e);
     throw fail(502, 'upstream');
   }
+  if (res.stop_reason === 'refusal') {
+    console.warn(`${tag}: refused`, res.stop_details?.category || '');
+    throw fail(422, 'refused');
+  }
   const text = res.content.filter(b => b.type === 'text').map(b => b.text).join('\n');
   return extractJson(text);
+}
+
+// Schaltungsprüfung für Skizzen: hier zählt Genauigkeit, daher das stärkste Modell.
+const REVIEW_MODEL = process.env.REVIEW_MODEL || 'claude-opus-5-5';
+export function reviewCircuit(body, signal) {
+  return completeJson({ prompt: body?.prompt, model: REVIEW_MODEL, maxTokens: 16000, maxPrompt: 60000, signal, tag: 'review', fallback: true, timeout: 180_000 });
 }
 
 // Teilesuche

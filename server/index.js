@@ -8,7 +8,7 @@ import { Transform } from 'node:stream';
 import { fileURLToPath } from 'node:url';
 import * as db from './db.js';
 import * as auth from './auth.js';
-import { identify, identifyAvailable, dropGenerate } from './identify.js';
+import { identify, identifyAvailable, dropGenerate, reviewCircuit } from './identify.js';
 import { importBackup } from './importer.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -88,6 +88,7 @@ app.use((req, res, next) => {
 
 app.get(['/', '/index.html'], pub('bench.html'));
 app.get('/runtime.js', pub('runtime.js'));
+app.get('/sim.js', pub('sim.js'));
 app.get('/config.js', (req, res) => {
   res.type('js').set('Cache-Control', 'no-store').send(
     `window.BENCH_CONFIG=${JSON.stringify({ maxUploadMB: MAX_UPLOAD_MB, identify: identifyAvailable() })};`);
@@ -207,6 +208,21 @@ app.post('/api/drop', express.json({ limit: '256kb' }), wrap(async (req, res) =>
   const ctl = new AbortController();
   res.on('close', () => { if (!res.writableEnded) ctl.abort(); });
   try { res.json(await dropGenerate(req.body, ctl.signal)); }
+  catch (e) {
+    if (e.code === 'cancelled') return;
+    res.status(e.status || 500).json({ code: e.code || 'upstream' });
+  }
+}));
+
+// ---------- Schaltungsprüfung (Skizzen) ----------
+app.post('/api/review', express.json({ limit: '512kb' }), wrap(async (req, res) => {
+  const now = Date.now();
+  while (dropHits.length && now - dropHits[0] > 60000) dropHits.shift();
+  if (dropHits.length >= 20) return res.status(429).json({ code: 'rate_limited' });
+  dropHits.push(now);
+  const ctl = new AbortController();
+  res.on('close', () => { if (!res.writableEnded) ctl.abort(); });
+  try { res.json(await reviewCircuit(req.body, ctl.signal)); }
   catch (e) {
     if (e.code === 'cancelled') return;
     res.status(e.status || 500).json({ code: e.code || 'upstream' });

@@ -13,6 +13,7 @@
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <script src="/config.js"></script>
 <script src="/runtime.js"></script>
+<script src="/sim.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -492,7 +493,61 @@ select.inp{appearance:none;background-image:linear-gradient(45deg,transparent 50
 .sym-ic svg{width:100%;height:100%;display:block}
 .pal-list{display:flex;flex-direction:column;border:1.5px solid var(--line);border-radius:6px;overflow:hidden;background:var(--paper)}
 .pal-list .pick{padding:8px 10px}
+/* test */
+.ed-tools.off{opacity:.38}
+.cv .tog{cursor:pointer}
+.cv .flow{fill:none;stroke:var(--gold);stroke-width:2.8;stroke-linecap:round;stroke-dasharray:4 12;pointer-events:none}
+.cv .spin{fill:none;stroke:var(--ok);stroke-width:2.4;stroke-linecap:round;pointer-events:none}
+.cv .badge{pointer-events:none}
+.cv .badge.error circle{fill:var(--danger)}
+.cv .badge.warn circle{fill:var(--warn)}
+.cv .badge text{fill:var(--paper-2)}
+.cv .tsel{fill:none;stroke:var(--sel);stroke-width:1.6;stroke-dasharray:5 4;pointer-events:none}
+.ed-test{width:340px}
+.tstat{display:flex;flex-direction:column;gap:2px;padding:10px 12px;border-left:4px solid var(--ok);border-radius:0 5px 5px 0;background:var(--paper)}
+.tstat.meh{border-left-color:var(--warn)}.tstat.bad{border-left-color:var(--danger)}
+.tstat b{font:600 17px var(--font-head)}
+.tstat span{font-size:13px;color:var(--ink-2)}
+.tctls{display:flex;flex-direction:column;gap:6px}
+.tctl{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;padding:8px 10px;border:1.5px solid var(--line);border-radius:6px;background:var(--paper);text-align:left;touch-action:none;user-select:none;-webkit-user-select:none}
+.tctl b{font-weight:600}
+.tctl small{color:var(--ink-3);font-size:12.5px}
+.tctl.pot{grid-template-columns:1fr auto}
+.tctl.pot input{grid-column:1/-1;width:100%;accent-color:var(--accent)}
+.tsw{position:relative;width:34px;height:20px;border-radius:999px;background:var(--paper-3);border:1.5px solid var(--line)}
+.tsw::after{content:"";position:absolute;top:2px;left:2px;width:13px;height:13px;border-radius:50%;background:var(--ink-3);transition:left .12s}
+.tctl[aria-pressed="true"] .tsw{background:var(--ok);border-color:var(--ok)}
+.tctl[aria-pressed="true"] .tsw::after{left:16px;background:var(--paper-2)}
+.tbtn{width:20px;height:20px;border-radius:50%;border:1.5px solid var(--ink-2);box-shadow:0 2px 0 var(--line)}
+.tctl[aria-pressed="true"]{border-color:var(--ok)}
+.tctl[aria-pressed="true"] .tbtn{background:var(--ok);border-color:var(--ok);transform:translateY(2px);box-shadow:none}
+.tfinds{display:flex;flex-direction:column;gap:4px}
+.tfind{display:grid;grid-template-columns:auto 1fr;gap:9px;align-items:start;padding:7px 9px;border:0;border-radius:5px;background:var(--paper);text-align:left;font-size:13.5px;line-height:1.4;color:var(--ink)}
+button.tfind:not(:disabled):hover{background:var(--paper-3)}
+button.tfind:disabled{cursor:default}
+.tfind i{width:9px;height:9px;margin-top:5px;border-radius:2px;background:var(--ink-3)}
+.tfind.error i{background:var(--danger)}.tfind.warn i{background:var(--warn)}
+.tfix{display:block;margin-top:3px;color:var(--ink-2)}
+.tread{padding:10px 12px;border:1.5px solid var(--line);border-radius:6px;background:var(--paper)}
+.tread dl{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;margin:6px 0 0;font-size:13.5px}
+.tread dt{color:var(--ink-3)}
+.tread dd{margin:0;font-family:var(--font-mono);font-size:12.5px;overflow-wrap:anywhere}
+.tai{display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+.tai .tfinds{align-self:stretch}
+.aiv{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.aiv b{font:600 17px var(--font-head)}
+.aiv span{font-size:12.5px;color:var(--ink-3)}
+.aiv.good b{color:var(--ok)}.aiv.meh b{color:var(--warn)}.aiv.bad b{color:var(--danger)}
+.tmore summary{cursor:pointer;font:600 16px var(--font-head);margin-top:6px}
+.treads{display:flex;flex-direction:column;margin-top:8px;border:1.5px solid var(--line);border-radius:6px;overflow:hidden;background:var(--paper)}
+.trow{display:flex;flex-direction:column;gap:1px;padding:7px 10px;border:0;border-top:1px solid var(--line);background:none;text-align:left;font-size:13px}
+.trow:first-child{border-top:0}
+.trow:hover{background:var(--paper-3)}
+.trow span{color:var(--ink-2);font-family:var(--font-mono);font-size:12px}
+.tnote{margin:4px 0 0}
 @media (max-width:820px){
+  .ed-pal.ed-test{height:46%}
+  .ed.testing .ed-save,.ed.testing .ur{display:none}
   .ed-body{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) auto}
   .ed-stage{grid-row:1}
   .ed-tools{grid-row:2;flex-direction:row;justify-content:space-around;padding:4px 6px;border-right:0;border-top:1.5px solid var(--line-strong);overflow:visible}
@@ -565,6 +620,7 @@ const ICONS = {
   note:'<path d="M5 4h14v16H5z"/><path d="M8.5 9h7M8.5 13h7M8.5 17h4"/>',
   scan:'<path d="M4 8.5V4h4.5M15.5 4H20v4.5M20 15.5V20h-4.5M8.5 20H4v-4.5"/><path d="M7.5 12h9"/>',
   image:'<rect x="3.5" y="5" width="17" height="14" rx="1.5"/><circle cx="9" cy="10" r="1.7"/><path d="M20.5 16l-5-5-8.5 8"/>',
+  zap:'<path d="M13 2.5 4.5 13.5h6.5l-1 8 8.5-11h-6.5z"/>',
   dice:'<rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8.5 8.5h.01M15.5 8.5h.01M12 12h.01M8.5 15.5h.01M15.5 15.5h.01" stroke-width="3"/>',
   thumb:'<path d="M7 10v11"/><path d="M15 5.9 14 10h5.8a2 2 0 0 1 1.9 2.6l-2.3 8a2 2 0 0 1-1.9 1.4H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.8a2 2 0 0 0 1.8-1.1L12 2a3.1 3.1 0 0 1 3 3.9Z"/>'
 };
@@ -1417,9 +1473,10 @@ const randInt = (lo, hi) => lo + Math.floor(Math.random() * (hi - lo + 1));
 const usableParts = () => partList().filter(x => x.stock !== 0).sort((a, b) => (a.category || '').localeCompare(b.category || '') || byName(a, b));
 const dropAvailable = () => !!(window.BENCH_CONFIG && window.BENCH_CONFIG.identify);
 
-async function dropGenerate(prompt, signal) {
+const dropGenerate = (prompt, signal) => postJson('/api/drop', { prompt }, signal);
+async function postJson(url, body, signal) {
   let r;
-  try { r = await fetch('/api/drop', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt }), signal }); }
+  try { r = await fetch(url, { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal }); }
   catch (e) { if (e && e.name === 'AbortError') throw { code: 'cancelled' }; throw { code: 'offline' }; }
   if (r.status === 401) { location.href = '/login'; throw { code: 'unauthenticated' }; }
   let data = null; try { data = await r.json(); } catch (e) {}
@@ -1784,8 +1841,17 @@ function compMarkup(c, sel, live, wc) {
   }
   let body, bb;
   if (c.t === 'block') { const g = blockGeom(c); bb = g.bb; body = blockBody(c, g); }
-  else { const s = SYM[c.t]; if (!s) return ''; bb = s.bb; body = `<path d="${s.d}"/>${s.x || ''}`; }
+  else {
+    const s = SYM[c.t]; if (!s) return ''; bb = s.bb; let d = s.d;
+    // Im Test zeigen Schalter und Taster ihren Zustand
+    if (live && E && E.test) {
+      if (c.t === 'switch' && E.test.sw[c.id]) d = 'M-40 0H-18M18 0H40M-15 -1L16 -1';
+      if (c.t === 'button' && E.test.pressed[c.id]) d = 'M-40 0H-18M18 0H40M-18 -2.5H18M0 -2.5V-12.5M-7 -12.5H7';
+    }
+    body = `<path d="${d}"/>${s.x || ''}`;
+  }
   const rb = rotBB(bb, c.r || 0);
+  if (live && E && E.test && (c.t === 'switch' || c.t === 'button')) return `<g class="cmp tog"${da}><g transform="${tr} rotate(${(c.r || 0) * 90})">${body}<rect class="hit" x="${bb[0]}" y="${bb[1] - 8}" width="${bb[2]}" height="${bb[3] + 16}"/></g>${labelMarkup(c, rb)}</g>`;
   return `<g${cls}${da}><g transform="${tr} rotate(${(c.r || 0) * 90})">${body}${live ? `<rect class="hit" x="${bb[0]}" y="${bb[1]}" width="${bb[2]}" height="${bb[3]}"/>` : ''}${sel && live ? `<rect class="selbox" x="${bb[0] - 5}" y="${bb[1] - 5}" width="${bb[2] + 10}" height="${bb[3] + 10}"/>` : ''}</g>${labelMarkup(c, rb)}</g>`;
 }
 function wireMarkup(w, cm, sel, live) {
@@ -1860,21 +1926,22 @@ function openEditor(sid) {
   const s = S.sketches.get(sid); if (!s || E) return;
   E = { sid, pid: s.projectId, name: s.name || 'Untitled sketch', data: { comps: clone(s.comps || []), wires: clone(s.wires || []), strokes: clone(s.strokes || []) },
     k: 1, tx: 0, ty: 0, mode: 'select', sel: null, pend: null, cursor: null, ptrs: new Map(), drag: null, pan: null, pinch: null, ignore: false, stroke: null,
-    hist: [], fut: [], saveT: null, dirty: false, pen: 'ink', lastTap: null, palOpen: false };
+    hist: [], fut: [], saveT: null, dirty: false, pen: 'ink', lastTap: null, palOpen: false, test: null };
   buildEditor();
   document.addEventListener('keydown', edKey);
   requestAnimationFrame(() => { fit(); renderEd(); });
 }
-function closeEditor() { if (!E) return; flushSave(); document.removeEventListener('keydown', edKey); E.root.remove(); E = null; schedRender(); }
+function closeEditor() { if (!E) return; if (E.test && E.test.ctl) E.test.ctl.abort(); flushSave(); document.removeEventListener('keydown', edKey); E.root.remove(); E = null; schedRender(); }
 function buildEditor() {
   const root = h('div', { class: 'ed', role: 'dialog', 'aria-label': 'Circuit sketch' });
   const name = h('input', { class: 'ed-name', 'aria-label': 'Sketch name' }); name.value = E.name;
   name.addEventListener('change', () => { E.name = name.value.trim() || 'Untitled sketch'; markDirty(); });
   name.addEventListener('keydown', e => { if (e.key === 'Enter') name.blur(); });
   E.saveEl = h('span', { class: 'ed-save' }, 'Saved');
-  E.undoBtn = h('button', { class: 'ibtn', 'aria-label': 'Undo', title: 'Undo (Ctrl+Z)', onClick: undo }, icon('undo'));
-  E.redoBtn = h('button', { class: 'ibtn', 'aria-label': 'Redo', title: 'Redo (Ctrl+Shift+Z)', onClick: redo }, icon('redo'));
+  E.undoBtn = h('button', { class: 'ibtn ur', 'aria-label': 'Undo', title: 'Undo (Ctrl+Z)', onClick: undo }, icon('undo'));
+  E.redoBtn = h('button', { class: 'ibtn ur', 'aria-label': 'Redo', title: 'Redo (Ctrl+Shift+Z)', onClick: redo }, icon('redo'));
   const top = h('header', { class: 'ed-top' }, h('button', { class: 'ibtn', 'aria-label': 'Close sketch', title: 'Back to project', onClick: closeEditor }, icon('back')), name, E.saveEl, h('span', { class: 'grow' }), E.undoBtn, E.redoBtn,
+    E.testBtn = h('button', { class: 'btn sm', onClick: toggleTest, title: 'Simulate the circuit and check it (Shift+T)' }, icon('zap', 16), h('span', null, 'Test')),
     h('button', { class: 'btn sm', onClick: exportMenu, 'aria-label': 'Export' }, icon('download', 16), h('span', { class: 'hide-sm' }, 'Export')));
   const tool = (mode, label, ic, keyHint) => h('button', { class: 'tool', 'data-mode': mode, 'aria-pressed': 'false', title: `${label} (${keyHint})`, onClick: () => setMode(mode) }, icon(ic, 22), h('span', null, label));
   E.toolsEl = h('nav', { class: 'ed-tools', 'aria-label': 'Tools' }, tool('select', 'Select', 'cursor', 'V'), tool('wire', 'Wire', 'wire', 'W'), tool('pen', 'Draw', 'pen', 'P'), tool('text', 'Text', 'text', 'T'), h('span', { class: 'tool-sep' }),
@@ -1882,9 +1949,9 @@ function buildEditor() {
   const svg = document.createElementNS(SVGNS, 'svg');
   svg.setAttribute('class', 'cv');
   const pcb = isPCB();
-  svg.innerHTML = `<defs><pattern id="g1" width="20" height="20" patternUnits="userSpaceOnUse"><path class="gl" d="M20 0H0V20"/></pattern><pattern id="g5" width="100" height="100" patternUnits="userSpaceOnUse"><rect width="100" height="100" fill="url(#g1)"/><path class="gl2" d="M100 0H0V100"/></pattern><pattern id="gp" x="-10" y="-10" width="20" height="20" patternUnits="userSpaceOnUse"><circle class="gh" cx="10" cy="10" r="3.4"/></pattern></defs><g class="vp"><rect x="-20000" y="-20000" width="40000" height="40000" fill="url(#${pcb ? 'gp' : 'g5'})"/><g class="l-str" fill="none" stroke-linecap="round" stroke-linejoin="round"></g><g class="l-wire" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></g><g class="l-cmp" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></g><g class="l-ovl"></g></g>`;
+  svg.innerHTML = `<defs><pattern id="g1" width="20" height="20" patternUnits="userSpaceOnUse"><path class="gl" d="M20 0H0V20"/></pattern><pattern id="g5" width="100" height="100" patternUnits="userSpaceOnUse"><rect width="100" height="100" fill="url(#g1)"/><path class="gl2" d="M100 0H0V100"/></pattern><pattern id="gp" x="-10" y="-10" width="20" height="20" patternUnits="userSpaceOnUse"><circle class="gh" cx="10" cy="10" r="3.4"/></pattern></defs><g class="vp"><rect x="-20000" y="-20000" width="40000" height="40000" fill="url(#${pcb ? 'gp' : 'g5'})"/><g class="l-glow"></g><g class="l-str" fill="none" stroke-linecap="round" stroke-linejoin="round"></g><g class="l-wire" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></g><g class="l-cmp" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></g><g class="l-sim"></g><g class="l-ovl"></g></g>`;
   E.svg = svg; E.vp = svg.querySelector('.vp');
-  E.L = { s: svg.querySelector('.l-str'), w: svg.querySelector('.l-wire'), c: svg.querySelector('.l-cmp'), o: svg.querySelector('.l-ovl') };
+  E.L = { s: svg.querySelector('.l-str'), w: svg.querySelector('.l-wire'), c: svg.querySelector('.l-cmp'), o: svg.querySelector('.l-ovl'), glow: svg.querySelector('.l-glow'), sim: svg.querySelector('.l-sim') };
   svg.addEventListener('pointerdown', onDown); svg.addEventListener('pointermove', onMove);
   svg.addEventListener('pointerup', onUp); svg.addEventListener('pointercancel', onUp);
   svg.addEventListener('lostpointercapture', e => { if (E && E.ptrs.has(e.pointerId)) onUp(e); });
@@ -1895,13 +1962,14 @@ function buildEditor() {
   E.pens = h('div', { class: 'ed-pens', hidden: true, role: 'group', 'aria-label': 'Pen colour' }, ['ink', 'red', 'blue'].map(c => h('button', { class: 'pen-c', 'data-c': c, 'aria-label': { ink: 'Ink', red: 'Red', blue: 'Blue' }[c] + ' pen', style: `--pc:${c === 'ink' ? 'var(--ink)' : penColor(c)}`, onClick: () => { E.pen = c; renderChrome(); } })));
   const zoom = h('div', { class: 'ed-zoom' }, h('button', { class: 'ibtn', 'aria-label': 'Zoom in', onClick: () => zoomBy(1.25) }, icon('zin')), h('button', { class: 'ibtn', 'aria-label': 'Fit sketch to screen', onClick: fit }, icon('fit')), h('button', { class: 'ibtn', 'aria-label': 'Zoom out', onClick: () => zoomBy(0.8) }, icon('zout')));
   E.pal = h('aside', { class: 'ed-pal', hidden: true, 'aria-label': 'Add to sketch' });
-  root.append(top, h('div', { class: 'ed-body' }, E.toolsEl, h('div', { class: 'ed-stage' }, svg, E.hintEl, E.selbar, E.pens, zoom), E.pal));
+  E.testPanel = h('aside', { class: 'ed-pal ed-test', hidden: true, 'aria-label': 'Test' });
+  root.append(top, h('div', { class: 'ed-body' }, E.toolsEl, h('div', { class: 'ed-stage' }, svg, E.hintEl, E.selbar, E.pens, zoom), E.pal, E.testPanel));
   document.getElementById('editor').append(root); E.root = root;
 }
 const compMap = () => new Map(E.data.comps.map(c => [c.id, c]));
 const findComp = id => E.data.comps.find(c => c.id === id);
 const isSel = (k, id) => !!(E.sel && E.sel.k === k && E.sel.id === id);
-function renderEd() { if (!E) return; renderLayers(); drawOverlay(); renderChrome(); }
+function renderEd() { if (!E) return; renderLayers(); drawOverlay(); renderSim(); renderChrome(); }
 function renderLayers() {
   const d = E.data, cm = compMap(), wc = wireCounts(d);
   E.L.s.innerHTML = d.strokes.map(s => strokeMarkup(s, isSel('s', s.id), true)).join('');
@@ -1923,7 +1991,15 @@ function drawOverlay() {
 function renderChrome() {
   E.toolsEl.querySelectorAll('[data-mode]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.mode === E.mode)));
   E.svg.setAttribute('class', 'cv m-' + E.mode);
-  E.undoBtn.disabled = !E.hist.length; E.redoBtn.disabled = !E.fut.length;
+  E.undoBtn.disabled = !E.hist.length || !!E.test; E.redoBtn.disabled = !E.fut.length || !!E.test;
+  E.testBtn.className = 'btn sm' + (E.test ? ' primary' : ''); E.testBtn.setAttribute('aria-pressed', String(!!E.test));
+  E.testBtn.lastChild.textContent = E.test ? 'Stop test' : 'Test';
+  E.toolsEl.classList.toggle('off', !!E.test); E.toolsEl.inert = !!E.test; E.root.classList.toggle('testing', !!E.test);
+  if (E.test) {
+    const n = E.data.comps.filter(c => c.t === 'switch' || c.t === 'button').length;
+    E.hintEl.textContent = n ? 'Tap switches, hold buttons. Moving dashes show current.' : 'Moving dashes show where current flows.';
+    E.hintEl.hidden = false; E.pens.hidden = true; E.selbar.hidden = true; return;
+  }
   const empty = !E.data.comps.length && !E.data.strokes.length;
   const hint = E.mode === 'wire' ? (E.pend ? 'Tap another pin to connect. Tap empty space to add a corner.' : 'Tap a pin to start a wire.')
     : E.mode === 'pen' ? 'Draw with a finger or the mouse. Two fingers pan and zoom.'
@@ -1955,8 +2031,10 @@ function zoomBy(f) { const r = E.svg.getBoundingClientRect(); zoomAt(r.width / 2
 function onWheel(e) { e.preventDefault(); const r = E.svg.getBoundingClientRect(); const f = Math.exp(-e.deltaY * (e.ctrlKey ? 0.01 : 0.0015)); zoomAt(e.clientX - r.left, e.clientY - r.top, E.k * f); }
 function fit() {
   if (!E) return; const r = E.svg.getBoundingClientRect(); const b = bounds(E.data);
-  if (!b) { E.k = 1; E.tx = Math.round(r.width / 2); E.ty = Math.round(r.height / 2); }
-  else { const pad = 50; const k = clamp(Math.min((r.width - pad * 2) / Math.max(b.w, 40), (r.height - pad * 2) / Math.max(b.h, 40)), 0.25, 1.6); E.k = k; E.tx = r.width / 2 - (b.x + b.w / 2) * k; E.ty = r.height / 2 - (b.y + b.h / 2) * k; }
+  // Am Handy deckt das Test-Panel die untere Hälfte ab
+  const H = E.test && window.matchMedia('(max-width:820px)').matches ? r.height * 0.52 : r.height;
+  if (!b) { E.k = 1; E.tx = Math.round(r.width / 2); E.ty = Math.round(H / 2); }
+  else { const pad = 50; const k = clamp(Math.min((r.width - pad * 2) / Math.max(b.w, 40), (H - pad * 2) / Math.max(b.h, 40)), 0.25, 1.6); E.k = k; E.tx = r.width / 2 - (b.x + b.w / 2) * k; E.ty = H / 2 - (b.y + b.h / 2) * k; }
   applyView();
 }
 function viewCenter() { const r = E.svg.getBoundingClientRect(); return toWorld(r.left + r.width / 2, r.top + r.height / 2); }
@@ -1976,6 +2054,15 @@ function onDown(e) {
   const w = toWorld(e.clientX, e.clientY);
   const thr = (e.pointerType === 'touch' ? 22 : 14) / E.k;
   const panStart = extra => ({ sx: e.clientX, sy: e.clientY, tx: E.tx, ty: E.ty, moved: false, w, ...extra });
+  if (E.test) {
+    // Im Test: Schalter umlegen, Taster halten, sonst Messwerte zeigen; nichts bearbeiten
+    const tgt = e.target.closest && e.target.closest('[data-k="c"]');
+    const c = tgt && findComp(tgt.dataset.id);
+    if (c && c.t === 'switch') { E.test.sw[c.id] = !E.test.sw[c.id]; E.test.sel = c.id; if (navigator.vibrate) navigator.vibrate(8); runSim(); return; }
+    if (c && c.t === 'button') { E.test.pressed[c.id] = true; E.test.hold = { id: c.id, ptr: e.pointerId }; E.test.sel = c.id; if (navigator.vibrate) navigator.vibrate(8); runSim(); return; }
+    if (c && c.t !== 'node') { E.test.sel = c.id; renderSim(); renderTestDyn(); }
+    E.pan = panStart({}); return;
+  }
   if (E.mode === 'pen') { E.stroke = { id: uid8(), c: E.pen, p: [Math.round(w.x), Math.round(w.y)] }; drawOverlay(); return; }
   if (E.mode === 'wire') {
     const pin = nearestPin(w, thr);
@@ -2022,6 +2109,7 @@ function onMove(e) {
 function onUp(e) {
   if (!E || !E.ptrs.has(e.pointerId)) return;
   E.ptrs.delete(e.pointerId);
+  if (E.test && E.test.hold && E.test.hold.ptr === e.pointerId) { E.test.pressed[E.test.hold.id] = false; E.test.hold = null; runSim(); }
   if (E.pinch) { if (E.ptrs.size < 2) E.pinch = null; if (!E.ptrs.size) E.ignore = false; return; }
   if (E.ignore) { if (!E.ptrs.size) E.ignore = false; return; }
   if (E.stroke) {
@@ -2210,6 +2298,8 @@ function edKey(e) {
   if (!E || modalStack.length) return;
   const t = e.target; if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
   const mod = e.ctrlKey || e.metaKey, k = e.key.toLowerCase();
+  if (E.test) { if (e.key === 'Escape' || (k === 't' && !mod)) { e.preventDefault(); toggleTest(); } return; }
+  if (k === 't' && e.shiftKey && !mod) { toggleTest(); return; }
   if (mod && k === 'z') { e.preventDefault(); e.shiftKey ? redo() : undo(); return; }
   if (mod && k === 'y') { e.preventDefault(); redo(); return; }
   if (mod) return;
@@ -2248,6 +2338,219 @@ function exportMenu() {
     }, !!S.assets && S.projects.has(E.pid)),
     opt('download', 'Download PNG', 'Picture for sharing or printing', async () => { await S.downloads.save({ filename: base + '.png', data: await svgToPng(exportSVG()) }); }, !!S.downloads),
     opt('download', 'Download SVG', 'Sharp at any size, opens in Inkscape or a browser', async () => { await S.downloads.save({ filename: base + '.svg', data: exportSVG() }); }, !!S.downloads)) });
+}
+
+/* ---- test: live simulation and Claude check ---- */
+const reduceMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+function toggleTest() {
+  if (!E) return;
+  if (E.test) { if (E.test.ctl) E.test.ctl.abort(); E.test = null; E.testPanel.hidden = true; renderEd(); return; }
+  if (!window.BenchSim) { toast('The simulator didn’t load. Reload the page and try again.'); return; }
+  flushSave();
+  E.mode = 'select'; E.sel = null; E.pend = null; if (E.palOpen) togglePalette(false);
+  const sk = S.sketches.get(E.sid) || {};
+  E.test = { sw: {}, pressed: {}, pots: {}, hold: null, sel: null, res: null, ctl: null, ctlEls: {}, ai: sk.review ? { state: 'done', data: sk.review } : { state: 'idle' } };
+  buildTestPanel(); E.testPanel.hidden = false;
+  runSim(); renderEd();
+  if (window.matchMedia('(max-width:820px)').matches) requestAnimationFrame(fit);
+}
+function runSim() {
+  if (!E || !E.test) return;
+  try { E.test.res = BenchSim.simulate(E.data, { switches: E.test.sw, pressed: E.test.pressed, pots: E.test.pots }); }
+  catch (e) { console.warn('sim', e); E.test.res = null; }
+  renderLayers(); renderSim(); renderTestDyn();
+}
+const compBB = c => { const bb = c.t === 'block' ? blockGeom(c).bb : (SYM[c.t] || {}).bb; return bb ? rotBB(bb, c.r || 0) : null; };
+function renderSim() {
+  if (!E) return;
+  if (!E.test || !E.test.res) { E.L.glow.innerHTML = ''; E.L.sim.innerHTML = ''; return; }
+  const r = E.test.res, cm = compMap(), still = reduceMotion();
+  let glow = '', top = '';
+  // Strom in den Leitungen: wandernde Striche in Flussrichtung
+  for (const w of E.data.wires) {
+    const I = r.wireI.get(w.id) || 0; if (Math.abs(I) < 1e-4) continue;
+    let pts = wirePts(w, cm); if (!pts) continue; if (I < 0) pts = pts.slice().reverse();
+    const dur = Math.max(0.25, 1.6 - Math.log10(Math.abs(I) * 1000 + 1) * 0.55).toFixed(2);
+    top += `<path class="flow" d="M${pts.map(p => `${p.x} ${p.y}`).join('L')}">${still ? '' : `<animate attributeName="stroke-dashoffset" from="0" to="-16" dur="${dur}s" repeatCount="indefinite"/>`}</path>`;
+  }
+  for (const c of E.data.comps) {
+    const led = r.leds[c.id];
+    if (led && led.brightness > 0 && led.color.hex) {
+      const b = led.brightness, hex = led.color.hex;
+      glow += `<radialGradient id="lg-${c.id}"><stop offset="0" stop-color="${hex}" stop-opacity="${(0.8 * b).toFixed(2)}"/><stop offset="1" stop-color="${hex}" stop-opacity="0"/></radialGradient><circle cx="${c.x}" cy="${c.y}" r="${Math.round(28 + 22 * b)}" fill="url(#lg-${c.id})"/>`;
+      top += `<g transform="translate(${c.x} ${c.y}) rotate(${(c.r || 0) * 90})"><path d="M-10 -12L10 0L-10 12Z" fill="${hex}" fill-opacity="${(0.35 + 0.65 * b).toFixed(2)}" stroke="none"/></g>`;
+    }
+    const m = r.motors[c.id];
+    if (m) top += `<g transform="translate(${c.x} ${c.y})${m < 0 ? ' scale(-1 1)' : ''}"><g><path class="spin" d="M0 -26A26 26 0 0 1 22.5 13"/><path class="spin" d="M22.5 13l.8 -8.6M22.5 13l-7.8 -3.6"/>${still ? '' : `<animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="${Math.max(0.3, 1.4 - Math.abs(m)).toFixed(2)}s" repeatCount="indefinite"/>`}</g></g>`;
+  }
+  // Warnzeichen an Bauteilen mit Problemen
+  const worst = new Map();
+  for (const f of r.findings) { if (f.sev === 'info') continue; for (const id of f.ids) if (!worst.has(id) || f.sev === 'error') worst.set(id, f.sev); }
+  for (const [id, sev] of worst) {
+    const c = cm.get(id), rb = c && compBB(c); if (!rb) continue;
+    top += `<g class="badge ${sev}" transform="translate(${c.x + rb[2] + 4} ${c.y + rb[1] - 4})"><circle r="8.5"/><text y="4.5" text-anchor="middle" font-size="13" font-weight="700" font-family="${FONT}">!</text></g>`;
+  }
+  const sc = E.test.sel && cm.get(E.test.sel), sb = sc && compBB(sc);
+  if (sb) top += `<rect class="tsel" x="${sc.x + sb[0] - 7}" y="${sc.y + sb[1] - 7}" width="${sb[2] - sb[0] + 14}" height="${sb[3] - sb[1] + 14}" rx="5"/>`;
+  E.L.glow.innerHTML = glow; E.L.sim.innerHTML = top;
+}
+const partLabel = c => c.l || (c.t === 'block' ? (c.v || 'IC') : c.t === 'vcc' ? (c.v || 'Supply') : (SYM[c.t] || {}).name || 'Part');
+function buildTestPanel() {
+  const T = E.test, ctrls = [];
+  for (const c of E.data.comps) {
+    if (c.t === 'switch') {
+      const el = h('button', { class: 'tctl', 'data-kind': 'switch', 'aria-pressed': 'false', onClick: () => { T.sw[c.id] = !T.sw[c.id]; T.sel = c.id; runSim(); } }, h('span', { class: 'tsw' }), h('b', null, partLabel(c)), h('small', null, 'Off'));
+      T.ctlEls[c.id] = el; ctrls.push(el);
+    } else if (c.t === 'button') {
+      const press = v => { if (!!T.pressed[c.id] === v) return; T.pressed[c.id] = v; T.sel = c.id; runSim(); };
+      const el = h('button', { class: 'tctl', 'data-kind': 'button', 'aria-pressed': 'false', onPointerdown: e => { e.preventDefault(); press(true); }, onPointerup: () => press(false), onPointerleave: () => press(false), onPointercancel: () => press(false),
+        onKeydown: e => { if ((e.key === ' ' || e.key === 'Enter') && !e.repeat) { e.preventDefault(); press(true); } }, onKeyup: e => { if (e.key === ' ' || e.key === 'Enter') press(false); } }, h('span', { class: 'tbtn' }), h('b', null, partLabel(c)), h('small', null, 'Hold to press'));
+      T.ctlEls[c.id] = el; ctrls.push(el);
+    } else if (c.t === 'pot') {
+      const out = h('small', null, '50 %');
+      const rng = h('input', { type: 'range', min: 0, max: 100, value: 50, 'aria-label': partLabel(c) + ' position', onInput: e => { T.pots[c.id] = e.target.value / 100; out.textContent = e.target.value + ' %'; T.sel = c.id; runSim(); } });
+      ctrls.push(h('label', { class: 'tctl pot' }, h('b', null, partLabel(c)), out, rng));
+    }
+  }
+  T.dyn = { status: h('div', { class: 'tstat' }), findings: h('div', { class: 'tfinds' }), sel: h('div'), ai: h('div', { class: 'tai' }), all: h('div', { class: 'treads' }) };
+  E.testPanel.replaceChildren(
+    h('div', { class: 'pal-h' }, h('b', null, 'Test'), h('button', { class: 'ibtn', 'aria-label': 'Stop test', onClick: toggleTest }, icon('x'))),
+    h('div', { class: 'pal-b' },
+      T.dyn.status,
+      ctrls.length ? [h('h4', null, 'Controls'), h('div', { class: 'tctls' }, ctrls)] : null,
+      h('h4', null, 'Simulation'), T.dyn.findings,
+      h('h4', null, 'Selected part'), T.dyn.sel,
+      h('h4', null, 'Check with Claude'), T.dyn.ai,
+      h('details', { class: 'tmore' }, h('summary', null, 'All readings'), T.dyn.all),
+      h('p', { class: 'dim sm tnote' }, 'Simplified DC simulation. ICs and modules aren’t simulated, capacitors count as open, op-amps are ideal.')));
+}
+function readingLines(c, r) {
+  const rd = r.readings.get(c.id), V = BenchSim.fmtV, I = BenchSim.fmtI, L = [];
+  const pinsV = () => BenchSim.pinNames(c).map((nm, i) => `${nm || i + 1} ${V(r.netV(r.netOf.get(c.id + ':' + i)))}`).join(' · ');
+  if (c.t === 'block') return [['State', 'Not simulated'], ['Pins', pinsV()]];
+  if (c.t === 'switch') L.push(['State', E.test.sw[c.id] ? 'Closed' : 'Open']);
+  if (c.t === 'button') L.push(['State', E.test.pressed[c.id] ? 'Pressed' : 'Released']);
+  if (!rd) return L.concat([['Current', '0 mA'], ['Pins', pinsV()]]);
+  if (c.t === 'battery' || c.t === 'vcc') return [['Delivers', I(-rd.I)], ['Voltage', V(c.t === 'vcc' ? rd.Vs[0] : rd.V)]];
+  if (c.t === 'pot') return [['Wiper', Math.round(100 * (E.test.pots[c.id] ?? 0.5)) + ' %'], ['Current 1→W', I(rd.Ia || 0)], ['Current W→2', I(rd.Ib || 0)], ['Pins', pinsV()]];
+  if (c.t === 'npn') return [['Base current', I(rd.Is[0])], ['Collector current', I(rd.Is[1])], ['Pins', pinsV()]];
+  if (c.t === 'pnp') return [['Base current', I(-rd.Is[0])], ['Collector current', I(-rd.Is[2])], ['Pins', pinsV()]];
+  if (c.t === 'nmos') return [['Drain current', I(Math.abs(rd.Is[1]))], ['Gate voltage', V(rd.Vs[0] - rd.Vs[2])], ['Pins', pinsV()]];
+  if (c.t === 'opamp') return [['Output', V(rd.Vs[2])], ['Pins', pinsV()]];
+  L.push(['Voltage', V(rd.V)], ['Current', I(rd.I)]);
+  if (c.t === 'resistor' && rd.R) L.push(['Power', (rd.I * rd.I * rd.R * 1000).toFixed(rd.I * rd.I * rd.R < 0.01 ? 2 : 0) + ' mW']);
+  if (c.t === 'led') { const l = r.leds[c.id]; L.push(['Light', l && l.brightness ? `${Math.round(l.brightness * 100)} %${l.over ? ', too bright' : ''}` : 'Off']); }
+  if (c.t === 'motor') L.push(['Motor', r.motors[c.id] ? 'Spinning' : 'Stopped']);
+  return L;
+}
+function renderTestDyn() {
+  if (!E || !E.test || !E.test.dyn) return;
+  const T = E.test, r = T.res, Dy = T.dyn, cm = compMap();
+  for (const [id, el] of Object.entries(T.ctlEls)) {
+    if (el.dataset.kind === 'switch') { el.setAttribute('aria-pressed', String(!!T.sw[id])); el.querySelector('small').textContent = T.sw[id] ? 'On' : 'Off'; }
+    else el.setAttribute('aria-pressed', String(!!T.pressed[id]));
+  }
+  if (!r) { Dy.status.className = 'tstat bad'; Dy.status.replaceChildren(h('b', null, 'The simulation didn’t run'), h('span', null, 'Try changing the sketch, or use Check with Claude.')); renderAiSection(); return; }
+  const errs = r.findings.filter(f => f.sev === 'error').length, warns = r.findings.filter(f => f.sev === 'warn').length;
+  Dy.status.className = 'tstat ' + (errs ? 'bad' : warns ? 'meh' : 'good');
+  Dy.status.replaceChildren(h('b', null, errs ? `${errs} problem${errs > 1 ? 's' : ''}` : warns ? `${warns} warning${warns > 1 ? 's' : ''}` : 'No problems found'),
+    h('span', null, r.maxU ? `${BenchSim.fmtV(r.maxU)} supply · ${BenchSim.fmtI(r.supplyI)} drawn` : 'No power source'));
+  Dy.findings.replaceChildren(...(r.findings.length ? r.findings.map(f => h('button', { class: 'tfind ' + f.sev, disabled: !f.ids.length, onClick: () => { T.sel = f.ids[0]; renderSim(); renderTestDyn(); } }, h('i'), h('span', null, f.text)))
+    : [h('p', { class: 'dim sm', style: 'margin:0' }, 'Nothing to report. Everything is within limits.')]));
+  const c = T.sel && cm.get(T.sel);
+  Dy.sel.replaceChildren(c ? h('div', { class: 'tread' }, h('b', null, partLabel(c), c.v && c.t !== 'block' && c.t !== 'vcc' ? h('span', { class: 'dim' }, ' ' + c.v) : null), h('dl', null, readingLines(c, r).map(([k, v]) => [h('dt', null, k), h('dd', null, v)])))
+    : h('p', { class: 'dim sm', style: 'margin:0' }, 'Tap a part to see its voltage and current.'));
+  const rows = E.data.comps.filter(x => !['node', 'text', 'gnd'].includes(x.t)).map(x => { const ls = readingLines(x, r).filter(([k]) => k !== 'Pins'); return h('button', { class: 'trow', onClick: () => { T.sel = x.id; renderSim(); renderTestDyn(); } }, h('b', null, partLabel(x)), h('span', null, ls.map(([k, v]) => `${k} ${v}`).join(' · ') || '—')); });
+  Dy.all.replaceChildren(...rows);
+  renderAiSection();
+}
+
+/* Claude check */
+function sketchHash(d) {
+  const s = JSON.stringify({ c: (d.comps || []).filter(c => c.t !== 'text').map(c => [c.id, c.t, c.l, c.v, c.pins, c.partId]), w: (d.wires || []).map(w => [w.a.c, w.a.p, w.b.c, w.b.p]) });
+  let x = 5381; for (let i = 0; i < s.length; i++) x = ((x << 5) + x + s.charCodeAt(i)) | 0; return (x >>> 0).toString(36);
+}
+const VERDICTS = { works: ['Should work', 'good'], 'minor issues': ['Works, with issues', 'meh'], "won't work": ['Won’t work as drawn', 'bad'], unclear: ['Hard to tell', 'unk'] };
+function renderAiSection() {
+  const T = E && E.test; if (!T || !T.dyn) return;
+  const el = T.dyn.ai, ai = T.ai, avail = dropAvailable(), hash = sketchHash(E.data);
+  const btn = (label, primary) => h('button', { class: 'btn sm' + (primary ? ' primary' : ''), disabled: !avail, onClick: runReview }, icon('scan', 16), label);
+  if (ai.state === 'busy') { el.replaceChildren(h('div', { class: 'lk-busy' }, h('span', { class: 'spin' }), 'Claude is checking the circuit. This can take a minute.'), h('button', { class: 'btn sm quiet', onClick: () => { if (T.ctl) T.ctl.abort(); } }, 'Stop')); return; }
+  if (ai.state === 'done' && ai.data) {
+    const d = ai.data, v = VERDICTS[d.verdict] || VERDICTS.unclear, stale = d.hash !== hash;
+    el.replaceChildren(...[
+      h('div', { class: 'aiv ' + v[1] }, h('b', null, v[0]), h('span', null, 'checked ' + relTime(d.at))),
+      stale ? h('p', { class: 'sm warn', style: 'margin:0' }, 'The sketch changed since this check.') : null,
+      d.summary ? h('p', { class: 'sm', style: 'margin:0' }, d.summary) : null,
+      (d.issues || []).length ? h('div', { class: 'tfinds' }, d.issues.map(is => h('div', { class: 'tfind ai ' + (is.severity === 'error' ? 'error' : is.severity === 'warning' ? 'warn' : 'info') }, h('i'),
+        h('span', null, h('b', null, (is.parts && is.parts.length ? is.parts.join(', ') + ': ' : '') + is.title), is.detail ? ' ' + is.detail : '', is.fix ? h('span', { class: 'tfix' }, 'Fix: ' + is.fix) : null)))) : null,
+      btn('Check again', stale)].filter(Boolean));
+    return;
+  }
+  el.replaceChildren(...[h('p', { class: 'dim sm', style: 'margin:0' }, avail ? 'Claude reads the whole circuit, ICs and modules included, and tells you what won’t work and how to fix it.' : 'Needs the Anthropic API key on the server.'),
+    ai.state === 'error' ? h('div', { class: 'lk-res miss' }, h('p', null, ai.msg)) : null, btn('Check with Claude', true)].filter(Boolean));
+}
+function reviewPrompt() {
+  const d = E.data, r = E.test.res, p = S.projects.get(E.pid) || {};
+  const { netOf } = BenchSim.buildNets(d.comps.filter(c => c.t !== 'text'), d.wires);
+  const size = new Map(); for (const n of netOf.values()) size.set(n, (size.get(n) || 0) + 1);
+  const names = new Map(); let k = 0;
+  for (const c of d.comps) if (c.t === 'gnd') names.set(netOf.get(c.id + ':0'), 'GND');
+  for (const c of d.comps) if (c.t === 'vcc') { const n = netOf.get(c.id + ':0'); if (!names.has(n)) names.set(n, (c.v || 'VCC').trim()); }
+  const netName = n => { if (!names.has(n)) names.set(n, 'N' + (++k)); return names.get(n); };
+  const used = new Set(d.comps.map(c => c.l).filter(Boolean)), labels = new Map();
+  for (const c of d.comps) { if (['text', 'node', 'vcc', 'gnd'].includes(c.t)) continue; let l = c.l; if (!l) { const pfx = c.t === 'block' ? 'U' : (SYM[c.t] || {}).pfx || 'X'; let i = 1; while (used.has(pfx + '?' + i)) i++; l = pfx + '?' + i; used.add(l); } labels.set(c.id, l); }
+  const parts = d.comps.filter(c => labels.has(c.id)).map(c => {
+    const lib = c.partId && S.parts.get(c.partId);
+    const pins = BenchSim.pinNames(c).map((nm, i) => { const n = netOf.get(c.id + ':' + i); return `${c.t === 'block' ? (i + 1) + ' ' : ''}${nm || i + 1}=${size.get(n) > 1 ? netName(n) : 'unconnected'}`; }).join(', ');
+    return `- ${labels.get(c.id)}: ${c.t === 'block' ? 'IC/module' : SYM[c.t].name}${c.v ? ` "${c.v}"` : ''}${lib ? ` [library part: ${lib.name}${lib.mpn ? ', ' + lib.mpn : ''}${lib.description ? ' (' + lib.description + ')' : ''}]` : ''}; pins: ${pins}`;
+  });
+  const fixed = [...names].filter(([, nm]) => nm === 'GND' || BenchSim.parseVolt(nm) != null).map(([, nm]) => `${nm} = ${nm === 'GND' ? '0 V' : BenchSim.parseVolt(nm) + ' V'}`);
+  const notes = d.comps.filter(c => c.t === 'text' && c.v).map(c => c.v);
+  const states = d.comps.filter(c => c.t === 'switch' || c.t === 'pot').map(c => c.t === 'switch' ? `${labels.get(c.id)} ${E.test.sw[c.id] ? 'closed' : 'open'}` : `${labels.get(c.id)} wiper at ${Math.round(100 * (E.test.pots[c.id] ?? 0.5))} %`);
+  const simLines = r ? r.findings.map(f => `- [${f.sev}] ${f.text}`).slice(0, 12) : ['- (simulation did not run)'];
+  return `You are an experienced electronics engineer helping a hobbyist. Review this circuit sketch from their project planner: say whether it will work, what's wrong, and how to fix it.
+
+Project: ${p.name || '(unnamed)'}${p.description ? ' — ' + p.description : ''}
+Sketch: ${E.name}${notes.length ? `\nText written on the sketch: ${notes.map(x => `"${x}"`).join(', ')}` : ''}
+
+Netlist, generated from the drawing. Connections come from wires and from supply or ground symbols with the same name. Labels with "?" were added because the part had none.
+Parts:
+${parts.join('\n') || '- (no parts)'}
+${fixed.length ? `Nets with a fixed voltage: ${fixed.join('; ')}\n` : ''}${states.length ? `Switch and pot positions while testing: ${states.join(', ')}\n` : ''}
+The app's own simplified DC simulation (ICs and modules not simulated, capacitors open, ideal op-amps) reported:
+${simLines.join('\n') || '- nothing'}
+
+Guidelines:
+- Infer what the circuit is meant to do from the parts, labels and project, and judge it against that.
+- For ICs and modules, check the pins against the real pinout of that part number. Pin names in the sketch may come from the user's parts library.
+- Look for missing current-limiting or base resistors, floating inputs, missing pull-ups or pull-downs, reversed polarity, voltages above ratings, logic-level mismatches, missing decoupling capacitors at ICs, missing flyback diodes on motors or relays, power budget, and pins that must be connected but aren't.
+- Don't repeat the simulation's findings unless you add something to them. Don't invent problems; if the circuit looks fine, say so. Unused pins that may stay open are fine.
+- Refer to parts by their labels. Keep it short and concrete.
+
+Reply with only a JSON object:
+{"verdict": "works" | "minor issues" | "won't work" | "unclear", "summary": "2-3 sentences: what the circuit does and whether it will work", "issues": [{"severity": "error" | "warning" | "tip", "parts": ["R1"], "title": "short", "detail": "1-2 sentences", "fix": "1 sentence"}]}
+At most 8 issues, most important first.`;
+}
+async function runReview() {
+  const T = E && E.test; if (!T) return;
+  if (T.ctl) T.ctl.abort();
+  const ctl = T.ctl = new AbortController(), prev = T.ai;
+  T.ai = { state: 'busy' }; renderAiSection();
+  try {
+    const r = await postJson('/api/review', { prompt: reviewPrompt() }, ctl.signal);
+    if (!E || E.test !== T || ctl !== T.ctl) return;
+    if (!r || typeof r !== 'object') throw { code: 'invalid_json' };
+    const review = { hash: sketchHash(E.data), at: Date.now(), verdict: str(r.verdict).toLowerCase(), summary: str(r.summary),
+      issues: (Array.isArray(r.issues) ? r.issues : []).slice(0, 10).map(x => ({ severity: str(x && x.severity).toLowerCase(), parts: Array.isArray(x && x.parts) ? x.parts.map(str).filter(Boolean).slice(0, 6) : [], title: str(x && x.title), detail: str(x && x.detail), fix: str(x && x.fix) })) };
+    T.ai = { state: 'done', data: review };
+    S.sketches.set(E.sid, { ...(S.sketches.get(E.sid) || {}), review });
+    queueWrite(sketchCol().doc(E.sid), { review });
+  } catch (e) {
+    if (!E || E.test !== T) return;
+    if (e && e.code === 'cancelled') T.ai = prev && prev.state !== 'busy' ? prev : { state: 'idle' };
+    else { console.warn('review', e); T.ai = { state: 'error', msg: e && e.code === 'refused' ? 'Claude declined to check this sketch. Try changing the labels or notes.' : e && e.code === 'offline' ? 'No connection. The check needs the internet; the simulation works offline.' : e && e.code === 'rate_limited' ? 'Too many checks at once. Wait a moment and try again.' : e && e.code === 'not_granted' ? 'The server has no working Anthropic API key.' : 'The check didn’t come back. Try again.' }; }
+  } finally { if (E && E.test === T && T.ctl === ctl) { T.ctl = null; renderAiSection(); } }
 }
 
 /* ================= boot ================= */

@@ -8,6 +8,7 @@ Dateien und Schaltungsskizzen. Selbst gehostete Version der ursprünglichen Clau
 | Pfad | Inhalt |
 |---|---|
 | `public/bench.html` | Die App (Vanilla JS, eine Datei) |
+| `public/sim.js` | Gleichstrom-Simulation für den Test-Modus der Skizzen |
 | `public/runtime.js` | Ersatz für `window.claude.use(…)`: `db`, `user`, `assets`, `downloads`, `sample` über das eigene Backend |
 | `public/sw.js`, `public/manifest.webmanifest`, `public/icons/` | PWA (Homescreen-Installation) |
 | `server/index.js` | Express-Server: Login, REST-API, Uploads, Teilesuche, Import, `/healthz` |
@@ -28,6 +29,19 @@ mit Kommentar) lenken spätere Würfe und schreiben alle 5 Bewertungen ein Gesch
 
 Bewertungen und Profil liegen in der Tabelle `drops` (ein Eintrag `state`) und sind im Backup enthalten.
 Modell über `DROP_MODEL`, Standard `claude-sonnet-4-6`.
+
+## Skizzen testen
+
+Im Skizzen-Editor startet **Test** (oder Shift+T) die Simulation:
+
+- **Live-Simulation** im Browser (`public/sim.js`, Knotenanalyse mit Newton-Iteration): Batterie, Versorgung,
+  Widerstand, Poti, Diode, LED, Schalter, Taster, Motor, Spule, NPN/PNP, N-MOSFET, Op-Amp (ideal).
+  Schalter antippen, Taster halten, Poti-Regler im Panel. LEDs leuchten, Motoren drehen, wandernde Striche
+  zeigen den Strom. Warnungen bei Überstrom an LEDs, Kurzschluss, zu viel Leistung an Widerständen,
+  verpolten Elkos, offenem MOSFET-Gate und offenen Pins. ICs/Module und Kondensatoren werden nicht simuliert.
+- **Check with Claude** schickt die Netzliste (inkl. ICs mit Teilenummer aus der Bibliothek) an `/api/review`.
+  Das Ergebnis wird an der Skizze gespeichert und als veraltet markiert, sobald sich die Schaltung ändert.
+  Modell über `REVIEW_MODEL`, Standard `claude-opus-5-5`, mit serverseitigem Fallback bei Ablehnung.
 
 ## Lokal starten
 
