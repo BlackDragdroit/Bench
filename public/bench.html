@@ -2058,8 +2058,8 @@ function onDown(e) {
     // Im Test: Schalter umlegen, Taster halten, sonst Messwerte zeigen; nichts bearbeiten
     const tgt = e.target.closest && e.target.closest('[data-k="c"]');
     const c = tgt && findComp(tgt.dataset.id);
-    if (c && c.t === 'switch') { E.test.sw[c.id] = !E.test.sw[c.id]; E.test.sel = c.id; if (navigator.vibrate) navigator.vibrate(8); runSim(); return; }
-    if (c && c.t === 'button') { E.test.pressed[c.id] = true; E.test.hold = { id: c.id, ptr: e.pointerId }; E.test.sel = c.id; if (navigator.vibrate) navigator.vibrate(8); runSim(); return; }
+    if (c && c.t === 'switch') { E.test.sw[c.id] = !E.test.sw[c.id]; if (navigator.vibrate) navigator.vibrate(8); runSim(); return; }
+    if (c && c.t === 'button') { E.test.pressed[c.id] = true; E.test.hold = { id: c.id, ptr: e.pointerId }; if (navigator.vibrate) navigator.vibrate(8); runSim(); return; }
     if (c && c.t !== 'node') { E.test.sel = c.id; renderSim(); renderTestDyn(); }
     E.pan = panStart({}); return;
   }
@@ -2399,16 +2399,16 @@ function buildTestPanel() {
   const T = E.test, ctrls = [];
   for (const c of E.data.comps) {
     if (c.t === 'switch') {
-      const el = h('button', { class: 'tctl', 'data-kind': 'switch', 'aria-pressed': 'false', onClick: () => { T.sw[c.id] = !T.sw[c.id]; T.sel = c.id; runSim(); } }, h('span', { class: 'tsw' }), h('b', null, partLabel(c)), h('small', null, 'Off'));
+      const el = h('button', { class: 'tctl', 'data-kind': 'switch', 'aria-pressed': 'false', onClick: () => { T.sw[c.id] = !T.sw[c.id]; runSim(); } }, h('span', { class: 'tsw' }), h('b', null, partLabel(c)), h('small', null, 'Off'));
       T.ctlEls[c.id] = el; ctrls.push(el);
     } else if (c.t === 'button') {
-      const press = v => { if (!!T.pressed[c.id] === v) return; T.pressed[c.id] = v; T.sel = c.id; runSim(); };
+      const press = v => { if (!!T.pressed[c.id] === v) return; T.pressed[c.id] = v; runSim(); };
       const el = h('button', { class: 'tctl', 'data-kind': 'button', 'aria-pressed': 'false', onPointerdown: e => { e.preventDefault(); press(true); }, onPointerup: () => press(false), onPointerleave: () => press(false), onPointercancel: () => press(false),
         onKeydown: e => { if ((e.key === ' ' || e.key === 'Enter') && !e.repeat) { e.preventDefault(); press(true); } }, onKeyup: e => { if (e.key === ' ' || e.key === 'Enter') press(false); } }, h('span', { class: 'tbtn' }), h('b', null, partLabel(c)), h('small', null, 'Hold to press'));
       T.ctlEls[c.id] = el; ctrls.push(el);
     } else if (c.t === 'pot') {
       const out = h('small', null, '50 %');
-      const rng = h('input', { type: 'range', min: 0, max: 100, value: 50, 'aria-label': partLabel(c) + ' position', onInput: e => { T.pots[c.id] = e.target.value / 100; out.textContent = e.target.value + ' %'; T.sel = c.id; runSim(); } });
+      const rng = h('input', { type: 'range', min: 0, max: 100, value: 50, 'aria-label': partLabel(c) + ' position', onInput: e => { T.pots[c.id] = e.target.value / 100; out.textContent = e.target.value + ' %'; runSim(); } });
       ctrls.push(h('label', { class: 'tctl pot' }, h('b', null, partLabel(c)), out, rng));
     }
   }
@@ -2459,7 +2459,7 @@ function renderTestDyn() {
     : [h('p', { class: 'dim sm', style: 'margin:0' }, 'Nothing to report. Everything is within limits.')]));
   const c = T.sel && cm.get(T.sel);
   Dy.sel.replaceChildren(c ? h('div', { class: 'tread' }, h('b', null, partLabel(c), c.v && c.t !== 'block' && c.t !== 'vcc' ? h('span', { class: 'dim' }, ' ' + c.v) : null), h('dl', null, readingLines(c, r).map(([k, v]) => [h('dt', null, k), h('dd', null, v)])))
-    : h('p', { class: 'dim sm', style: 'margin:0' }, 'Tap a part to see its voltage and current.'));
+    : h('p', { class: 'dim sm', style: 'margin:0' }, 'Tap a part to see its voltage and current. Switches and buttons are listed under All readings.'));
   const rows = E.data.comps.filter(x => !['node', 'text', 'gnd'].includes(x.t)).map(x => { const ls = readingLines(x, r).filter(([k]) => k !== 'Pins'); return h('button', { class: 'trow', onClick: () => { T.sel = x.id; renderSim(); renderTestDyn(); } }, h('b', null, partLabel(x)), h('span', null, ls.map(([k, v]) => `${k} ${v}`).join(' · ') || '—')); });
   Dy.all.replaceChildren(...rows);
   renderAiSection();
