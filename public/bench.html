@@ -271,6 +271,9 @@ select.inp{appearance:none;background-image:linear-gradient(45deg,transparent 50
 .dfrom{display:flex;flex-direction:column;gap:6px;margin-top:14px;max-width:72ch}
 .dfrom>.conf{align-self:flex-start;display:inline-flex;align-items:center;gap:5px}
 .drate.compact{padding-top:0;border-top:0}
+.dfrom .dplan{max-width:420px}
+.planhint{margin:0 0 10px}
+.dsettings .tctl{align-self:stretch}
 
 /* ---------- project view ---------- */
 .crumb{margin:0 0 12px -10px}
@@ -816,8 +819,19 @@ function EmptyBlock(title, text, action) { return h('div', { class: 'empty' }, h
 const projectList = () => [...S.projects.entries()].map(([id, p]) => ({ id, ...p }));
 const partList = () => [...S.parts.entries()].map(([id, p]) => ({ id, ...p }));
 const byName = (a, b) => (a.name || '').localeCompare(b.name || '', undefined, { numeric: true, sensitivity: 'base' });
-function stepsStat(p) { const s = p.steps || []; return { done: s.filter(x => x.done).length, total: s.length }; }
-function bomShort(p) { let n = 0; for (const b of p.bom || []) { const pt = S.parts.get(b.partId); if (pt && typeof pt.stock === 'number' && pt.stock < b.qty) n++; } return n; }
+// Von Drop vorgeschlagene Schritte und Teile (drop: true) sind ausgeblendet, bis man sie einschaltet
+const planHidden = p => !!(p && p.drop && p.drop.rollId && !p.drop.showPlan);
+const visSteps = p => (p.steps || []).filter(s => !(s.drop && planHidden(p)));
+const visBom = p => (p.bom || []).filter(b => !(b.drop && planHidden(p)));
+function setShowPlan(pid, v) { const p = S.projects.get(pid); if (p && p.drop) patchProject(pid, { drop: { ...p.drop, showPlan: !!v } }); }
+function hiddenNote(p, kind) {
+  if (!planHidden(p)) return null;
+  const n = ((kind === 'steps' ? p.steps : p.bom) || []).filter(x => x.drop).length; if (!n) return null;
+  const what = kind === 'steps' ? (n > 1 ? 'steps' : 'step') : (n > 1 ? 'parts' : 'part');
+  return h('p', { class: 'dim sm planhint' }, `${n} ${what} suggested by Drop ${n > 1 ? 'are' : 'is'} hidden. `, h('button', { class: 'linkbtn', onClick: () => setShowPlan(p.id, true) }, 'Show them'));
+}
+function stepsStat(p) { const s = visSteps(p); return { done: s.filter(x => x.done).length, total: s.length }; }
+function bomShort(p) { let n = 0; for (const b of visBom(p)) { const pt = S.parts.get(b.partId); if (pt && typeof pt.stock === 'number' && pt.stock < b.qty) n++; } return n; }
 
 /* ================= views ================= */
 function View() {
@@ -892,7 +906,7 @@ function ProjectRow(p) {
     h('span', { class: 'prow-meta' },
       h('span', { class: 'status st', style: `--c:var(--s-${k})` }, statusLabel(k)),
       st.total ? h('span', { class: 'mstat' }, h('span', { class: 'meter' }, h('i', { style: `width:${Math.round(st.done / st.total * 100)}%` })), `${st.done}/${st.total} steps`) : h('span', null, 'No steps yet'),
-      h('span', null, `${(p.bom || []).length} parts`, short ? h('span', { class: 'warn' }, `, ${short} short`) : null),
+      h('span', null, `${visBom(p).length} parts`, short ? h('span', { class: 'warn' }, `, ${short} short`) : null),
       h('span', null, relTime(p.updated))));
 }
 
@@ -900,7 +914,7 @@ function ProjectView(pid) {
   const p = { id: pid, ...S.projects.get(pid) };
   const st = stepsStat(p), short = bomShort(p), tab = S.route.tab || 'steps';
   const nSk = S.sketchSub && S.sketchSub.pid === pid && S.sketchesLoaded ? S.sketches.size : null;
-  const tabs = [['steps', 'Steps', st.total || null], ['parts', 'Parts', (p.bom || []).length || null], ['files', 'Files', (p.files || []).length || null], ['sketches', 'Sketches', nSk || null], ['notes', 'Notes', null]];
+  const tabs = [['steps', 'Steps', st.total || null], ['parts', 'Parts', visBom(p).length || null], ['files', 'Files', (p.files || []).length || null], ['sketches', 'Sketches', nSk || null], ['notes', 'Notes', null]];
   const k = p.status || 'idea';
   const sel = h('select', { 'aria-label': 'Status', onChange: e => patchProject(pid, { status: e.target.value }) }, STATUSES.map(([sk, l]) => h('option', { value: sk, selected: sk === k }, l)));
   return h('div', { class: 'page' },
@@ -910,7 +924,7 @@ function ProjectView(pid) {
         h('button', { class: 'ibtn', 'aria-label': 'Edit project', title: 'Edit project', onClick: () => projectDialog(pid) }, icon('edit'))),
       h('div', null, h('span', { class: 'tb-l' }, 'Status'), h('label', { class: 'tb-sel' }, sel)),
       h('div', null, h('span', { class: 'tb-l' }, 'Steps'), h('div', { class: 'tb-v' }, st.total ? `${st.done} of ${st.total}` : 'None yet', st.total ? h('span', { class: 'meter' }, h('i', { style: `width:${Math.round(st.done / st.total * 100)}%` })) : null)),
-      h('div', null, h('span', { class: 'tb-l' }, 'Parts'), h('div', { class: 'tb-v' }, String((p.bom || []).length), short ? h('span', { class: 'warn' }, `${short} short`) : null)),
+      h('div', null, h('span', { class: 'tb-l' }, 'Parts'), h('div', { class: 'tb-v' }, String(visBom(p).length), short ? h('span', { class: 'warn' }, `${short} short`) : null)),
       h('div', null, h('span', { class: 'tb-l' }, 'Started'), h('div', { class: 'tb-v' }, shortDate(p.created))),
       h('div', null, h('span', { class: 'tb-l' }, 'Last change'), h('div', { class: 'tb-v' }, relTime(p.updated)))),
     p.description ? h('p', { class: 'pdesc' }, p.description) : null,
@@ -922,16 +936,21 @@ function ProjectView(pid) {
 /* ---- steps ---- */
 const curSteps = pid => (S.projects.get(pid) || {}).steps || [];
 function updStep(pid, sid, patch) { patchProject(pid, { steps: curSteps(pid).map(s => s.id === sid ? { ...s, ...patch } : s) }); }
-function moveStep(pid, i, d) { const a = [...curSteps(pid)]; const j = i + d; if (j < 0 || j >= a.length) return; [a[i], a[j]] = [a[j], a[i]]; patchProject(pid, { steps: a }); }
+// Verschieben innerhalb der sichtbaren Schritte; ausgeblendete bleiben an ihrem Platz
+function moveStep(pid, i, d) {
+  const vis = visSteps(S.projects.get(pid) || {}), a = vis[i], b = vis[i + d]; if (!a || !b) return;
+  const all = [...curSteps(pid)], ia = all.findIndex(s => s.id === a.id), ib = all.findIndex(s => s.id === b.id);
+  [all[ia], all[ib]] = [all[ib], all[ia]]; patchProject(pid, { steps: all });
+}
 function delStep(pid, sid) { patchProject(pid, { steps: curSteps(pid).filter(s => s.id !== sid) }); if (S.openStep === sid) S.openStep = null; }
 function StepsTab(p) {
-  const steps = p.steps || [], key = 'newstep:' + p.id;
+  const steps = visSteps(p), key = 'newstep:' + p.id;
   const add = h('input', { class: 'inp', placeholder: 'Add a step and press Enter', 'aria-label': 'New step', 'data-key': key, 'data-live': true, enterkeyhint: 'done' });
   add.value = drafts.get(key) || '';
   add.addEventListener('input', () => drafts.set(key, add.value));
   const addStep = () => { const t = add.value.trim(); if (!t) return; drafts.delete(key); add.value = ''; patchProject(p.id, { steps: [...curSteps(p.id), { id: uid8(), text: t, done: false, note: '' }] }); };
   add.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); addStep(); } });
-  return h('div', null,
+  return h('div', null, hiddenNote(p, 'steps'),
     steps.length ? h('ol', { class: 'steps' }, steps.map((s, i) => StepRow(p, s, i, steps.length))) :
       EmptyBlock('No steps yet', 'Break the build into steps you can tick off: order parts, breadboard it, write firmware, solder, test.'),
     h('div', { class: 'addrow' }, add, h('button', { class: 'btn', onClick: addStep }, icon('plus', 17), 'Add')));
@@ -966,12 +985,13 @@ function updBom(pid, id, patch) { patchProject(pid, { bom: curBom(pid).map(b => 
 function addToBom(pid, partId, silent) {
   const bom = curBom(pid), part = S.parts.get(partId), name = part ? part.name : 'Part';
   const ex = bom.find(b => b.partId === partId);
-  if (ex) { updBom(pid, ex.id, { qty: ex.qty + 1 }); if (!silent) toast(`${name}: ${ex.qty + 1} needed`); }
+  if (ex && ex.drop && planHidden(S.projects.get(pid))) { updBom(pid, ex.id, { drop: false }); if (!silent) toast(`Added ${name} to the parts list`); }
+  else if (ex) { updBom(pid, ex.id, { qty: ex.qty + 1 }); if (!silent) toast(`${name}: ${ex.qty + 1} needed`); }
   else { patchProject(pid, { bom: [...bom, { id: uid8(), partId, qty: 1, note: '' }] }); if (!silent) toast(`Added ${name} to the parts list`); }
 }
 function BomTab(p) {
-  const bom = p.bom || [], short = bomShort(p);
-  return h('div', null,
+  const bom = visBom(p), short = bomShort(p);
+  return h('div', null, hiddenNote(p, 'parts'),
     h('div', { class: 'bar' },
       h('span', { class: 'dim' }, bom.length ? `${bom.length} part${bom.length > 1 ? 's' : ''} on the list` : ''),
       short ? h('span', { class: 'pill short' }, `${short} short`) : null, h('span', { class: 'grow' }),
@@ -999,7 +1019,7 @@ function BomRow(p, b) {
 }
 function shoppingList(pid) {
   const p = S.projects.get(pid), lines = [];
-  for (const b of p.bom || []) {
+  for (const b of visBom(p)) {
     const pt = S.parts.get(b.partId); if (!pt || typeof pt.stock !== 'number') continue;
     const need = b.qty - pt.stock;
     if (need > 0) lines.push(`${need} × ${pt.name}${pt.mpn && !(pt.name || '').includes(pt.mpn) ? ` (${pt.mpn})` : ''}`);
@@ -1577,7 +1597,8 @@ function dropSchema(payoffSpec, fromParts) {
   "hours": "e.g. 3-4 h",
   "payoff": "one sentence: ${payoffSpec}",
 ${fromParts ? `  "uses": [{"id": "part id from their inventory", "qty": 1, "for": "its job in this build, max 8 words"}],
-  "extra": ["parts from their always-on-hand list with value and count, e.g. '220 Ω resistor ×2', plus basic consumables; max 8, or empty"],` : '  "parts": ["max 4 items that aren\'t obvious"],'}
+  "extra": ["parts from their always-on-hand list with value and count, e.g. '220 Ω resistor ×2', plus basic consumables; max 8, or empty"],` : `  "parts": [{"name": "short name, e.g. MPU-6050 IMU module", "mpn": "real part number, or empty", "category": "exactly one of: ${CATS.join(', ')}", "value": "for passives, else empty", "qty": 1, "for": "its job in this build, max 8 words"}],
+  "extra": ["parts from their always-on-hand list with value and count, plus consumables like jumper wires; max 8, or empty"],`}
   "steps": ["4-5 milestones, short imperative sentences"],
   "gotcha": "one sentence: the thing that will actually eat the time",
   "stretch": ["2 extensions, one line each"]
@@ -1595,7 +1616,10 @@ ${parts.length ? `Their parts inventory (id | part | category, value, package | 
 ${partsBlock(parts)}
 ` : 'Their parts inventory is empty.\n'}${onHand() ? `Always on hand, no need to be in the inventory, use freely:
 ${onHand().split('\n').map(x => '- ' + x.trim()).filter(x => x.length > 2).join('\n')}
-` : ''}` : ''}${feedbackBlock()}
+` : ''}` : onHand() ? `
+Always on hand, no need to buy:
+${onHand().split('\n').map(x => '- ' + x.trim()).filter(x => x.length > 2).join('\n')}
+` : ''}${feedbackBlock()}
 This brief:
 - Time budget: ${s.brief}. The estimate must be honest for someone working alone.
 - Field: ${domain.id === 'wildcard' ? 'your choice, but make it unexpected — something they\'d never pick off a list' : domain.label}.
@@ -1605,7 +1629,8 @@ This brief:
 - Be specific. Name the actual algorithm, chip, part or method — not a category.
 - No AI wrappers, no todo apps, no weather dashboards.
 ${fromParts ? `- Build it from what they have. Every electronic component must come from their inventory or their always-on-hand list. Inventory parts go in "uses" with the exact id and a quantity no higher than what they have. Always-on-hand parts go in "extra" with their value and count. Basic consumables (breadboard, jumper wires, solder, USB cable, a battery or power supply, screws, cardboard) may also go in "extra". Nothing else may be bought. Use only parts the build really needs.
-` : ''}${avoid.length ? '- Nothing close to these, they already exist: ' + avoid.join('; ') : ''}
+` : `- List every electronic component and module the build needs in "parts", with real part numbers where it matters. Anything from their always-on-hand list, and consumables, go in "extra" instead.
+`}${avoid.length ? '- Nothing close to these, they already exist: ' + avoid.join('; ') : ''}
 
 JSON only.`;
 }
@@ -1628,7 +1653,9 @@ async function dropRoll(scopeId) {
     if (ctl !== D.ctl) return;
     if (!raw || typeof raw !== 'object' || !str(raw.title)) throw { code: 'invalid_json' };
     const uses = fromParts && Array.isArray(raw.uses) ? raw.uses.filter(u => u && S.parts.has(str(u.id))).map(u => ({ id: str(u.id), qty: Math.max(1, parseInt(u.qty, 10) || 1), for: str(u.for) })) : [];
-    D.order = { ...raw, uses, extra: Array.isArray(raw.extra) ? raw.extra.map(str).filter(Boolean) : [], id: 'd' + Date.now().toString(36), domain: domain.id, difficulty, scope: scopeId, intent: intent.id, mode: fromParts ? 'parts' : 'free' };
+    const partsFree = !fromParts && Array.isArray(raw.parts) ? raw.parts.map(x => typeof x === 'string' ? { name: x } : x || {})
+      .map(x => ({ name: str(x.name), mpn: str(x.mpn), category: str(x.category), value: str(x.value), qty: Math.max(1, parseInt(x.qty, 10) || 1), for: str(x.for) })).filter(x => x.name || x.mpn).slice(0, 16) : [];
+    D.order = { ...raw, uses, parts: partsFree, extra: Array.isArray(raw.extra) ? raw.extra.map(str).filter(Boolean) : [], id: 'd' + Date.now().toString(36), domain: domain.id, difficulty, scope: scopeId, intent: intent.id, mode: fromParts ? 'parts' : 'free' };
     patchDrop({ lastDomains: [domain.id, (st.lastDomains || [])[0]].filter(Boolean) });
     if (navigator.vibrate) navigator.vibrate(18);
   } catch (e) {
@@ -1647,17 +1674,38 @@ async function takeDrop() {
     `From Drop: ${scope.label}, ${dropDom(o.domain).label}, ${dropIntentLabel(o.intent)}, ${DROP_TIERS[n - 1]} (${n}/5)${o.hours ? `, about ${str(o.hours)}` : ''}`,
     o.payoff ? `Why: ${str(o.payoff)}` : '',
     o.gotcha ? `What’ll bite you: ${str(o.gotcha)}` : '',
-    list(o.mode === 'parts' ? 'Also needed (always on hand):' : 'You’ll need:', (o.mode === 'parts' ? o.extra : (o.parts || [])).map(str).filter(Boolean)),
+    list(o.mode === 'parts' ? 'Also needed (always on hand):' : 'Also needed:', (o.extra || []).map(str).filter(Boolean)),
     list('If it goes well:', (o.stretch || []).map(str).filter(Boolean))
   ].filter(Boolean).join('\n\n');
-  const id = uid8(), now = Date.now();
-  const doc = { name: str(o.title), status: 'planning', description: str(o.pitch), notes,
-    steps: (o.steps || []).map(str).filter(Boolean).map(text => ({ id: uid8(), text, done: false, note: '' })),
-    bom: (o.uses || []).map(u => ({ id: uid8(), partId: u.id, qty: u.qty, note: u.for })),
-    files: [], created: now, updated: now, drop: { rollId: o.id, ...dropFacts(o) } };
+  const id = uid8(), now = Date.now(), title = str(o.title);
+  // Teile, die noch nicht in der Bibliothek sind, dort als "nicht gezählt" anlegen
+  const created = [], bom = (o.uses || []).map(u => ({ id: uid8(), partId: u.id, qty: u.qty, note: u.for, drop: true }));
+  for (const x of o.parts || []) {
+    let lib = libMatch(x);
+    if (!lib) {
+      const pid2 = uid8();
+      const part = { name: x.name || x.mpn, mpn: x.mpn, manufacturer: '', category: guessCat(x.category || x.name), package: '', value: x.value, description: x.for ? x.for.charAt(0).toUpperCase() + x.for.slice(1) : '',
+        pins: [], specs: [], stock: null, location: '', datasheet: '', notes: `Added by Drop for “${title}”.`, created: now, updated: now };
+      S.parts.set(pid2, part); created.push([pid2, part]); lib = { id: pid2 };
+    }
+    const ex = bom.find(b => b.partId === lib.id);
+    if (ex) ex.qty += x.qty; else bom.push({ id: uid8(), partId: lib.id, qty: x.qty, note: x.for, drop: true });
+  }
+  const doc = { name: title, status: 'planning', description: str(o.pitch), notes,
+    steps: (o.steps || []).map(str).filter(Boolean).map(text => ({ id: uid8(), text, done: false, note: '', drop: true })),
+    bom, files: [], created: now, updated: now, drop: { rollId: o.id, ...dropFacts(o), showPlan: !!dropState().showPlan } };
   D.order = null;
   S.projects.set(id, doc); go({ view: 'project', pid: id, tab: 'steps' });
-  try { await projCol().doc(id).set(doc); toast('Project created from Drop'); } catch (e) { S.projects.delete(id); writeFailed(e); go({ view: 'drop' }); }
+  try {
+    for (const [pid2, part] of created) await partCol().doc(pid2).set(part);
+    await projCol().doc(id).set(doc);
+    toast(created.length ? `Project created. ${created.length} new part${created.length > 1 ? 's' : ''} added to your library, not counted yet.` : 'Project created from Drop');
+  } catch (e) { S.projects.delete(id); writeFailed(e); go({ view: 'drop' }); }
+}
+// Passendes Teil in der Bibliothek: gleiche Teilenummer oder gleicher Name
+function libMatch(x) {
+  const mpn = str(x.mpn).toLowerCase(), name = str(x.name).toLowerCase();
+  return partList().find(p => (mpn && str(p.mpn).toLowerCase() === mpn) || (name && str(p.name).toLowerCase() === name)) || null;
 }
 
 /* --- views --- */
@@ -1681,14 +1729,21 @@ function DropCard(o) {
       h('span', { class: 'grow' }, h('b', null, p.name || u.id), p.mpn && p.mpn !== p.name ? h('span', { class: 'mono dim' }, ' ' + p.mpn) : null, u.for ? h('span', { class: 'dim' }, ' · ' + u.for) : null),
       have == null ? h('span', { class: 'pill unk' }, 'not counted') : have >= u.qty ? h('span', { class: 'pill ok' }, `have ${have}`) : h('span', { class: 'pill short' }, `only ${have}`));
   });
-  const other = o.mode === 'parts' ? (o.extra || []) : (o.parts || []).map(str).filter(Boolean);
+  // Freier Modus: Teile mit Hinweis, ob sie schon in der Bibliothek sind
+  for (const x of o.mode === 'parts' ? [] : o.parts || []) {
+    const lib = libMatch(x);
+    uses.push(h('li', null, h('span', { class: 'dq mono' }, x.qty + '×'),
+      h('span', { class: 'grow' }, h('b', null, x.name || x.mpn), x.mpn && x.mpn !== x.name ? h('span', { class: 'mono dim' }, ' ' + x.mpn) : null, x.for ? h('span', { class: 'dim' }, ' · ' + x.for) : null),
+      lib ? h('span', { class: 'pill ok' }, 'in library') : h('span', { class: 'pill unk' }, 'new, gets added')));
+  }
+  const other = (o.extra || []).map(str).filter(Boolean);
   return h('article', { class: 'dcard' + (D.reveal ? ' reveal' : ''), style: `--c:${d.color}` },
     h('div', { class: 'wo-head' }, h('span', null, 'WORK ORDER'), h('span', null, '#' + String(o.id).slice(1).toUpperCase()), h('span', { class: 'grow' }), h('span', null, (DROP_SCOPES.find(x => x.id === o.scope) || DROP_SCOPES[0]).label.toUpperCase())),
     h('div', { class: 'dcard-top' }, h('span', { class: 'status' }, d.label), h('span', { class: 'conf' }, dropIntentLabel(o.intent)), o.mode === 'parts' ? h('span', { class: 'conf' }, 'From your parts') : null, h('span', { class: 'grow' }), o.hours ? h('span', { class: 'mono dim' }, str(o.hours)) : null),
     h('h2', null, str(o.title)),
     h('p', { class: 'dpitch' }, str(o.pitch)),
     o.payoff ? h('p', { class: 'dpayoff' }, str(o.payoff)) : null,
-    uses.length || other.length ? sec('You’ll need', uses.length ? h('ul', { class: 'duses' }, uses) : null, other.length ? h('ul', { class: 'dlist' }, other.map(x => h('li', null, h('span', { class: 'grow' }, x), o.mode === 'parts' ? h('span', { class: 'pill ok' }, 'on hand') : null))) : null) : null,
+    uses.length || other.length ? sec('You’ll need', uses.length ? h('ul', { class: 'duses' }, uses) : null, other.length ? h('ul', { class: 'dlist' }, other.map(x => h('li', null, h('span', { class: 'grow' }, x), h('span', { class: 'pill ok' }, 'on hand')))) : null) : null,
     (o.steps || []).length ? sec('Route', h('ol', { class: 'dsteps' }, o.steps.map(s => h('li', null, str(s))))) : null,
     o.gotcha ? h('p', { class: 'dgotcha' }, h('b', null, 'What’ll bite you'), str(o.gotcha)) : null,
     (o.stretch || []).length ? sec('If it goes well', h('ul', { class: 'dlist' }, o.stretch.map(s => h('li', null, str(s))))) : null,
@@ -1706,6 +1761,8 @@ function DropSettings() {
     h('label', { class: 'field' }, h('span', null, 'Anything Drop should know about you (optional)'), boundInput({ tag: 'textarea', class: 'inp', rows: 3, key: 'drop:kit', value: st.kit, placeholder: 'Leave empty if nothing holds you back. Otherwise e.g. “no oscilloscope” or “only Python, no C”.', onCommit: v => patchDrop({ kit: v }) })),
     h('label', { class: 'field' }, h('span', null, 'Always on hand: “From my parts” may use these without them being in your library'), boundInput({ tag: 'textarea', class: 'inp', rows: 6, key: 'drop:basics', value: onHand(), placeholder: 'One kind of part per line, e.g. “Resistors, all common E12 values”', onCommit: v => patchDrop({ basics: v }) })),
     onHand() !== DROP_BASICS ? h('button', { class: 'linkbtn sm', style: 'align-self:flex-start', onClick: () => { drafts.delete('drop:basics'); patchDrop({ basics: null }); render(); } }, 'Reset to the default list') : null,
+    h('button', { class: 'tctl', 'aria-pressed': String(!!st.showPlan), onClick: () => { patchDrop({ showPlan: !st.showPlan }); render(); } }, h('span', { class: 'tsw' }),
+      h('b', null, 'Show Drop’s steps and parts in new projects'), h('small', null, st.showPlan ? 'On' : 'Off, switch on per project')),
     h('h3', null, 'What Drop has learned'),
     h('p', { class: 'dim sm', style: 'margin:0' }, meta),
     fb.length ? h('div', { class: 'daff' }, DROP_DOMAINS.map(d => { const a = affinity('domain', d.id); return [h('span', null, d.label), h('span', { class: 'meter', title: `×${a.toFixed(2)} roll odds` }, h('i', { style: `width:${Math.round(a / 2.5 * 100)}%;background:${d.color}` }))]; })) : null,
@@ -1754,7 +1811,11 @@ function DropView() {
 }
 function DropFrom(p) {
   // Bewerten auch später noch möglich, z. B. nach dem Bauen
-  return h('div', { class: 'dfrom' }, h('span', { class: 'conf' }, icon('dice', 14), 'From Drop'), RateBlock(p.drop.rollId, { title: p.name, pitch: p.description, ...p.drop }, true));
+  const ns = (p.steps || []).filter(s => s.drop).length, nb = (p.bom || []).filter(b => b.drop).length, on = !!p.drop.showPlan;
+  return h('div', { class: 'dfrom' }, h('span', { class: 'conf' }, icon('dice', 14), 'From Drop'),
+    ns || nb ? h('button', { class: 'tctl dplan', 'aria-pressed': String(on), onClick: () => setShowPlan(p.id, !on) }, h('span', { class: 'tsw' }),
+      h('b', null, 'Show Drop’s steps and parts'), h('small', null, [ns ? `${ns} step${ns > 1 ? 's' : ''}` : '', nb ? `${nb} part${nb > 1 ? 's' : ''}` : ''].filter(Boolean).join(', '))) : null,
+    RateBlock(p.drop.rollId, { title: p.name, pitch: p.description, ...p.drop }, true));
 }
 
 function onDbErr(e) { console.warn('db', e); if (e && e.code === 'revoked') { S.err = 'revoked'; render(); } }
@@ -2247,7 +2308,7 @@ function placePart(part) {
   const sym = symbolForPart(part);
   if (sym) place(sym, { v: part.value || part.mpn || part.name, partId: part.id });
   else place('block', { pins: part.pins && part.pins.length ? part.pins : ['1', '2', '3', '4'], v: part.mpn || part.name, partId: part.id });
-  const bom = curBom(E.pid);
+  const bom = visBom(S.projects.get(E.pid) || {});
   if (S.projects.has(E.pid) && !bom.some(b => b.partId === part.id)) { addToBom(E.pid, part.id, true); toast(`Placed ${part.name} and added it to the parts list`); }
 }
 function insertSketch(src) {
@@ -2272,7 +2333,7 @@ function renderPalette() {
   const p = S.projects.get(E.pid) || {};
   const partBtn = x => h('button', { class: 'pick', onClick: () => placePart(x) },
     h('span', { class: 'pick-main' }, h('span', { class: 'pick-name' }, x.name), h('span', { class: 'psub' }, x.mpn ? h('span', { class: 'mono' }, x.mpn) : null, h('span', null, symbolForPart(x) ? SYM[symbolForPart(x)].name : (x.pins || []).length ? `${x.pins.length}-pin block` : 'Block, no pins saved'))), icon('plus', 18));
-  const bomParts = (p.bom || []).map(b => S.parts.get(b.partId) && { id: b.partId, ...S.parts.get(b.partId) }).filter(x => x && x.category !== 'Mechanical');
+  const bomParts = visBom(p).map(b => S.parts.get(b.partId) && { id: b.partId, ...S.parts.get(b.partId) }).filter(x => x && x.category !== 'Mechanical');
   const libList = h('div', { class: 'pal-list' });
   const drawLib = q => {
     const ql = (q || '').trim().toLowerCase();

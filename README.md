@@ -25,8 +25,13 @@ mit Kommentar) lenken spätere Würfe und schreiben alle 5 Bewertungen ein Gesch
 - **From my parts:** baut aus der Teilebibliothek (Teile mit Bestand 0 zählen nicht) plus der Liste „Always on hand“
   (Widerstände, Kondensatoren, LEDs, Kleinsignal-Dioden und -Transistoren, Taster, Kabel …), die in den Drop-Einstellungen änderbar ist.
 - **Anything goes:** ignoriert die Bibliothek.
-- **Take it on** legt ein Bench-Projekt an: Schritte, Stückliste aus der Bibliothek, Notizen (Warum, Stolperstein, Erweiterungen).
+- **Take it on** legt ein Bench-Projekt an: Schritte, Stückliste, Notizen (Warum, Stolperstein, Erweiterungen).
+  Teile, die noch nicht in der Bibliothek sind (Abgleich über Teilenummer oder Name), werden dort als
+  „nicht gezählt“ angelegt; Basics aus „Always on hand“ landen nur in den Notizen.
   Auf der Projektseite lässt sich die Idee später noch bewerten.
+- Von Drop vorgeschlagene Schritte und Teile sind im Projekt markiert (`drop: true`) und standardmäßig
+  **ausgeblendet**. Der Schalter „Show Drop’s steps and parts“ auf der Projektseite blendet sie ein; der
+  Standard für neue Projekte steht in den Drop-Einstellungen.
 
 Bewertungen und Profil liegen in der Tabelle `drops` (ein Eintrag `state`) und sind im Backup enthalten.
 Modell über `DROP_MODEL`, Standard `claude-sonnet-4-6`.
