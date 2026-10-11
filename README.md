@@ -23,7 +23,7 @@ Self-hosted · single user · works on desktop and as a phone app
 |---|---|
 | **Projects** | Steps you can tick off, a parts list that knows what's in stock, files (datasheets, photos, firmware, STL), notes, and a status from *idea* to *done*. |
 | **Parts library** | Every part you own, with pins, specs, stock and where it lives. Type the number printed on a part (or snap a photo, or just describe it) and Claude fills in the rest. |
-| **Circuit sketches** | A schematic editor made for the phone: symbols, wires, freehand notes, parts straight from your library with their real pins. Export as PNG or SVG. |
+| **Circuit sketches** | A schematic editor made for the phone: symbols in six sizes, wires, freehand notes, parts straight from your library with their real pins. Export as PNG or SVG. |
 | **Test mode** | A live DC simulation right in the browser. Flip switches, hold buttons, turn pots; LEDs glow, motors spin and moving dashes show where current flows. Warnings for burnt LEDs, shorts and the like, plus a full review of the circuit by Claude. |
 | **Drop** | Pick a scope, hit roll, get a project you can actually finish, built from the parts you have. Your likes and dislikes steer future rolls. |
 | **Installable** | A PWA: add it to your home screen and it opens like an app. Light and dark theme follow your system. |

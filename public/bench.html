@@ -475,7 +475,7 @@ select.inp{appearance:none;background-image:linear-gradient(45deg,transparent 50
 .cv .whit{fill:none;stroke:transparent;stroke-width:14}
 .cv .cmp{cursor:grab}
 .cv .sel{color:var(--sel)}
-.cv .selbox{fill:none;stroke:var(--sel);stroke-width:1.2;stroke-dasharray:4 3}
+.cv .selbox{fill:none;stroke:var(--sel);stroke-width:1.2;stroke-dasharray:4 3;vector-effect:non-scaling-stroke}
 .cv .str-sel{fill:none;stroke:var(--sel);stroke-width:9;opacity:.28}
 .cv .pin{fill:var(--paper);stroke:var(--gold);stroke-width:1.6}
 .cv .pin.on{fill:var(--gold)}
@@ -1876,10 +1876,15 @@ function blockGeom(c) {
   const top = y0 - 32, bot = y0 + (rows - 1) * G + 18;
   return { pins: P, halfW, top, bot, bb: [-halfW - 20, top, 2 * halfW + 40, bot - top] };
 }
+// Größe eines Bauteils (1 = normal). Pins und Umriss wachsen mit, Linien bleiben gleich dick.
+const SIZES = [0.5, 0.75, 1, 1.5, 2, 3];
+const sizeOf = c => (c && c.s > 0 ? c.s : 1);
+const scaleBB = (bb, k) => k === 1 ? bb : bb.map(v => v * k);
 function localPins(c) {
-  if (c.t === 'block') return blockGeom(c).pins.map(([n, x, y]) => ({ n, x, y }));
+  const k = sizeOf(c);
+  if (c.t === 'block') return blockGeom(c).pins.map(([n, x, y]) => ({ n, x: x * k, y: y * k }));
   const s = SYM[c.t]; if (!s || c.t === 'text') return [];
-  return s.pins.map(([n, x, y]) => ({ n, x, y }));
+  return s.pins.map(([n, x, y]) => ({ n, x: x * k, y: y * k }));
 }
 function worldPins(c) { return localPins(c).map(p => { const [rx, ry] = rot(p.x, p.y, c.r || 0); return { n: p.n, x: c.x + rx, y: c.y + ry }; }); }
 function pinPos(ref, cm) { const c = cm.get(ref.c); if (!c) return null; const lp = localPins(c)[ref.p]; if (!lp) return null; const [rx, ry] = rot(lp.x, lp.y, c.r || 0); return { x: c.x + rx, y: c.y + ry }; }
@@ -1934,9 +1939,10 @@ function compMarkup(c, sel, live, wc) {
     }
     body = `<path d="${d}"/>${s.x || ''}`;
   }
-  const rb = rotBB(bb, c.r || 0);
-  if (live && E && E.test && (c.t === 'switch' || c.t === 'button')) return `<g class="cmp tog"${da}><g transform="${tr} rotate(${(c.r || 0) * 90})">${body}<rect class="hit" x="${bb[0]}" y="${bb[1] - 8}" width="${bb[2]}" height="${bb[3] + 16}"/></g>${labelMarkup(c, rb)}</g>`;
-  return `<g${cls}${da}><g transform="${tr} rotate(${(c.r || 0) * 90})">${body}${live ? `<rect class="hit" x="${bb[0]}" y="${bb[1]}" width="${bb[2]}" height="${bb[3]}"/>` : ''}${sel && live ? `<rect class="selbox" x="${bb[0] - 5}" y="${bb[1] - 5}" width="${bb[2] + 10}" height="${bb[3] + 10}"/>` : ''}</g>${labelMarkup(c, rb)}</g>`;
+  const k = sizeOf(c), rb = rotBB(scaleBB(bb, k), c.r || 0);
+  const tf = `transform="${tr} rotate(${(c.r || 0) * 90})${k !== 1 ? ` scale(${k})` : ''}"${k !== 1 ? ` stroke-width="${+(2 / k).toFixed(3)}"` : ''}`;
+  if (live && E && E.test && (c.t === 'switch' || c.t === 'button')) return `<g class="cmp tog"${da}><g ${tf}>${body}<rect class="hit" x="${bb[0]}" y="${bb[1] - 8}" width="${bb[2]}" height="${bb[3] + 16}"/></g>${labelMarkup(c, rb)}</g>`;
+  return `<g${cls}${da}><g ${tf}>${body}${live ? `<rect class="hit" x="${bb[0]}" y="${bb[1]}" width="${bb[2]}" height="${bb[3]}"/>` : ''}${sel && live ? `<rect class="selbox" x="${bb[0] - 5}" y="${bb[1] - 5}" width="${bb[2] + 10}" height="${bb[3] + 10}"/>` : ''}</g>${labelMarkup(c, rb)}</g>`;
 }
 function wireMarkup(w, cm, sel, live) {
   const pts = wirePts(w, cm); if (!pts) return '';
@@ -1970,7 +1976,7 @@ function bounds(d) {
     if (c.t === 'text') { add(c.x - 6, c.y - 14); add(c.x + (c.v || 'Text').length * 8.4 + 6, c.y + 14); continue; }
     if (c.t === 'node') { add(c.x - 5, c.y - 5); add(c.x + 5, c.y + 5); continue; }
     const bb = c.t === 'block' ? blockGeom(c).bb : (SYM[c.t] || {}).bb; if (!bb) continue;
-    const rb = rotBB(bb, c.r || 0), vert = (rb[2] - rb[0]) < (rb[3] - rb[1]) && c.t !== 'block';
+    const rb = rotBB(scaleBB(bb, sizeOf(c)), c.r || 0), vert = (rb[2] - rb[0]) < (rb[3] - rb[1]) && c.t !== 'block';
     add(c.x + rb[0], c.y + rb[1] - 18); add(c.x + rb[2] + (vert ? 46 : 0), c.y + rb[3] + 18);
   }
   for (const s of d.strokes || []) for (let i = 0; i < s.p.length; i += 2) add(s.p[i], s.p[i + 1]);
@@ -2099,6 +2105,7 @@ function renderChrome() {
   if (sel.k === 'c') {
     const c = findComp(sel.id); if (!c) { E.sel = null; E.selbar.hidden = true; return; }
     if (c.t !== 'node' && c.t !== 'text') btns.push(B('Rotate', 'rotate', rotateSel));
+    if (c.t !== 'node' && c.t !== 'text') { const k = sizeOf(c); btns.push(B('Smaller', 'zout', () => resizeSel(-1)), B(k === 1 ? 'Larger' : `Larger · ${k}×`, 'zin', () => resizeSel(1))); }
     if (c.t !== 'node' && c.t !== 'gnd') btns.push(B(c.t === 'text' ? 'Edit' : 'Label', 'edit', editSel));
     if (c.t !== 'node') btns.push(B('Duplicate', 'copy', dupSel));
   } else if (sel.k === 'w') btns.push(B('Flip bend', 'flip', flipSel));
@@ -2281,6 +2288,12 @@ function delSel() {
   else d.strokes = d.strokes.filter(s => s.id !== sel.id);
   pruneNodes(); E.sel = null; commit(pre); renderEd();
 }
+function resizeSel(dir) {
+  const c = E.sel && findComp(E.sel.id); if (!c || c.t === 'node' || c.t === 'text') return;
+  const i = SIZES.indexOf(sizeOf(c)), j = Math.max(0, Math.min(SIZES.length - 1, (i < 0 ? SIZES.indexOf(1) : i) + dir));
+  if (SIZES[j] === sizeOf(c)) { toast(dir > 0 ? 'That’s the largest size.' : 'That’s the smallest size.'); return; }
+  const pre = snapState(); if (SIZES[j] === 1) delete c.s; else c.s = SIZES[j]; commit(pre); renderEd();
+}
 function rotateSel() { const c = E.sel && findComp(E.sel.id); if (!c || c.t === 'node' || c.t === 'text') return; const pre = snapState(); c.r = ((c.r || 0) + 1) % 4; commit(pre); renderEd(); }
 function flipSel() { const w = E.sel && E.data.wires.find(x => x.id === E.sel.id); if (!w) return; const pre = snapState(); w.f = !w.f; commit(pre); renderEd(); }
 function dupSel() {
@@ -2390,6 +2403,7 @@ function edKey(e) {
   if (e.key === 'Delete' || e.key === 'Backspace') { if (E.sel) { e.preventDefault(); delSel(); } return; }
   if (e.key === 'Escape') { if (E.pend) { E.pend = null; renderEd(); } else if (E.palOpen) togglePalette(false); else if (E.sel) { E.sel = null; renderEd(); } else if (E.mode !== 'select') setMode('select'); else closeEditor(); return; }
   if (k === 'r' && E.sel && E.sel.k === 'c') { rotateSel(); return; }
+  if ((e.key === '+' || e.key === '=' || e.key === '-') && E.sel && E.sel.k === 'c') { resizeSel(e.key === '-' ? -1 : 1); return; }
   if (k === 'f' && E.sel && E.sel.k === 'w') { flipSel(); return; }
   if (k === 'v') setMode('select'); else if (k === 'w') setMode('wire'); else if (k === 'p') setMode('pen'); else if (k === 't') setMode('text'); else if (k === 'a') togglePalette();
 }
@@ -2444,7 +2458,7 @@ function runSim() {
   catch (e) { console.warn('sim', e); E.test.res = null; }
   renderLayers(); renderSim(); renderTestDyn();
 }
-const compBB = c => { const bb = c.t === 'block' ? blockGeom(c).bb : (SYM[c.t] || {}).bb; return bb ? rotBB(bb, c.r || 0) : null; };
+const compBB = c => { const bb = c.t === 'block' ? blockGeom(c).bb : (SYM[c.t] || {}).bb; return bb ? rotBB(scaleBB(bb, sizeOf(c)), c.r || 0) : null; };
 function renderSim() {
   if (!E) return;
   if (!E.test || !E.test.res) { E.L.glow.innerHTML = ''; E.L.sim.innerHTML = ''; return; }
@@ -2461,11 +2475,11 @@ function renderSim() {
     const led = r.leds[c.id];
     if (led && led.brightness > 0 && led.color.hex) {
       const b = led.brightness, hex = led.color.hex;
-      glow += `<radialGradient id="lg-${c.id}"><stop offset="0" stop-color="${hex}" stop-opacity="${(0.8 * b).toFixed(2)}"/><stop offset="1" stop-color="${hex}" stop-opacity="0"/></radialGradient><circle cx="${c.x}" cy="${c.y}" r="${Math.round(28 + 22 * b)}" fill="url(#lg-${c.id})"/>`;
-      top += `<g transform="translate(${c.x} ${c.y}) rotate(${(c.r || 0) * 90})"><path d="M-10 -12L10 0L-10 12Z" fill="${hex}" fill-opacity="${(0.35 + 0.65 * b).toFixed(2)}" stroke="none"/></g>`;
+      glow += `<radialGradient id="lg-${c.id}"><stop offset="0" stop-color="${hex}" stop-opacity="${(0.8 * b).toFixed(2)}"/><stop offset="1" stop-color="${hex}" stop-opacity="0"/></radialGradient><circle cx="${c.x}" cy="${c.y}" r="${Math.round((28 + 22 * b) * sizeOf(c))}" fill="url(#lg-${c.id})"/>`;
+      top += `<g transform="translate(${c.x} ${c.y}) rotate(${(c.r || 0) * 90}) scale(${sizeOf(c)})"><path d="M-10 -12L10 0L-10 12Z" fill="${hex}" fill-opacity="${(0.35 + 0.65 * b).toFixed(2)}" stroke="none"/></g>`;
     }
     const m = r.motors[c.id];
-    if (m) top += `<g transform="translate(${c.x} ${c.y})${m < 0 ? ' scale(-1 1)' : ''}"><g><path class="spin" d="M0 -26A26 26 0 0 1 22.5 13"/><path class="spin" d="M22.5 13l.8 -8.6M22.5 13l-7.8 -3.6"/>${still ? '' : `<animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="${Math.max(0.3, 1.4 - Math.abs(m)).toFixed(2)}s" repeatCount="indefinite"/>`}</g></g>`;
+    if (m) top += `<g transform="translate(${c.x} ${c.y}) scale(${m < 0 ? -sizeOf(c) : sizeOf(c)} ${sizeOf(c)})"><g><path class="spin" d="M0 -26A26 26 0 0 1 22.5 13"/><path class="spin" d="M22.5 13l.8 -8.6M22.5 13l-7.8 -3.6"/>${still ? '' : `<animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="${Math.max(0.3, 1.4 - Math.abs(m)).toFixed(2)}s" repeatCount="indefinite"/>`}</g></g>`;
   }
   // Warnzeichen an Bauteilen mit Problemen
   const worst = new Map();
