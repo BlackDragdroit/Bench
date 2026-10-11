@@ -274,6 +274,55 @@ select.inp{appearance:none;background-image:linear-gradient(45deg,transparent 50
 .dfrom{display:flex;flex-direction:column;gap:6px;margin-top:14px;max-width:72ch}
 .dfrom>.conf{align-self:flex-start;display:inline-flex;align-items:center;gap:5px}
 .drate.compact{padding-top:0;border-top:0}
+/* phases */
+.phasebar{display:flex;align-items:center;gap:8px;margin:22px 0 0}
+.phasebar.none{gap:12px;flex-wrap:wrap}
+.phasebar.none .linkbtn{display:inline-flex;align-items:center;gap:4px}
+.pchips{flex:1;min-width:0;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:2px 0}
+.pchips::-webkit-scrollbar{display:none}
+.pchip{flex:none;display:inline-flex;align-items:center;gap:7px;height:36px;padding:0 12px 0 8px;border:1.5px solid var(--line);border-radius:999px;background:var(--paper-2);font-weight:600;font-size:14.5px;color:var(--ink-2)}
+.pchip:first-child{padding-left:14px}
+.pchip:hover{border-color:var(--ink-2);color:var(--ink)}
+.pchip.on{border-color:var(--ink);background:var(--ink);color:var(--paper-2)}
+.pchip.add{padding:0 10px;color:var(--accent);border-style:dashed}
+.pcount{font:500 12px var(--font-mono);opacity:.7}
+.phase-no{display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 5px;border-radius:999px;background:var(--paper-3);color:var(--ink);font:600 12px var(--font-mono)}
+.pchip.on .phase-no{background:var(--paper-2);color:var(--ink)}
+.phase-no.done{background:var(--ok);color:var(--paper-2)}
+.phase-no.big{min-width:30px;height:30px;font-size:14px}
+.ptags{display:inline-flex;flex-wrap:wrap;gap:4px;padding:0;border:0;background:none;text-align:left}
+.ptag{display:inline-flex;align-items:center;gap:4px;padding:1px 7px 1px 2px;border-radius:999px;background:var(--paper-3);color:var(--ink-2);font-size:12px;font-weight:500}
+.ptag b{display:inline-grid;place-items:center;min-width:16px;height:16px;border-radius:999px;background:var(--paper-2);font:600 10.5px var(--font-mono)}
+.ptag.add{padding:1px 8px;border:1px dashed var(--line);background:none;color:var(--ink-3)}
+.ptags:hover .ptag{color:var(--ink)}
+.step-sub{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:-4px 0 4px 6px}
+.step-sub:empty{display:none}
+.step-sub .step-by{margin:0}
+.psub .ptags{margin-left:2px}
+.smeta .ptags{margin-top:4px}
+.pv-meta{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.phase-picks{display:flex;flex-direction:column;border:1.5px solid var(--line);border-radius:6px;overflow:hidden;background:var(--paper)}
+.phase-pick{display:flex;align-items:center;gap:10px;padding:10px 12px;border-top:1px solid var(--line);font-weight:500}
+.phase-pick:first-child{border-top:0}
+.phase-pick input{width:18px;height:18px;accent-color:var(--accent)}
+.ov{margin-top:18px}
+.ov-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px}
+.ov-card{display:flex;flex-direction:column;gap:10px;padding:14px 14px 12px;border:1.5px solid var(--line-strong);border-radius:8px;background:var(--paper-2);min-width:0}
+.ov-card.complete{border-color:var(--ok)}
+.ov-card.loose{border-style:dashed;border-color:var(--line)}
+.ov-card header{display:flex;align-items:center;gap:10px}
+.ov-card h3{margin:0;font:700 19px/1.15 var(--font-head)}
+.ov-card h4{display:flex;align-items:center;gap:8px;margin:2px 0 0;font:600 12.5px var(--font);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
+.ov-meter{width:100%}
+.ov-card.complete .ov-meter>i{background:var(--ok)}
+.ov-steps,.ov-parts{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:2px;font-size:14px}
+.ov-steps li{display:flex;align-items:flex-start;gap:8px;padding:2px 0}
+.ov-steps li.done span{color:var(--ink-3);text-decoration:line-through}
+.ov-chk{flex:none;width:18px;height:18px;margin-top:1px;display:grid;place-items:center;padding:0;border:1.5px solid var(--ink-2);border-radius:3px;background:none;color:var(--on-accent)}
+.ov-steps li.done .ov-chk{background:var(--accent);border-color:var(--accent)}
+.ov-parts li{display:flex;align-items:baseline;gap:8px}
+.ov-foot{display:flex;align-items:center;gap:8px;margin-top:auto;padding-top:6px;border-top:1px solid var(--line)}
+@media (max-width:820px){.phasebar{margin-top:16px}.ov-grid{grid-template-columns:1fr}}
 /* sharing */
 .ibtn.on{color:var(--accent)}
 .shared-line{display:flex;align-items:center;gap:6px;margin:10px 0 0;font-size:13.5px;color:var(--ink-2)}
@@ -782,6 +831,7 @@ function render() {
 }
 function go(r) {
   if (GUEST && ((r.view && r.view !== 'project') || (r.pid && r.pid !== ME.projectId))) r = { view: 'project', pid: ME.projectId, tab: r.tab || 'steps' };
+  if (r.pid && r.pid !== S.route.pid && !('phase' in r)) r = { ...r, phase: null };
   S.route = { ...S.route, ...r }; S.scrollReset = true; saveRoute();
   if (S.route.view === 'project' && S.route.pid) subscribeSketches(S.route.pid);
   render();
@@ -966,6 +1016,7 @@ function ProjectRow(p) {
       h('span', { class: 'status st', style: `--c:var(--s-${k})` }, statusLabel(k)),
       st.total ? h('span', { class: 'mstat' }, h('span', { class: 'meter' }, h('i', { style: `width:${Math.round(st.done / st.total * 100)}%` })), `${st.done}/${st.total} steps`) : h('span', null, 'No steps yet'),
       h('span', null, `${visBom(p).length} parts`, short ? h('span', { class: 'warn' }, `, ${short} short`) : null),
+      phasesOf(p).length ? h('span', null, (() => { const list = phasesOf(p), i = list.findIndex(ph => { const st = visSteps(p).filter(x => inPhase(x, ph.id)); return !st.length || st.some(x => !x.done); }); return i < 0 ? `All ${list.length} phases done` : `Phase ${i + 1} of ${list.length}: ${list[i].name}`; })()) : null,
       h('span', null, relTime(p.updated))));
 }
 
@@ -973,7 +1024,10 @@ function ProjectView(pid) {
   const p = { id: pid, ...S.projects.get(pid) };
   const st = stepsStat(p), short = bomShort(p), tab = S.route.tab || 'steps';
   const nSk = S.sketchSub && S.sketchSub.pid === pid && S.sketchesLoaded ? S.sketches.size : null;
-  const tabs = [['steps', 'Steps', st.total || null], ['parts', 'Parts', visBom(p).length || null], ['files', 'Files', (p.files || []).length || null], ['sketches', 'Sketches', nSk || null], ['notes', 'Notes', null]];
+  if (S.route.phase && S.route.phase !== 'overview' && !curPhase(p)) S.route.phase = null;
+  const ov = S.route.phase === 'overview' && phasesOf(p).length > 0;
+  const fSteps = phaseFilter(p, visSteps(p)), fSk = S.sketchSub && S.sketchSub.pid === pid && S.sketchesLoaded ? phaseFilter(p, [...S.sketches.values()]).length : null;
+  const tabs = [['steps', 'Steps', fSteps.length || null], ['parts', 'Parts', phaseFilter(p, visBom(p)).length || null], ['files', 'Files', phaseFilter(p, p.files || []).length || null], ['sketches', 'Sketches', fSk || null], ['notes', 'Notes', null]];
   const k = p.status || 'idea';
   const sel = h('select', { 'aria-label': 'Status', onChange: e => patchProject(pid, { status: e.target.value }) }, STATUSES.map(([sk, l]) => h('option', { value: sk, selected: sk === k }, l)));
   return h('div', { class: 'page' },
@@ -990,8 +1044,121 @@ function ProjectView(pid) {
     p.description ? h('p', { class: 'pdesc' }, p.description) : null,
     !GUEST && sharedWith(pid).length ? h('p', { class: 'shared-line' }, icon('share', 14), 'Shared with ', sharedWith(pid).map(i => i.name).join(', ')) : null,
     p.drop && p.drop.rollId ? DropFrom(p) : null,
-    h('div', { class: 'tabs', role: 'tablist' }, tabs.map(([tk, l, n]) => h('button', { class: 'tab', role: 'tab', 'aria-selected': String(tab === tk), onClick: () => { S.route.tab = tk; saveRoute(); render(); } }, l, n != null ? h('span', { class: 'n' }, n) : null))),
-    h('div', { role: 'tabpanel' }, tab === 'steps' ? StepsTab(p) : tab === 'parts' ? BomTab(p) : tab === 'files' ? FilesTab(p) : tab === 'sketches' ? SketchesTab(p) : NotesTab(p)));
+    PhaseBar(p),
+    ov ? PhaseOverview(p) : [
+      h('div', { class: 'tabs', role: 'tablist' }, tabs.map(([tk, l, n]) => h('button', { class: 'tab', role: 'tab', 'aria-selected': String(tab === tk), onClick: () => { S.route.tab = tk; saveRoute(); render(); } }, l, n != null ? h('span', { class: 'n' }, n) : null))),
+      h('div', { role: 'tabpanel' }, tab === 'steps' ? StepsTab(p) : tab === 'parts' ? BomTab(p) : tab === 'files' ? FilesTab(p) : tab === 'sketches' ? SketchesTab(p) : NotesTab(p))]);
+}
+
+/* ---- phases ---- */
+// Ein Projekt kann Phasen haben (p.phases = [{ id, name, notes }]). Schritte, Teile,
+// Dateien und Skizzen gehören über item.phases = [ids] zu einer oder mehreren Phasen.
+// S.route.phase: null = alles, eine Phasen-ID = gefiltert, 'overview' = Übersicht.
+const phasesOf = p => (p && Array.isArray(p.phases) ? p.phases : []);
+const curPhase = p => { const id = S.route.phase; return id && id !== 'overview' ? phasesOf(p).find(x => x.id === id) || null : null; };
+const inPhase = (item, phId) => !!item && Array.isArray(item.phases) && item.phases.includes(phId);
+const noPhase = item => !item || !Array.isArray(item.phases) || !item.phases.length;
+const phaseFilter = (p, list) => { const ph = curPhase(p); return ph ? list.filter(x => inPhase(x, ph.id)) : list; };
+// Neu angelegte Dinge landen in der gerade gewählten Phase
+const withPhase = (p, item) => { const ph = curPhase(p); return ph ? { ...item, phases: [ph.id] } : item; };
+const phaseNo = (p, id) => phasesOf(p).findIndex(x => x.id === id) + 1;
+function phaseStats(p, ph) {
+  const steps = visSteps(p).filter(x => inPhase(x, ph.id)), bom = visBom(p).filter(x => inPhase(x, ph.id));
+  const short = bom.filter(b => { const pt = S.parts.get(b.partId); return pt && typeof pt.stock === 'number' && pt.stock < b.qty; }).length;
+  const files = (p.files || []).filter(x => inPhase(x, ph.id)), sk = [...S.sketches.values()].filter(x => inPhase(x, ph.id));
+  const done = steps.filter(x => x.done).length;
+  return { steps, bom, short, files, sk, done, total: steps.length, complete: steps.length > 0 && done === steps.length };
+}
+function setPhase(id) { S.route.phase = id; saveRoute(); render(); }
+async function addPhase(pid) {
+  const p = S.projects.get(pid); if (!p) return;
+  const n = await promptDialog({ title: 'New phase', label: 'Name', value: `Phase ${phasesOf(p).length + 1}`, ok: 'Add phase', placeholder: 'e.g. Prototype, PCB, Enclosure' });
+  if (!n || !n.trim()) return;
+  const ph = { id: uid8(), name: n.trim(), notes: '' };
+  patchProject(pid, { phases: [...phasesOf(S.projects.get(pid)), ph] });
+  setPhase(ph.id);
+}
+function phaseMenu(pid, phId) {
+  const p = S.projects.get(pid), list = phasesOf(p), i = list.findIndex(x => x.id === phId), ph = list[i]; if (!ph) return;
+  let m;
+  const opt = (ic, label, sub, fn, ok = true) => ok ? h('button', { class: 'opt', onClick: () => { m.close(); fn(); } }, icon(ic, 20), h('span', null, label, sub ? h('small', null, sub) : null)) : null;
+  const move = d => { const a = [...phasesOf(S.projects.get(pid))], j = i + d; [a[i], a[j]] = [a[j], a[i]]; patchProject(pid, { phases: a }); };
+  m = openModal({ title: `${i + 1} · ${ph.name}`, body: h('div', { class: 'opts' },
+    opt('text', 'Rename', null, async () => { const n = await promptDialog({ title: 'Rename phase', label: 'Name', value: ph.name, ok: 'Rename' }); if (n && n.trim()) patchProject(pid, { phases: phasesOf(S.projects.get(pid)).map(x => x.id === phId ? { ...x, name: n.trim() } : x) }); }),
+    opt('back', 'Move earlier', null, () => move(-1), i > 0),
+    opt('up', 'Move later', null, () => move(1), i < list.length - 1),
+    opt('trash', 'Delete phase', 'Its steps, parts, files and sketches stay in the project', () => deletePhase(pid, phId))) });
+}
+async function deletePhase(pid, phId) {
+  const p = S.projects.get(pid), ph = phasesOf(p).find(x => x.id === phId); if (!ph) return;
+  if (!await confirmDialog({ title: `Delete “${ph.name}”?`, text: 'Steps, parts, files and sketches stay in the project. They just aren’t in this phase anymore.', ok: 'Delete phase' })) return;
+  const strip = x => inPhase(x, phId) ? { ...x, phases: x.phases.filter(y => y !== phId) } : x;
+  const cur = S.projects.get(pid);
+  patchProject(pid, { phases: phasesOf(cur).filter(x => x.id !== phId), steps: (cur.steps || []).map(strip), bom: (cur.bom || []).map(strip), files: (cur.files || []).map(strip) });
+  for (const [sid, sk] of S.sketches) if (inPhase(sk, phId)) setSketchPhases(sid, sk.phases.filter(y => y !== phId));
+  if (S.route.phase === phId) setPhase(null); else render();
+}
+function setSketchPhases(sid, phases) {
+  const sk = S.sketches.get(sid); if (!sk) return;
+  S.sketches.set(sid, { ...sk, phases }); queueWrite(sketchCol().doc(sid), { phases, updated: Date.now() }); schedRender();
+}
+// Zuordnen: eine Sache kann in mehreren Phasen sein
+function assignPhases(p, item, what, onSave) {
+  const list = phasesOf(p); if (!list.length) return;
+  let m; const chosen = new Set(item.phases || []);
+  const rows = list.map((ph, i) => h('label', { class: 'phase-pick' },
+    h('input', { type: 'checkbox', checked: chosen.has(ph.id) ? true : null, onChange: e => { if (e.target.checked) chosen.add(ph.id); else chosen.delete(ph.id); } }),
+    h('span', { class: 'phase-no' }, i + 1), ph.name));
+  m = openModal({ title: 'Phases', body: [h('p', { class: 'dim sm', style: 'margin:0' }, `Which phases is ${what} part of? Pick as many as you like.`), h('div', { class: 'phase-picks' }, rows)],
+    footer: [h('button', { class: 'btn quiet', onClick: () => m.close() }, 'Cancel'), h('button', { class: 'btn primary', onClick: () => { m.close(); onSave(list.map(x => x.id).filter(id => chosen.has(id))); } }, 'Save')] });
+}
+// Kleine Phasen-Schilder an einer Sache; Tippen öffnet die Zuordnung
+function PhaseTags(p, item, what, onSave, opts = {}) {
+  const list = phasesOf(p); if (!list.length) return null;
+  const cur = curPhase(p);
+  const tags = list.map((ph, i) => inPhase(item, ph.id) && !(opts.hideCurrent && cur && cur.id === ph.id) ? h('span', { class: 'ptag' }, h('b', null, i + 1), ph.name) : null).filter(Boolean);
+  if (!tags.length && opts.hideCurrent && cur && inPhase(item, cur.id) && !opts.always) return null;
+  return h('button', { class: 'ptags', title: 'Change phases', onClick: e => { e.stopPropagation(); assignPhases(p, item, what, onSave); } },
+    tags.length ? tags : h('span', { class: 'ptag add' }, noPhase(item) ? '+ phase' : 'also in…'));
+}
+function PhaseBar(p) {
+  const list = phasesOf(p), sel = S.route.phase || null, cur = curPhase(p);
+  if (!list.length) return h('div', { class: 'phasebar none' }, h('button', { class: 'linkbtn sm', onClick: () => addPhase(p.id) }, icon('plus', 15), 'Add phases'), h('span', { class: 'dim sm' }, 'Split the build into stages like Prototype, PCB and Enclosure.'));
+  const chip = (id, label, extra, title) => h('button', { class: 'pchip' + (sel === id || (!sel && id === null) ? ' on' : ''), title, onClick: () => { if (id && sel === id) phaseMenu(p.id, id); else setPhase(id); } }, label, extra);
+  // Die Leiste wird bei jedem Rendern neu gebaut: gewählte Phase wieder in die Mitte holen (wichtig am Handy)
+  const center = box => setTimeout(() => { const c = box.querySelector('.pchip.on'); if (c && box.scrollWidth > box.clientWidth) box.scrollLeft = Math.max(0, c.offsetLeft - box.offsetLeft - (box.clientWidth - c.offsetWidth) / 2); }, 0);
+  const box = h('div', { class: 'pchips' },
+      chip(null, 'All', null, 'Everything in this project'),
+      list.map((ph, i) => { const st = phaseStats(p, ph); return chip(ph.id, [h('span', { class: 'phase-no' + (st.complete ? ' done' : '') }, st.complete ? icon('check', 12) : i + 1), ph.name], st.total ? h('span', { class: 'pcount' }, `${st.done}/${st.total}`) : null, sel === ph.id ? 'Tap again for rename, move or delete' : ph.name); }),
+      h('button', { class: 'pchip add', title: 'Add a phase', 'aria-label': 'Add a phase', onClick: () => addPhase(p.id) }, icon('plus', 15)));
+  center(box);
+  return h('div', { class: 'phasebar' }, box,
+    cur ? h('button', { class: 'ibtn', 'aria-label': 'Phase options', title: 'Rename, move or delete this phase', onClick: () => phaseMenu(p.id, cur.id) }, icon('more')) : null,
+    h('button', { class: 'btn sm' + (sel === 'overview' ? ' primary' : ''), 'aria-pressed': String(sel === 'overview'), onClick: () => setPhase(sel === 'overview' ? null : 'overview') }, icon('fit', 16), h('span', { class: 'hide-sm' }, 'Overview')));
+}
+// Übersicht: alle Phasen nebeneinander mit Fortschritt, Schritten und Teilen
+function PhaseOverview(p) {
+  const list = phasesOf(p);
+  const stepLine = st => h('li', { class: st.done ? 'done' : null }, h('button', { class: 'ov-chk', role: 'checkbox', 'aria-checked': String(!!st.done), 'aria-label': 'Mark step done', onClick: () => updStep(p.id, st.id, { done: !st.done, doneBy: !st.done ? ME.name : null }) }, st.done ? icon('check', 12) : null), h('span', null, st.text || 'Untitled step'));
+  const partLine = b => { const pt = S.parts.get(b.partId) || {}; const short = typeof pt.stock === 'number' && pt.stock < b.qty; return h('li', null, h('span', { class: 'mono dim' }, b.qty + '×'), h('span', { class: 'grow' }, pt.name || 'Removed part'), short ? h('span', { class: 'warn sm' }, 'short') : null); };
+  const card = (ph, i) => {
+    const st = phaseStats(p, ph), pct = st.total ? Math.round(st.done / st.total * 100) : 0;
+    return h('article', { class: 'ov-card' + (st.complete ? ' complete' : '') },
+      h('header', null, h('span', { class: 'phase-no big' + (st.complete ? ' done' : '') }, st.complete ? icon('check', 15) : i + 1), h('div', { class: 'grow' }, h('h3', null, ph.name), h('div', { class: 'dim sm' }, st.total ? `${st.done} of ${st.total} steps${st.complete ? ', done' : ''}` : 'No steps yet')), h('button', { class: 'ibtn', 'aria-label': 'Phase options', onClick: () => phaseMenu(p.id, ph.id) }, icon('more'))),
+      h('span', { class: 'meter ov-meter' }, h('i', { style: `width:${pct}%` })),
+      st.steps.length ? h('ul', { class: 'ov-steps' }, st.steps.slice(0, 8).map(stepLine), st.steps.length > 8 ? h('li', { class: 'dim sm' }, `and ${st.steps.length - 8} more`) : null) : null,
+      st.bom.length ? [h('h4', null, 'Parts', st.short ? h('span', { class: 'pill short' }, `${st.short} short`) : null), h('ul', { class: 'ov-parts' }, st.bom.slice(0, 6).map(partLine), st.bom.length > 6 ? h('li', { class: 'dim sm' }, `and ${st.bom.length - 6} more`) : null)] : null,
+      h('div', { class: 'ov-foot' }, h('span', { class: 'dim sm' }, [st.files.length ? `${st.files.length} file${st.files.length > 1 ? 's' : ''}` : '', st.sk.length ? `${st.sk.length} sketch${st.sk.length > 1 ? 'es' : ''}` : ''].filter(Boolean).join(' · ') || ' '), h('span', { class: 'grow' }), h('button', { class: 'btn sm', onClick: () => setPhase(ph.id) }, 'Open phase')));
+  };
+  const loose = { steps: visSteps(p).filter(noPhase), bom: visBom(p).filter(noPhase), files: (p.files || []).filter(noPhase), sk: [...S.sketches.values()].filter(noPhase) };
+  const anyLoose = loose.steps.length || loose.bom.length || loose.files.length || loose.sk.length;
+  return h('div', { class: 'ov' },
+    h('div', { class: 'ov-grid' }, list.map(card),
+      anyLoose ? h('article', { class: 'ov-card loose' },
+        h('header', null, h('span', { class: 'phase-no big' }, '–'), h('div', { class: 'grow' }, h('h3', null, 'Not in a phase'), h('div', { class: 'dim sm' }, 'Tap the phase tags in a list to sort these in.'))),
+        loose.steps.length ? h('ul', { class: 'ov-steps' }, loose.steps.slice(0, 8).map(stepLine), loose.steps.length > 8 ? h('li', { class: 'dim sm' }, `and ${loose.steps.length - 8} more`) : null) : null,
+        loose.bom.length ? [h('h4', null, 'Parts'), h('ul', { class: 'ov-parts' }, loose.bom.slice(0, 6).map(partLine))] : null,
+        h('div', { class: 'ov-foot' }, h('span', { class: 'dim sm' }, [loose.files.length ? `${loose.files.length} file${loose.files.length > 1 ? 's' : ''}` : '', loose.sk.length ? `${loose.sk.length} sketch${loose.sk.length > 1 ? 'es' : ''}` : ''].filter(Boolean).join(' · ') || ' '), h('span', { class: 'grow' }), h('button', { class: 'btn sm', onClick: () => setPhase(null) }, 'Show all'))) : null));
 }
 
 /* ---- steps ---- */
@@ -1005,18 +1172,18 @@ function moveStep(pid, list, i, d) {
 }
 function delStep(pid, sid) { patchProject(pid, { steps: curSteps(pid).filter(s => s.id !== sid) }); if (S.openStep === sid) S.openStep = null; }
 function StepsTab(p) {
-  const steps = visSteps(p), key = 'newstep:' + p.id;
-  const add = h('input', { class: 'inp', placeholder: 'Add a step and press Enter', 'aria-label': 'New step', 'data-key': key, 'data-live': true, enterkeyhint: 'done' });
+  const steps = phaseFilter(p, visSteps(p)), key = 'newstep:' + p.id, ph = curPhase(p);
+  const add = h('input', { class: 'inp', placeholder: ph ? `Add a step to ${ph.name}` : 'Add a step and press Enter', 'aria-label': 'New step', 'data-key': key, 'data-live': true, enterkeyhint: 'done' });
   add.value = drafts.get(key) || '';
   add.addEventListener('input', () => drafts.set(key, add.value));
-  const addStep = () => { const t = add.value.trim(); if (!t) return; drafts.delete(key); add.value = ''; patchProject(p.id, { steps: [...curSteps(p.id), { id: uid8(), text: t, done: false, note: '', by: ME.name }] }); };
+  const addStep = () => { const t = add.value.trim(); if (!t) return; drafts.delete(key); add.value = ''; patchProject(p.id, { steps: [...curSteps(p.id), withPhase(p, { id: uid8(), text: t, done: false, note: '', by: ME.name })] }); };
   add.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); addStep(); } });
   // Eigene Schritte und Drops Vorschläge sind zwei getrennte Listen mit eigener Nummerierung
   const own = steps.filter(s => !s.drop), sug = steps.filter(s => s.drop);
   return h('div', null, hiddenNote(p, 'steps'),
     sug.length ? h('h3', { class: 'stephead' }, 'Your steps') : null,
     own.length ? h('ol', { class: 'steps' }, own.map((s, i) => StepRow(p, s, i, own))) :
-      EmptyBlock('No steps yet', sug.length ? 'Add your own steps here. Drop’s suggestions stay in their own list below.' : 'Break the build into steps you can tick off: order parts, breadboard it, write firmware, solder, test.'),
+      EmptyBlock(ph ? `No steps in ${ph.name} yet` : 'No steps yet', ph ? 'Add steps for this phase below, or tap the phase tags on a step under “All” to add it here too.' : sug.length ? 'Add your own steps here. Drop’s suggestions stay in their own list below.' : 'Break the build into steps you can tick off: order parts, breadboard it, write firmware, solder, test.'),
     h('div', { class: 'addrow' }, add, h('button', { class: 'btn', onClick: addStep }, icon('plus', 17), 'Add')),
     sug.length ? [h('h3', { class: 'stephead' }, icon('dice', 16), 'Suggested by Drop', h('button', { class: 'linkbtn sm', onClick: () => setShowPlan(p.id, false) }, 'Hide')),
       h('ol', { class: 'steps sug' }, sug.map((s, i) => StepRow(p, s, i, sug)))] : null);
@@ -1036,7 +1203,7 @@ function StepRow(p, s, i, list) {
     h('div', { class: 'step-row' },
       h('button', { class: 'chk', role: 'checkbox', 'aria-checked': String(!!s.done), 'aria-label': 'Mark step done', onClick: () => updStep(p.id, s.id, { done: !s.done, doneBy: !s.done ? ME.name : null }) }, s.done ? icon('check', 15) : null),
       h('span', { class: 'step-num' }, i + 1),
-      h('div', { class: 'step-main' }, stepText(p, s, i), s.done && byOther(s.doneBy) ? h('span', { class: 'step-by' }, icon('check', 12), s.doneBy) : byOther(s.by) ? h('span', { class: 'step-by' }, 'added by ' + s.by) : null),
+      h('div', { class: 'step-main' }, stepText(p, s, i), h('div', { class: 'step-sub' }, s.done && byOther(s.doneBy) ? h('span', { class: 'step-by' }, icon('check', 12), s.doneBy) : byOther(s.by) ? h('span', { class: 'step-by' }, 'added by ' + s.by) : null, PhaseTags(p, s, 'this step', v => updStep(p.id, s.id, { phases: v }), { hideCurrent: true }))),
       h('button', { class: 'ibtn', 'aria-label': open ? 'Hide step details' : 'Step details', 'aria-expanded': String(open), title: s.note ? 'Has notes' : 'Notes and options', onClick: () => { S.openStep = open ? null : s.id; render(); } }, icon(open ? 'up' : (s.note ? 'note' : 'down'), 18))),
     open ? h('div', { class: 'step-more' },
       boundInput({ tag: 'textarea', key: 'stepnote:' + s.id, value: s.note, class: 'inp', rows: 3, placeholder: 'Notes, measurements, links…', 'aria-label': 'Step notes', onCommit: v => updStep(p.id, s.id, { note: v }) }),
@@ -1053,17 +1220,20 @@ function addToBom(pid, partId, silent) {
   const bom = curBom(pid), part = S.parts.get(partId), name = part ? part.name : 'Part';
   const ex = bom.find(b => b.partId === partId);
   if (ex && ex.drop && planHidden(S.projects.get(pid))) { updBom(pid, ex.id, { drop: false }); if (!silent) toast(`Added ${name} to the parts list`); }
+  else if (ex && curPhase(S.projects.get(pid)) && !inPhase(ex, curPhase(S.projects.get(pid)).id)) { const ph = curPhase(S.projects.get(pid)); updBom(pid, ex.id, { phases: [...(ex.phases || []), ph.id] }); if (!silent) toast(`${name} is now also in ${ph.name}`); }
   else if (ex) { updBom(pid, ex.id, { qty: ex.qty + 1 }); if (!silent) toast(`${name}: ${ex.qty + 1} needed`); }
-  else { patchProject(pid, { bom: [...bom, { id: uid8(), partId, qty: 1, note: '', by: ME.name }] }); if (!silent) toast(`Added ${name} to the parts list`); }
+  else { patchProject(pid, { bom: [...bom, withPhase(S.projects.get(pid), { id: uid8(), partId, qty: 1, note: '', by: ME.name })] }); if (!silent) toast(`Added ${name} to the parts list`); }
 }
 function BomTab(p) {
-  const bom = visBom(p), short = bomShort(p);
+  const bom = phaseFilter(p, visBom(p)), ph = curPhase(p);
+  const short = bom.filter(b => { const pt = S.parts.get(b.partId); return pt && typeof pt.stock === 'number' && pt.stock < b.qty; }).length;
   return h('div', null, hiddenNote(p, 'parts'),
     h('div', { class: 'bar' },
       h('span', { class: 'dim' }, bom.length ? `${bom.length} part${bom.length > 1 ? 's' : ''} on the list` : ''),
       short ? h('span', { class: 'pill short' }, `${short} short`) : null, h('span', { class: 'grow' }),
       short ? h('button', { class: 'btn sm', onClick: () => shoppingList(p.id) }, icon('list', 16), 'Shopping list') : null,
       h('button', { class: 'btn primary sm', onClick: () => bomPicker(p.id) }, icon('plus', 16), 'Add part')),
+    bom.length === 0 && ph ? EmptyBlock(`No parts in ${ph.name} yet`, 'Add parts for this phase, or tap the phase tags on a part under “All” to add it here too.', h('button', { class: 'btn primary', onClick: () => bomPicker(p.id) }, icon('plus'), 'Add part')) :
     bom.length === 0 ? EmptyBlock('No parts listed yet', 'Pick parts from your library. If one isn’t there, type the number printed on it and it gets identified for you.', h('button', { class: 'btn primary', onClick: () => bomPicker(p.id) }, icon('plus'), 'Add part')) :
     h('div', { class: 'bom' },
       h('div', { class: 'bom-row bom-head' }, h('span', null, 'Part'), h('span', null, 'Needed'), h('span', null, 'In stock'), h('span', null, 'Status'), h('span')),
@@ -1076,7 +1246,7 @@ function BomRow(p, b) {
   return h('div', { class: 'bom-row' },
     h('div', { class: 'bcell-name' },
       part ? h('button', { class: 'pname', onClick: () => partDialog({ id: b.partId }) }, part.name) : h('span', { class: 'pname' }, 'Part no longer in library'),
-      part ? h('div', { class: 'psub' }, part.mpn ? h('span', { class: 'mono' }, part.mpn) : null, part.category ? h('span', null, part.category) : null, part.location ? h('span', null, part.location) : null, byOther(b.by) ? h('span', null, 'added by ' + b.by) : null) : null),
+      part ? h('div', { class: 'psub' }, part.mpn ? h('span', { class: 'mono' }, part.mpn) : null, part.category ? h('span', null, part.category) : null, part.location ? h('span', null, part.location) : null, byOther(b.by) ? h('span', null, 'added by ' + b.by) : null, PhaseTags(p, b, 'this part', v => updBom(p.id, b.id, { phases: v }), { hideCurrent: true })) : null),
     h('div', null, h('span', { class: 'cap' }, 'Needed'), Stepper(() => (curBom(p.id).find(x => x.id === b.id) || b).qty, v => updBom(p.id, b.id, { qty: v }), 1, 'needed', 'qty:' + b.id)),
     h('div', { class: 'bstock' }, h('span', { class: 'cap' }, 'In stock'),
       !part ? h('span', { class: 'dim' }, '—') : GUEST ? h('span', { class: 'mono stock-ro' }, typeof stock === 'number' ? String(stock) : 'not counted') : typeof stock === 'number' ? Stepper(() => (S.parts.get(b.partId) || {}).stock || 0, v => patchPart(b.partId, { stock: v }), 0, 'in stock', 'stk:' + b.id) :
@@ -1086,12 +1256,12 @@ function BomRow(p, b) {
 }
 function shoppingList(pid) {
   const p = S.projects.get(pid), lines = [];
-  for (const b of visBom(p)) {
+  for (const b of phaseFilter(p, visBom(p))) {
     const pt = S.parts.get(b.partId); if (!pt || typeof pt.stock !== 'number') continue;
     const need = b.qty - pt.stock;
     if (need > 0) lines.push(`${need} × ${pt.name}${pt.mpn && !(pt.name || '').includes(pt.mpn) ? ` (${pt.mpn})` : ''}`);
   }
-  const text = `${p.name}: parts to buy\n` + lines.join('\n');
+  const text = `${p.name}${curPhase(p) ? ' · ' + curPhase(p).name : ''}: parts to buy\n` + lines.join('\n');
   const ta = h('textarea', { class: 'inp mono', rows: Math.min(14, lines.length + 2), readonly: true, 'aria-label': 'Shopping list' }); ta.value = text;
   let m;
   m = openModal({ title: 'Shopping list', body: [h('p', { class: 'dim', style: 'margin:0' }, 'Everything where the list needs more than you have in stock.'), ta],
@@ -1317,7 +1487,7 @@ async function uploadFiles(pid, list) {
       let res;
       try { res = await S.assets.upload(prep.blob, { type: prep.type }); }
       catch (e) { if (e && e.code === 'store_unavailable') { await sleep(800); res = await S.assets.upload(prep.blob, { type: prep.type }); } else throw e; }
-      const rec = { id: uid8(), assetId: res.id, name: file.name, type: prep.orig, size: file.size, enc: prep.enc, added: Date.now(), by: ME.name };
+      const rec = withPhase(S.projects.get(pid), { id: uid8(), assetId: res.id, name: file.name, type: prep.orig, size: file.size, enc: prep.enc, added: Date.now(), by: ME.name });
       patchProject(pid, { files: [...((S.projects.get(pid) || {}).files || []), rec] }); ok++;
     } catch (e) { console.warn(e); toast(uploadErrCopy(e, file.name)); if (e && (e.code === 'rate_limited' || e.code === 'quota_or_state' || e.code === 'not_granted' || e.code === 'capability_disabled')) break; await sleep(1200); }
   }
@@ -1325,7 +1495,7 @@ async function uploadFiles(pid, list) {
   if (ok) toast(ok === 1 ? 'File uploaded' : `${ok} files uploaded`);
 }
 function FilesTab(p) {
-  const files = p.files || [];
+  const files = phaseFilter(p, p.files || []);
   if (!S.assets) return EmptyBlock('Uploads aren’t available in this view', 'Open Bench from your own Claude account on claude.ai or in the Claude app to add files.');
   const input = h('input', { type: 'file', multiple: true, hidden: true, onChange: e => { const fl = [...e.target.files]; e.target.value = ''; uploadFiles(p.id, fl); } });
   const drop = h('div', { class: 'drop' },
@@ -1336,7 +1506,7 @@ function FilesTab(p) {
   drop.addEventListener('dragleave', () => drop.classList.remove('over'));
   drop.addEventListener('drop', e => { e.preventDefault(); drop.classList.remove('over'); uploadFiles(p.id, [...(e.dataTransfer && e.dataTransfer.files || [])]); });
   return h('div', null, drop,
-    files.length ? h('div', { class: 'fgrid' }, [...files].reverse().map(f => FileTile(p, f))) : EmptyBlock('No files yet', 'Keep datasheets, build photos, firmware and print files right next to the project.'));
+    files.length ? h('div', { class: 'fgrid' }, [...files].reverse().map(f => FileTile(p, f))) : EmptyBlock(curPhase(p) ? `No files in ${curPhase(p).name} yet` : 'No files yet', 'Keep datasheets, build photos, firmware and print files right next to the project.'));
 }
 function FileTile(p, f) {
   const isImg = !f.missing && f.enc === 'raw' && /^image\//.test(f.type);
@@ -1378,7 +1548,8 @@ function filePreview(pid, fid) {
     fetch(url).then(r => r.text()).then(t => { view.textContent = t.length > 150000 ? t.slice(0, 150000) + '\n\n… preview cut off here. Download the file to see all of it.' : t; }).catch(() => { view.textContent = 'The preview didn’t load.'; });
   } else view = h('div', { class: 'pv-none' }, h('span', { class: 'fext big' }, '.' + (extOf(f.name) || 'file')), h('p', { class: 'dim', style: 'margin:0' }, 'There’s no preview for this kind of file. Download it to open it.'));
   let m;
-  m = openModal({ title: f.name, wide: true, body: [view, h('div', { class: 'dim sm' }, `${fmtBytes(f.size)}, added ${shortDate(f.added)}`)],
+  const pp = S.projects.get(pid);
+  m = openModal({ title: f.name, wide: true, body: [view, h('div', { class: 'dim sm pv-meta' }, `${fmtBytes(f.size)}, added ${shortDate(f.added)}`, PhaseTags({ id: pid, ...pp }, f, 'this file', v => { patchProject(pid, { files: ((S.projects.get(pid) || {}).files || []).map(x => x.id === fid ? { ...x, phases: v } : x) }); m.close(); filePreview(pid, fid); }))],
     footer: [
       h('button', { class: 'btn quiet danger-text', onClick: async () => { if (await confirmDialog({ title: 'Delete this file?', text: `“${f.name}” will be removed from the project and from storage. This can’t be undone.` })) { await deleteFile(pid, fid); m.close(); } } }, icon('trash', 16), 'Delete'),
       h('span', { class: 'grow' }),
@@ -1400,20 +1571,20 @@ function subscribeSketches(pid) {
 async function newSketch(pid) {
   const id = uid8(), now = Date.now();
   const n = S.sketches.size + 1;
-  const doc = { projectId: pid, name: n > 1 ? `Sketch ${n}` : 'Main circuit', comps: [], wires: [], strokes: [], created: now, updated: now };
+  const doc = withPhase(S.projects.get(pid), { projectId: pid, name: n > 1 ? `Sketch ${n}` : 'Main circuit', comps: [], wires: [], strokes: [], created: now, updated: now });
   S.sketches.set(id, doc);
   try { await sketchCol().doc(id).set(doc); } catch (e) { S.sketches.delete(id); writeFailed(e); schedRender(); return; }
   openEditor(id);
 }
 function SketchesTab(p) {
-  const list = [...S.sketches.entries()].map(([id, s]) => ({ id, ...s })).sort((a, b) => (b.updated || 0) - (a.updated || 0));
+  const list = phaseFilter(p, [...S.sketches.entries()].map(([id, s]) => ({ id, ...s }))).sort((a, b) => (b.updated || 0) - (a.updated || 0));
   const add = h('button', { class: 'btn primary sm', onClick: () => newSketch(p.id) }, icon('plus', 16), 'New sketch');
   return h('div', null,
     list.length ? h('div', { class: 'bar' }, h('span', { class: 'dim' }, 'Wire up symbols and this project’s parts, or draw freehand.'), h('span', { class: 'grow' }), add) : null,
     !S.sketchesLoaded ? h('div', { class: 'loading' }, 'Loading sketches…') :
     list.length ? h('div', { class: 'sgrid' }, list.map(s => h('div', { class: 'scard' },
       h('button', { class: 'sthumb', 'aria-label': `Open ${s.name || 'sketch'}`, onClick: () => openEditor(s.id), html: thumbSVG(s) }),
-      h('div', { class: 'smeta' }, h('div', { style: 'flex:1;min-width:0' }, h('div', { class: 'fname' }, s.name || 'Untitled sketch'), h('div', { class: 'fsize' }, relTime(s.updated))),
+      h('div', { class: 'smeta' }, h('div', { style: 'flex:1;min-width:0' }, h('div', { class: 'fname' }, s.name || 'Untitled sketch'), h('div', { class: 'fsize' }, relTime(s.updated)), PhaseTags(p, s, 'this sketch', v => setSketchPhases(s.id, v), { hideCurrent: true })),
         h('button', { class: 'ibtn', 'aria-label': `Options for ${s.name || 'sketch'}`, onClick: () => sketchMenu(s) }, icon('more')))))) :
     EmptyBlock('No sketches yet', 'Sketch how the circuit goes together: place symbols or the parts on this project’s list, then wire their pins.', h('button', { class: 'btn primary', onClick: () => newSketch(p.id) }, icon('plus'), 'New sketch')));
 }
@@ -1423,10 +1594,15 @@ function sketchMenu(s) {
   m = openModal({ title: s.name || 'Sketch', body: h('div', { class: 'opts' },
     opt('edit', 'Open', null, () => openEditor(s.id)),
     opt('text', 'Rename', null, async () => { const n = await promptDialog({ title: 'Rename sketch', label: 'Name', value: s.name || '', ok: 'Rename' }); if (n && n.trim()) { S.sketches.set(s.id, { ...S.sketches.get(s.id), name: n.trim() }); queueWrite(sketchCol().doc(s.id), { name: n.trim(), updated: Date.now() }); schedRender(); } }),
+    phasesOf(S.projects.get(s.projectId)).length ? opt('fit', 'Phases', 'Which phases this sketch belongs to', () => assignPhases(S.projects.get(s.projectId), S.sketches.get(s.id) || s, 'this sketch', v => setSketchPhases(s.id, v))) : null,
     opt('copy', 'Duplicate', null, async () => { const src = S.sketches.get(s.id); const id = uid8(), now = Date.now(); const doc = { ...clone(src), name: (src.name || 'Sketch') + ' copy', created: now, updated: now }; S.sketches.set(id, doc); schedRender(); try { await sketchCol().doc(id).set(doc); toast('Sketch duplicated'); } catch (e) { writeFailed(e); } }),
     opt('trash', 'Delete', 'This can’t be undone', async () => { if (await confirmDialog({ title: 'Delete this sketch?', text: `“${s.name || 'Sketch'}” will be deleted.` })) { S.sketches.delete(s.id); wq.delete(sketchCol().doc(s.id).path); schedRender(); try { await sketchCol().doc(s.id).delete(); toast('Sketch deleted'); } catch (e) { writeFailed(e); } } })) });
 }
 function NotesTab(p) {
+  const ph = curPhase(p);
+  if (ph) return h('div', null,
+    boundInput({ tag: 'textarea', key: 'pnotes:' + ph.id, value: ph.notes || '', class: 'inp notes-ta', 'aria-label': `Notes for ${ph.name}`, placeholder: `Notes for ${ph.name}: what to watch out for, results, links…`, onCommit: v => patchProject(p.id, { phases: phasesOf(S.projects.get(p.id)).map(x => x.id === ph.id ? { ...x, notes: v } : x) }) }),
+    h('p', { class: 'dim sm' }, 'These notes belong to this phase. The project notes are under “All”.'));
   return h('div', null,
     boundInput({ tag: 'textarea', key: 'notes:' + p.id, value: p.notes, class: 'inp notes-ta', 'aria-label': 'Project notes', placeholder: 'Ideas, measurements, links, what went wrong and how you fixed it…', onCommit: v => patchProject(p.id, { notes: v }) }),
     h('p', { class: 'dim sm' }, 'Notes save as you type.'));
@@ -2557,7 +2733,7 @@ function exportMenu() {
   m = openModal({ title: 'Export sketch', body: h('div', { class: 'opts' },
     opt('image', 'Save as image to project files', 'Adds a PNG to this project’s Files tab', async () => {
       const png = await svgToPng(exportSVG()); const res = await S.assets.upload(png, { type: 'image/png' });
-      const pid = E.pid; const rec = { id: uid8(), assetId: res.id, name: base + '.png', type: 'image/png', size: png.size, enc: 'raw', added: Date.now() };
+      const pid = E.pid; const rec = withPhase(S.projects.get(pid), { id: uid8(), assetId: res.id, name: base + '.png', type: 'image/png', size: png.size, enc: 'raw', added: Date.now(), by: ME.name });
       patchProject(pid, { files: [...((S.projects.get(pid) || {}).files || []), rec] }); refreshUsage(); toast('Image saved to project files');
     }, !!S.assets && S.projects.has(E.pid)),
     opt('download', 'Download PNG', 'Picture for sharing or printing', async () => { await S.downloads.save({ filename: base + '.png', data: await svgToPng(exportSVG()) }); }, !!S.downloads),

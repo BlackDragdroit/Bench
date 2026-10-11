@@ -9,7 +9,7 @@
    Läuft im Browser (window.BenchPatch) und auf dem Server (über vm geladen). */
 (function (root) {
   'use strict';
-  const LISTS = ['steps', 'bom', 'files'];
+  const LISTS = ['steps', 'bom', 'files', 'phases'];
   const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
   const byId = (arr, id) => arr.findIndex(x => x && x.id === id);
 

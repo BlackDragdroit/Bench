@@ -22,6 +22,7 @@ Self-hosted · single user · works on desktop and as a phone app
 | | |
 |---|---|
 | **Projects** | Steps you can tick off, a parts list that knows what's in stock, files (datasheets, photos, firmware, STL), notes, and a status from *idea* to *done*. |
+| **Phases** | Split a project into stages like *Prototype → PCB → Enclosure*. Steps, parts, files and sketches can belong to one or several phases, each phase has its own notes, and the overview shows all phases side by side with their progress. |
 | **Parts library** | Every part you own, with pins, specs, stock and where it lives. Type the number printed on a part (or snap a photo, or just describe it) and Claude fills in the rest. |
 | **Circuit sketches** | A schematic editor made for the phone: symbols in six sizes, wires, freehand notes, parts straight from your library with their real pins. Export as PNG or SVG. |
 | **Test mode** | A live DC simulation right in the browser. Flip switches, hold buttons, turn pots; LEDs glow, motors spin and moving dashes show where current flows. Warnings for burnt LEDs, shorts and the like, plus a full review of the circuit by Claude. |
@@ -86,7 +87,7 @@ Bench started as a single-file Claude artifact. This repo is the same app runnin
 |---|---|
 | `public/bench.html` | The whole app: vanilla JS, one file |
 | `public/runtime.js` | Recreates the artifact runtime (`window.claude.use`: `db`, `user`, `assets`, `downloads`, `sample`) on top of the REST API. Live updates by ETag polling |
-| `public/patch.js` | Small list operations (add, change, remove, reorder) so simultaneous edits merge instead of overwriting |
+| `public/patch.js` | Small list operations (add, change, remove, reorder) on steps, parts list, files and phases, so simultaneous edits merge instead of overwriting |
 | `public/sim.js` | The DC simulator: nodal analysis with Newton iteration, wire currents, findings |
 | `public/sw.js`, `public/manifest.webmanifest`, `public/icons/` | PWA |
 | `server/index.js` | Express: login, REST API, uploads, part lookup, Drop, circuit review, import, `/healthz` |
