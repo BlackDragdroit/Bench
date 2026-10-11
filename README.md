@@ -26,6 +26,7 @@ Self-hosted · single user · works on desktop and as a phone app
 | **Circuit sketches** | A schematic editor made for the phone: symbols in six sizes, wires, freehand notes, parts straight from your library with their real pins. Export as PNG or SVG. |
 | **Test mode** | A live DC simulation right in the browser. Flip switches, hold buttons, turn pots; LEDs glow, motors spin and moving dashes show where current flows. Warnings for burnt LEDs, shorts and the like, plus a full review of the circuit by Claude. |
 | **Drop** | Pick a scope, hit roll, get a project you can actually finish, built from the parts you have. Your likes and dislikes steer future rolls. |
+| **Sharing** | Invite someone to one project with a link. They can work on it with you, live: steps, parts list, files, sketches. Your library, other projects and Drop stay private. |
 | **Installable** | A PWA: add it to your home screen and it opens like an app. Light and dark theme follow your system. |
 
 ## A closer look
@@ -63,6 +64,20 @@ Drop picks the field, difficulty and vibe at random and writes a work order you 
 </tr>
 </table>
 
+## Working on a project together
+
+Open a project and tap the share icon next to its name. Give the person a name and you get a link to send them: no account, no password.
+
+- They see **only that project** and can change everything in it: steps, parts list, files, sketches, notes, status.
+- They can **look at your parts library** and add parts from it to the project's list, but not change stock or anything else in the library.
+- **AI features** (part lookup, Check with Claude) run on your API key, so they're off per person until you switch them on.
+- Changes show up for everyone **within a second** (Server-Sent Events). Edits to the same list are merged on the server, so ticking a step and adding one at the same time doesn't lose either.
+- **Sketches** are edited by one person at a time; everyone else watches the drawing update and takes over when it's free.
+- Small labels show who did what (*✓ Max*, *added by Max*).
+- **Remove** someone and they're out immediately; **New link** replaces a link that got passed around.
+
+Access is enforced on the server (`server/policy.js`) and covered by end-to-end tests that try everything a guest must not be able to do.
+
 ## How it's built
 
 Bench started as a single-file Claude artifact. This repo is the same app running on its own server: no build step, no frontend framework.
@@ -71,10 +86,12 @@ Bench started as a single-file Claude artifact. This repo is the same app runnin
 |---|---|
 | `public/bench.html` | The whole app: vanilla JS, one file |
 | `public/runtime.js` | Recreates the artifact runtime (`window.claude.use`: `db`, `user`, `assets`, `downloads`, `sample`) on top of the REST API. Live updates by ETag polling |
+| `public/patch.js` | Small list operations (add, change, remove, reorder) so simultaneous edits merge instead of overwriting |
 | `public/sim.js` | The DC simulator: nodal analysis with Newton iteration, wire currents, findings |
 | `public/sw.js`, `public/manifest.webmanifest`, `public/icons/` | PWA |
 | `server/index.js` | Express: login, REST API, uploads, part lookup, Drop, circuit review, import, `/healthz` |
-| `server/db.js` | PostgreSQL. Tables `projects`, `parts`, `sketches`, `drops`, `assets` (`id`, `data jsonb`, `updated_at`), created on start |
+| `server/db.js` | PostgreSQL. Tables `projects`, `parts`, `sketches`, `drops` (`id`, `data jsonb`, `updated_at`), plus `assets` and `invites`, created on start |
+| `server/policy.js` | Who may read and write what: owner vs. invited guest |
 | `server/identify.js` | Calls to the Anthropic Messages API. The key never leaves the server |
 | `server/importer.js`, `scripts/import.js` | Backup import |
 | `test/` | Unit tests (`node --test`) |
@@ -93,12 +110,19 @@ npm run dev            # http://localhost:3000
 npm test
 ```
 
+The sharing tests run against a real server and database. Point `TEST_DATABASE_URL` at an empty database (it gets wiped) to include them, otherwise they're skipped:
+
+```bash
+TEST_DATABASE_URL=postgres://bench:bench@localhost:54329/benchtest npm test
+```
+
 ## Configuration
 
 | Variable | Required | Default | |
 |---|---|---|---|
 | `DATABASE_URL` | yes | | PostgreSQL connection string |
 | `APP_PASSWORD` | yes | | The login password |
+| `OWNER_NAME` | | `Owner` | Your name as guests see it (“Shared by …”, “✓ …”) |
 | `SESSION_SECRET` | yes | | At least 32 random characters, e.g. `openssl rand -hex 32` |
 | `ANTHROPIC_API_KEY` | | | Enables part lookup, Drop and Check with Claude. Everything else works without it |
 | `ANTHROPIC_MODEL` | | `claude-haiku-4-5-20251001` | Part lookup |

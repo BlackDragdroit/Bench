@@ -12,6 +12,7 @@
 <link rel="icon" href="/icons/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <script src="/config.js"></script>
+<script src="/patch.js"></script>
 <script src="/runtime.js"></script>
 <script src="/sim.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -273,6 +274,25 @@ select.inp{appearance:none;background-image:linear-gradient(45deg,transparent 50
 .dfrom{display:flex;flex-direction:column;gap:6px;margin-top:14px;max-width:72ch}
 .dfrom>.conf{align-self:flex-start;display:inline-flex;align-items:center;gap:5px}
 .drate.compact{padding-top:0;border-top:0}
+/* sharing */
+.ibtn.on{color:var(--accent)}
+.shared-line{display:flex;align-items:center;gap:6px;margin:10px 0 0;font-size:13.5px;color:var(--ink-2)}
+.share-new{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap}
+.share-new .field{flex:1 1 200px}
+.share-ai{display:inline-flex;align-items:center;gap:6px;font-size:14px;color:var(--ink-2);white-space:nowrap;min-height:40px}
+.share-ai input{accent-color:var(--accent);width:16px;height:16px}
+.share-link{display:flex;flex-direction:column;gap:8px;padding:12px 14px;border-left:3px solid var(--ok);border-radius:0 5px 5px 0;background:var(--paper)}
+.share-h{margin:6px 0 0;font:600 16px var(--font-head)}
+.share-list{display:flex;flex-direction:column;border:1.5px solid var(--line);border-radius:6px;overflow:hidden;background:var(--paper)}
+.share-list>p{padding:10px 12px}
+.share-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:9px 10px 9px 12px;border-top:1px solid var(--line)}
+.share-row:first-child{border-top:0}
+.step-main{min-width:0;display:flex;flex-direction:column}
+.step-by{display:inline-flex;align-items:center;gap:3px;margin:-4px 0 4px 6px;font-size:12px;color:var(--ink-3)}
+.stock-ro{display:block;text-align:center;color:var(--ink-2)}
+.guest-note{margin:0 6px 4px}
+.guest-leave{display:none;justify-content:center;padding:0 16px 24px}
+@media (max-width:820px){.guest-leave.m-only{display:flex}}
 .dfrom .dplan{max-width:420px}
 .planhint{margin:0 0 10px}
 .dsettings .tctl{align-self:stretch}
@@ -629,6 +649,7 @@ const ICONS = {
   note:'<path d="M5 4h14v16H5z"/><path d="M8.5 9h7M8.5 13h7M8.5 17h4"/>',
   scan:'<path d="M4 8.5V4h4.5M15.5 4H20v4.5M20 15.5V20h-4.5M8.5 20H4v-4.5"/><path d="M7.5 12h9"/>',
   image:'<rect x="3.5" y="5" width="17" height="14" rx="1.5"/><circle cx="9" cy="10" r="1.7"/><path d="M20.5 16l-5-5-8.5 8"/>',
+  share:'<circle cx="18" cy="5" r="2.6"/><circle cx="6" cy="12" r="2.6"/><circle cx="18" cy="19" r="2.6"/><path d="M8.3 10.7l7.4-4.3M8.3 13.3l7.4 4.3"/>',
   zap:'<path d="M13 2.5 4.5 13.5h6.5l-1 8 8.5-11h-6.5z"/>',
   dice:'<rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8.5 8.5h.01M15.5 8.5h.01M12 12h.01M8.5 15.5h.01M15.5 15.5h.01" stroke-width="3"/>',
   thumb:'<path d="M7 10v11"/><path d="M15 5.9 14 10h5.8a2 2 0 0 1 1.9 2.6l-2.3 8a2 2 0 0 1-1.9 1.4H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.8a2 2 0 0 0 1.8-1.1L12 2a3.1 3.1 0 0 1 3 3.9Z"/>'
@@ -664,6 +685,22 @@ const S = {
 try { const r = JSON.parse(localStorage.getItem('bench.route') || 'null'); if (r && r.view) S.route = { ...S.route, ...r }; } catch (e) {}
 function saveRoute() { try { localStorage.setItem('bench.route', JSON.stringify(S.route)); } catch (e) {} }
 
+// Wer ist angemeldet: der Besitzer (Passwort) oder ein Gast über einen Einladungslink.
+// Gäste sehen nur das geteilte Projekt; was sie dürfen, prüft der Server (server/policy.js).
+const ME = (window.BENCH_CONFIG && window.BENCH_CONFIG.me) || { kind: 'owner', name: 'Owner' };
+const GUEST = ME.kind === 'guest';
+const OWNER_NAME = (window.BENCH_CONFIG && window.BENCH_CONFIG.ownerName) || 'Owner';
+const byOther = n => !!n && n !== ME.name;
+const aiAvailable = () => !!(window.BENCH_CONFIG && window.BENCH_CONFIG.identify) && (!GUEST || !!ME.allowAi);
+if (GUEST) S.route = { view: 'project', pid: ME.projectId, tab: S.route.pid === ME.projectId ? (S.route.tab || 'steps') : 'steps' };
+async function apiJson(method, url, body) {
+  const r = await fetch(url, { method, credentials: 'same-origin', headers: body ? { 'Content-Type': 'application/json' } : {}, body: body ? JSON.stringify(body) : undefined });
+  if (r.status === 401) { location.reload(); throw { code: 'unauthenticated' }; }
+  let data = null; try { data = await r.json(); } catch (e) {}
+  if (!r.ok) throw { code: (data && data.code) || 'failed', status: r.status };
+  return data;
+}
+
 const projCol = () => S.db.collection(`data/users/${S.uid}/projects/items`);
 const partCol = () => S.db.collection(`data/users/${S.uid}/library/parts`);
 const sketchCol = () => S.db.collection(`data/users/${S.uid}/sketches/items`);
@@ -673,7 +710,7 @@ const wq = new Map();
 function queueWrite(ref, patch, mode = 'update') {
   let q = wq.get(ref.path);
   if (!q) { q = { ref, patch: null, mode: 'update', running: false, waiters: [] }; wq.set(ref.path, q); }
-  if (mode === 'set') { q.patch = { ...patch }; q.mode = 'set'; } else q.patch = Object.assign(q.patch || {}, patch);
+  if (mode === 'set') { q.patch = { ...patch }; q.mode = 'set'; } else q.patch = q.mode === 'set' ? BenchPatch.applyPatch(q.patch, patch) : BenchPatch.mergePatch(q.patch, patch);
   const p = new Promise(r => q.waiters.push(r));
   if (!q.running) runQueue(q);
   return p;
@@ -698,12 +735,13 @@ function writeFailed(e) {
   else if (c === 'invalid_argument') toast('That change couldn’t be saved.');
   else toast('Saving failed. Check your connection and try again.');
 }
-function withPending(path, data) { const q = wq.get(path); if (q && q.patch) return q.mode === 'set' ? { ...q.patch } : { ...data, ...q.patch }; return data; }
+function withPending(path, data) { const q = wq.get(path); if (q && q.patch) return q.mode === 'set' ? { ...q.patch } : BenchPatch.applyPatch(data, q.patch); return data; }
 function patchProject(pid, patch) {
   const cur = S.projects.get(pid); if (!cur) return;
   const next = { ...cur, ...patch, updated: Date.now() };
   S.projects.set(pid, next);
-  queueWrite(projCol().doc(pid), { ...patch, updated: next.updated });
+  // Listen (Schritte, Teile, Dateien) gehen als kleine Operationen raus, damit gleichzeitige Änderungen erhalten bleiben
+  queueWrite(projCol().doc(pid), { ...BenchPatch.toOps(cur, patch), updated: next.updated });
   schedRender();
 }
 function patchPart(id, patch) {
@@ -743,6 +781,7 @@ function render() {
   if (fk) { const el = app.querySelector(`[data-key="${CSS.escape(fk)}"]`); if (el) { el.focus({ preventScroll: true }); try { if (ss != null) el.setSelectionRange(ss, se); } catch (e) {} } }
 }
 function go(r) {
+  if (GUEST && ((r.view && r.view !== 'project') || (r.pid && r.pid !== ME.projectId))) r = { view: 'project', pid: ME.projectId, tab: r.tab || 'steps' };
   S.route = { ...S.route, ...r }; S.scrollReset = true; saveRoute();
   if (S.route.view === 'project' && S.route.pid) subscribeSketches(S.route.pid);
   render();
@@ -843,6 +882,7 @@ function bomShort(p) { let n = 0; for (const b of visBom(p)) { const pt = S.part
 function View() {
   if (!S.ready && !S.err) return h('div', { class: 'notice' }, h('div', { class: 'brand', style: 'padding:0' }, logo(), 'Bench'), h('p', { class: 'lk-busy' }, h('span', { class: 'spin' }), 'Opening your bench…'));
   if (S.err) return Notice();
+  if (GUEST) return GuestView();
   const r = S.route; let main;
   if (r.view === 'project') {
     if (S.projects.has(r.pid)) main = ProjectView(r.pid);
@@ -867,6 +907,19 @@ function View() {
         h('form', { method: 'post', action: '/logout', style: 'display:contents' }, h('button', { class: 'btn sm quiet', style: 'justify-content:flex-start', type: 'submit' }, icon('back', 16), 'Sign out')))),
     h('main', { class: 'main' }, main),
     h('nav', { class: 'bottomnav', 'aria-label': 'Sections' }, bnav('projects', 'Projects', 'folder'), bnav('parts', 'Parts', 'chip'), bnav('drop', 'Drop', 'dice')));
+}
+function GuestView() {
+  const p = S.projects.get(ME.projectId);
+  const main = p ? ProjectView(ME.projectId) : !S.loaded.projects ? h('div', { class: 'page loading' }, 'Loading project…')
+    : h('div', { class: 'page' }, EmptyBlock('This project isn’t available', `${OWNER_NAME} may have deleted it or stopped sharing it.`));
+  return h('div', { class: 'shell' },
+    h('aside', { class: 'side' },
+      h('div', { class: 'brand' }, logo(), 'Bench'),
+      h('button', { class: 'nav', 'aria-current': 'page', onClick: () => go({ view: 'project', pid: ME.projectId }) }, icon('folder'), p ? p.name : 'Project'),
+      h('div', { class: 'side-foot' },
+        h('p', { class: 'dim sm guest-note' }, `Shared with you by ${OWNER_NAME}. You’re working as `, h('b', null, ME.name), '.'),
+        h('form', { method: 'post', action: '/logout', style: 'display:contents' }, h('button', { class: 'btn sm quiet', style: 'justify-content:flex-start', type: 'submit' }, icon('back', 16), 'Leave project')))),
+    h('main', { class: 'main' }, main, h('form', { method: 'post', action: '/logout', class: 'm-only guest-leave' }, h('button', { class: 'btn sm quiet', type: 'submit' }, `Shared by ${OWNER_NAME} · Leave`))));
 }
 function Notice() {
   const msgs = {
@@ -924,9 +977,10 @@ function ProjectView(pid) {
   const k = p.status || 'idea';
   const sel = h('select', { 'aria-label': 'Status', onChange: e => patchProject(pid, { status: e.target.value }) }, STATUSES.map(([sk, l]) => h('option', { value: sk, selected: sk === k }, l)));
   return h('div', { class: 'page' },
-    h('button', { class: 'btn quiet sm crumb', onClick: () => go({ view: 'projects' }) }, icon('back', 16), 'Projects'),
+    GUEST ? null : h('button', { class: 'btn quiet sm crumb', onClick: () => go({ view: 'projects' }) }, icon('back', 16), 'Projects'),
     h('section', { class: 'tblock', style: `--c:var(--s-${k})`, 'aria-label': 'Project summary' },
       h('div', { class: 'tb-name' }, h('div', { style: 'flex:1;min-width:0' }, h('span', { class: 'tb-l' }, 'Project'), h('h1', null, p.name || 'Untitled')),
+        GUEST ? null : h('button', { class: 'ibtn' + (sharedWith(pid).length ? ' on' : ''), 'aria-label': 'Share project', title: sharedWith(pid).length ? 'Shared with ' + sharedWith(pid).map(i => i.name).join(', ') : 'Invite someone to work on this project', onClick: () => shareDialog(pid) }, icon('share')),
         h('button', { class: 'ibtn', 'aria-label': 'Edit project', title: 'Edit project', onClick: () => projectDialog(pid) }, icon('edit'))),
       h('div', null, h('span', { class: 'tb-l' }, 'Status'), h('label', { class: 'tb-sel' }, sel)),
       h('div', null, h('span', { class: 'tb-l' }, 'Steps'), h('div', { class: 'tb-v' }, st.total ? `${st.done} of ${st.total}` : 'None yet', st.total ? h('span', { class: 'meter' }, h('i', { style: `width:${Math.round(st.done / st.total * 100)}%` })) : null)),
@@ -934,6 +988,7 @@ function ProjectView(pid) {
       h('div', null, h('span', { class: 'tb-l' }, 'Started'), h('div', { class: 'tb-v' }, shortDate(p.created))),
       h('div', null, h('span', { class: 'tb-l' }, 'Last change'), h('div', { class: 'tb-v' }, relTime(p.updated)))),
     p.description ? h('p', { class: 'pdesc' }, p.description) : null,
+    !GUEST && sharedWith(pid).length ? h('p', { class: 'shared-line' }, icon('share', 14), 'Shared with ', sharedWith(pid).map(i => i.name).join(', ')) : null,
     p.drop && p.drop.rollId ? DropFrom(p) : null,
     h('div', { class: 'tabs', role: 'tablist' }, tabs.map(([tk, l, n]) => h('button', { class: 'tab', role: 'tab', 'aria-selected': String(tab === tk), onClick: () => { S.route.tab = tk; saveRoute(); render(); } }, l, n != null ? h('span', { class: 'n' }, n) : null))),
     h('div', { role: 'tabpanel' }, tab === 'steps' ? StepsTab(p) : tab === 'parts' ? BomTab(p) : tab === 'files' ? FilesTab(p) : tab === 'sketches' ? SketchesTab(p) : NotesTab(p)));
@@ -954,7 +1009,7 @@ function StepsTab(p) {
   const add = h('input', { class: 'inp', placeholder: 'Add a step and press Enter', 'aria-label': 'New step', 'data-key': key, 'data-live': true, enterkeyhint: 'done' });
   add.value = drafts.get(key) || '';
   add.addEventListener('input', () => drafts.set(key, add.value));
-  const addStep = () => { const t = add.value.trim(); if (!t) return; drafts.delete(key); add.value = ''; patchProject(p.id, { steps: [...curSteps(p.id), { id: uid8(), text: t, done: false, note: '' }] }); };
+  const addStep = () => { const t = add.value.trim(); if (!t) return; drafts.delete(key); add.value = ''; patchProject(p.id, { steps: [...curSteps(p.id), { id: uid8(), text: t, done: false, note: '', by: ME.name }] }); };
   add.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); addStep(); } });
   // Eigene Schritte und Drops Vorschläge sind zwei getrennte Listen mit eigener Nummerierung
   const own = steps.filter(s => !s.drop), sug = steps.filter(s => s.drop);
@@ -979,9 +1034,9 @@ function StepRow(p, s, i, list) {
   const open = S.openStep === s.id;
   return h('li', { class: 'step' + (s.done ? ' done' : '') },
     h('div', { class: 'step-row' },
-      h('button', { class: 'chk', role: 'checkbox', 'aria-checked': String(!!s.done), 'aria-label': 'Mark step done', onClick: () => updStep(p.id, s.id, { done: !s.done }) }, s.done ? icon('check', 15) : null),
+      h('button', { class: 'chk', role: 'checkbox', 'aria-checked': String(!!s.done), 'aria-label': 'Mark step done', onClick: () => updStep(p.id, s.id, { done: !s.done, doneBy: !s.done ? ME.name : null }) }, s.done ? icon('check', 15) : null),
       h('span', { class: 'step-num' }, i + 1),
-      stepText(p, s, i),
+      h('div', { class: 'step-main' }, stepText(p, s, i), s.done && byOther(s.doneBy) ? h('span', { class: 'step-by' }, icon('check', 12), s.doneBy) : byOther(s.by) ? h('span', { class: 'step-by' }, 'added by ' + s.by) : null),
       h('button', { class: 'ibtn', 'aria-label': open ? 'Hide step details' : 'Step details', 'aria-expanded': String(open), title: s.note ? 'Has notes' : 'Notes and options', onClick: () => { S.openStep = open ? null : s.id; render(); } }, icon(open ? 'up' : (s.note ? 'note' : 'down'), 18))),
     open ? h('div', { class: 'step-more' },
       boundInput({ tag: 'textarea', key: 'stepnote:' + s.id, value: s.note, class: 'inp', rows: 3, placeholder: 'Notes, measurements, links…', 'aria-label': 'Step notes', onCommit: v => updStep(p.id, s.id, { note: v }) }),
@@ -999,7 +1054,7 @@ function addToBom(pid, partId, silent) {
   const ex = bom.find(b => b.partId === partId);
   if (ex && ex.drop && planHidden(S.projects.get(pid))) { updBom(pid, ex.id, { drop: false }); if (!silent) toast(`Added ${name} to the parts list`); }
   else if (ex) { updBom(pid, ex.id, { qty: ex.qty + 1 }); if (!silent) toast(`${name}: ${ex.qty + 1} needed`); }
-  else { patchProject(pid, { bom: [...bom, { id: uid8(), partId, qty: 1, note: '' }] }); if (!silent) toast(`Added ${name} to the parts list`); }
+  else { patchProject(pid, { bom: [...bom, { id: uid8(), partId, qty: 1, note: '', by: ME.name }] }); if (!silent) toast(`Added ${name} to the parts list`); }
 }
 function BomTab(p) {
   const bom = visBom(p), short = bomShort(p);
@@ -1021,10 +1076,10 @@ function BomRow(p, b) {
   return h('div', { class: 'bom-row' },
     h('div', { class: 'bcell-name' },
       part ? h('button', { class: 'pname', onClick: () => partDialog({ id: b.partId }) }, part.name) : h('span', { class: 'pname' }, 'Part no longer in library'),
-      part ? h('div', { class: 'psub' }, part.mpn ? h('span', { class: 'mono' }, part.mpn) : null, part.category ? h('span', null, part.category) : null, part.location ? h('span', null, part.location) : null) : null),
+      part ? h('div', { class: 'psub' }, part.mpn ? h('span', { class: 'mono' }, part.mpn) : null, part.category ? h('span', null, part.category) : null, part.location ? h('span', null, part.location) : null, byOther(b.by) ? h('span', null, 'added by ' + b.by) : null) : null),
     h('div', null, h('span', { class: 'cap' }, 'Needed'), Stepper(() => (curBom(p.id).find(x => x.id === b.id) || b).qty, v => updBom(p.id, b.id, { qty: v }), 1, 'needed', 'qty:' + b.id)),
     h('div', { class: 'bstock' }, h('span', { class: 'cap' }, 'In stock'),
-      !part ? h('span', { class: 'dim' }, '—') : typeof stock === 'number' ? Stepper(() => (S.parts.get(b.partId) || {}).stock || 0, v => patchPart(b.partId, { stock: v }), 0, 'in stock', 'stk:' + b.id) :
+      !part ? h('span', { class: 'dim' }, '—') : GUEST ? h('span', { class: 'mono stock-ro' }, typeof stock === 'number' ? String(stock) : 'not counted') : typeof stock === 'number' ? Stepper(() => (S.parts.get(b.partId) || {}).stock || 0, v => patchPart(b.partId, { stock: v }), 0, 'in stock', 'stk:' + b.id) :
         h('button', { class: 'btn sm', onClick: () => patchPart(b.partId, { stock: 0 }) }, 'Count it')),
     status,
     h('button', { class: 'ibtn', 'aria-label': `Remove ${part ? part.name : 'part'} from list`, onClick: () => patchProject(p.id, { bom: curBom(p.id).filter(x => x.id !== b.id) }) }, icon('x', 17)));
@@ -1058,6 +1113,7 @@ function bomPicker(pid) {
         h('span', { class: 'psub' }, x.mpn ? h('span', { class: 'mono' }, x.mpn) : null, x.category ? h('span', null, x.category) : null, typeof x.stock === 'number' ? h('span', null, `${x.stock} in stock`) : null)),
       inBom.has(x.id) ? h('span', { class: 'pill ok' }, icon('check', 13), `${inBom.get(x.id)} on list`) : icon('plus', 18)))
       : [h('div', { class: 'pick-empty' }, `Nothing in your library matches “${q.trim()}”.`)]));
+    if (GUEST) { newEl.replaceChildren(h('p', { class: 'dim sm', style: 'margin:0' }, `Only ${OWNER_NAME} can add new parts to the library.`)); return; }
     newEl.replaceChildren(h('button', { class: 'pick-new', onClick: () => { m.close(); partDialog({ prefill: q.trim(), onSaved: id => addToBom(pid, id) }); } }, icon('scan', 20),
       h('span', null, h('b', null, S.parts.size ? 'Not in your library?' : 'Your library is empty'), h('span', { class: 'dim sm' }, q.trim() ? `Look up “${q.trim()}” by its part number and add it` : 'Add a part by typing the number printed on it'))));
   }
@@ -1213,6 +1269,13 @@ function partDialog({ id, prefill = '', onSaved, copy } = {}) {
   els.category.value = f.category && CATS.includes(f.category) ? f.category : 'Other';
   const ds = existing && /^https?:\/\//.test(existing.datasheet || '') ? h('a', { href: existing.datasheet, target: '_blank', rel: 'noopener noreferrer', class: 'btn sm' }, icon('file', 16), 'Open datasheet') : null;
   const dupe = () => { const data = readForm(); m.close(); partDialog({ copy: data, onSaved }); };
+  if (GUEST) {
+    if (!existing) return;
+    form.querySelectorAll('input, select, textarea').forEach(el => { el.disabled = true; });
+    m = openModal({ title: existing.name, wide: true, body: [h('p', { class: 'dim sm', style: 'margin:0' }, `From ${OWNER_NAME}’s parts library. Only ${OWNER_NAME} can change it.`), formWrap, ds ? h('div', null, ds) : null],
+      footer: [h('span', { class: 'grow' }), h('button', { class: 'btn', onClick: () => m.close() }, 'Close')] });
+    return;
+  }
   m = openModal({ title: existing ? existing.name : copy ? 'Duplicate part' : 'Add a part', wide: true,
     body: copy ? [h('p', { class: 'dim', style: 'margin:0' }, `A copy of “${copy.name || copy.mpn || 'the part'}”. Change the value and name, then save it as a new part. Stock starts uncounted.`), formWrap] : [lookup, formWrap, ds ? h('div', null, ds) : null],
     footer: [existing ? h('button', { class: 'btn quiet danger-text', onClick: del }, icon('trash', 16), 'Delete') : null, existing ? h('button', { class: 'btn quiet', onClick: dupe, title: 'Make a copy, e.g. the same pot with another value' }, icon('copy', 16), 'Duplicate') : null, h('span', { class: 'grow' }),
@@ -1254,7 +1317,7 @@ async function uploadFiles(pid, list) {
       let res;
       try { res = await S.assets.upload(prep.blob, { type: prep.type }); }
       catch (e) { if (e && e.code === 'store_unavailable') { await sleep(800); res = await S.assets.upload(prep.blob, { type: prep.type }); } else throw e; }
-      const rec = { id: uid8(), assetId: res.id, name: file.name, type: prep.orig, size: file.size, enc: prep.enc, added: Date.now() };
+      const rec = { id: uid8(), assetId: res.id, name: file.name, type: prep.orig, size: file.size, enc: prep.enc, added: Date.now(), by: ME.name };
       patchProject(pid, { files: [...((S.projects.get(pid) || {}).files || []), rec] }); ok++;
     } catch (e) { console.warn(e); toast(uploadErrCopy(e, file.name)); if (e && (e.code === 'rate_limited' || e.code === 'quota_or_state' || e.code === 'not_granted' || e.code === 'capability_disabled')) break; await sleep(1200); }
   }
@@ -1280,7 +1343,7 @@ function FileTile(p, f) {
   const ext = extOf(f.name);
   return h('button', { class: 'ftile' + (f.missing ? ' missing' : ''), onClick: () => filePreview(p.id, f.id) },
     h('span', { class: 'fthumb' }, isImg ? h('img', { src: '/_blob/' + f.assetId, alt: '', loading: 'lazy' }) : h('span', { class: 'fext' }, ext ? '.' + ext.slice(0, 6) : 'file')),
-    h('span', { class: 'fmeta' }, h('span', { class: 'fname', title: f.name }, f.name), h('span', { class: 'fsize' }, f.missing ? 'Missing, upload it again' : `${fmtBytes(f.size)}, ${shortDate(f.added)}`)));
+    h('span', { class: 'fmeta' }, h('span', { class: 'fname', title: f.name }, f.name), h('span', { class: 'fsize' }, f.missing ? 'Missing, upload it again' : `${fmtBytes(f.size)}, ${shortDate(f.added)}${byOther(f.by) ? ' · ' + f.by : ''}`)));
 }
 async function downloadFile(f) {
   if (!S.downloads) { toast('Downloads aren’t available in this view.'); return; }
@@ -1330,6 +1393,7 @@ function subscribeSketches(pid) {
   S.sketches = new Map(); S.sketchesLoaded = false;
   const un = sketchCol().where('projectId', '==', pid).onSnapshot(snap => {
     S.sketches = new Map(snap.docs.map(d => [d.id, withPending(sketchCol().doc(d.id).path, d.data())])); S.sketchesLoaded = true; schedRender();
+    if (E && E.ro && S.sketches.has(E.sid)) { reloadEditorData(); renderEd(); }
   }, onDbErr);
   S.sketchSub = { pid, un };
 }
@@ -1387,7 +1451,7 @@ function projectDialog(pid) {
   name.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); save(); } });
   m = openModal({ title: p ? 'Edit project' : 'New project',
     body: [h('label', { class: 'field' }, h('span', null, 'Name'), name), h('label', { class: 'field' }, h('span', null, 'Status'), status), h('label', { class: 'field' }, h('span', null, 'Description'), desc)],
-    footer: [p ? h('button', { class: 'btn quiet danger-text', onClick: async () => { m.close(); await deleteProject(pid); } }, icon('trash', 16), 'Delete project') : null, h('span', { class: 'grow' }),
+    footer: [p && !GUEST ? h('button', { class: 'btn quiet danger-text', onClick: async () => { m.close(); await deleteProject(pid); } }, icon('trash', 16), 'Delete project') : null, h('span', { class: 'grow' }),
       h('button', { class: 'btn quiet', onClick: () => m.close() }, 'Cancel'), h('button', { class: 'btn primary', onClick: save }, p ? 'Save' : 'Create project')] });
 }
 const newProjectDialog = () => projectDialog(null);
@@ -1445,6 +1509,58 @@ async function exportBackup() {
   try { await S.downloads.save({ filename: `bench-backup-${new Date().toISOString().slice(0, 10)}.json`, data: JSON.stringify(data, null, 2) }); }
   catch (e) { if (!e || e.code !== 'declined') toast('The backup didn’t download. Try again.'); }
 }
+/* ================= sharing ================= */
+// Einladungen gehören dem Besitzer; Gäste bekommen sie nie zu sehen.
+S.invites = [];
+const sharedWith = pid => (S.invites || []).filter(i => i.projectId === pid);
+async function refreshInvites() {
+  if (GUEST) return;
+  try { S.invites = (await apiJson('GET', '/api/invites')).invites || []; schedRender(); } catch (e) {}
+}
+function shareDialog(pid) {
+  const p = S.projects.get(pid); if (!p) return;
+  let m, invites = sharedWith(pid);
+  const list = h('div', { class: 'share-list' }), out = h('div');
+  const name = h('input', { class: 'inp', placeholder: 'Their name, e.g. Max', maxlength: 40, autofocus: true });
+  const ai = h('input', { type: 'checkbox' });
+  const load = async () => { await refreshInvites(); invites = sharedWith(pid); draw(); };
+  const copy = async link => { try { await navigator.clipboard.writeText(link); toast('Link copied'); } catch (e) { toast('Select the link and copy it'); } };
+  const showLink = (who, link) => out.replaceChildren(h('div', { class: 'share-link' },
+    h('b', null, `Link for ${who}`),
+    h('input', { class: 'inp mono', readonly: true, value: link, onFocus: e => e.target.select() }),
+    h('div', { class: 'bar', style: 'margin:0' },
+      h('button', { class: 'btn sm primary', onClick: () => copy(link) }, icon('copy', 16), 'Copy link'),
+      navigator.share ? h('button', { class: 'btn sm', onClick: () => navigator.share({ title: p.name, text: `Work on “${p.name}” with me in Bench`, url: link }).catch(() => {}) }, icon('share', 16), 'Send…') : null),
+    h('p', { class: 'dim sm', style: 'margin:0' }, 'Whoever opens this link can edit the project until you remove them. The link is only shown now; “New link” makes another one.')));
+  const row = inv => h('div', { class: 'share-row' },
+    h('div', { class: 'grow' }, h('b', null, inv.name), h('div', { class: 'dim sm' }, inv.lastSeen ? `Last here ${relTime(Date.parse(inv.lastSeen))}` : 'Hasn’t opened the link yet')),
+    h('label', { class: 'share-ai', title: 'Part lookup and Check with Claude run on your API key' },
+      h('input', { type: 'checkbox', checked: inv.allowAi ? true : null, onChange: async e => {
+        const on = e.target.checked;
+        try { await apiJson('PATCH', `/api/invites/${inv.id}`, { allowAi: on }); inv.allowAi = on; toast(on ? `${inv.name} can use AI features now` : `AI features are off for ${inv.name}`); }
+        catch (er) { e.target.checked = !on; toast('That didn’t save. Try again.'); } } }), 'AI'),
+    h('button', { class: 'btn sm quiet', title: 'Make a new link; the old one stops working', onClick: async () => {
+      try { showLink(inv.name, (await apiJson('POST', `/api/invites/${inv.id}/renew`)).link); } catch (e) { toast('That didn’t work. Try again.'); } } }, 'New link'),
+    h('button', { class: 'btn sm quiet danger-text', onClick: async () => {
+      if (!await confirmDialog({ title: `Stop sharing with ${inv.name}?`, text: `${inv.name} loses access right away. Everything they changed stays in the project.`, ok: 'Remove' })) return;
+      try { await apiJson('DELETE', `/api/invites/${inv.id}`); out.replaceChildren(); await load(); toast(`${inv.name} can’t open the project anymore`); } catch (e) { toast('That didn’t work. Try again.'); } } }, 'Remove'));
+  const draw = () => list.replaceChildren(...(invites.length ? invites.map(row) : [h('p', { class: 'dim sm', style: 'margin:0' }, 'Not shared with anyone yet.')]));
+  const create = async () => {
+    const n = name.value.trim(); if (!n) { name.focus(); toast('Enter a name first'); return; }
+    try { const r = await apiJson('POST', '/api/invites', { projectId: pid, name: n, allowAi: ai.checked }); name.value = ''; ai.checked = false; showLink(n, r.link); await load(); }
+    catch (e) { toast('The invite couldn’t be created. Try again.'); }
+  };
+  name.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); create(); } });
+  m = openModal({ title: `Share “${p.name}”`, body: [
+      h('p', { class: 'dim', style: 'margin:0' }, 'People you invite can work on this project: steps, parts list, files, sketches and notes. They can look at your parts library and add from it, but not change it. Your other projects and Drop stay private.'),
+      h('div', { class: 'share-new' }, h('label', { class: 'field grow' }, h('span', null, 'Invite someone'), name),
+        h('label', { class: 'share-ai', title: 'Part lookup and Check with Claude run on your API key' }, ai, 'Allow AI features'),
+        h('button', { class: 'btn primary', onClick: create }, icon('plus', 16), 'Create link')),
+      out, h('h4', { class: 'share-h' }, 'People with access'), list],
+    footer: [h('span', { class: 'grow' }), h('button', { class: 'btn', onClick: () => m.close() }, 'Done')] });
+  draw(); load();
+}
+
 function importBackupDialog() {
   const inp = h('input', { type: 'file', accept: 'application/json,.json', hidden: true });
   inp.addEventListener('change', async () => {
@@ -1827,7 +1943,7 @@ function DropFrom(p) {
   return h('div', { class: 'dfrom' }, h('span', { class: 'conf' }, icon('dice', 14), 'From Drop'),
     ns || nb ? h('button', { class: 'tctl dplan', 'aria-pressed': String(on), onClick: () => setShowPlan(p.id, !on) }, h('span', { class: 'tsw' }),
       h('b', null, 'Show Drop’s steps and parts'), h('small', null, [ns ? `${ns} step${ns > 1 ? 's' : ''}` : '', nb ? `${nb} part${nb > 1 ? 's' : ''}` : ''].filter(Boolean).join(', '))) : null,
-    RateBlock(p.drop.rollId, { title: p.name, pitch: p.description, ...p.drop }, true));
+    GUEST ? null : RateBlock(p.drop.rollId, { title: p.name, pitch: p.description, ...p.drop }, true));
 }
 
 function onDbErr(e) { console.warn('db', e); if (e && e.code === 'revoked') { S.err = 'revoked'; render(); } }
@@ -2016,15 +2132,17 @@ function openEditor(sid) {
   const s = S.sketches.get(sid); if (!s || E) return;
   E = { sid, pid: s.projectId, name: s.name || 'Untitled sketch', data: { comps: clone(s.comps || []), wires: clone(s.wires || []), strokes: clone(s.strokes || []) },
     k: 1, tx: 0, ty: 0, mode: 'select', sel: null, pend: null, cursor: null, ptrs: new Map(), drag: null, pan: null, pinch: null, ignore: false, stroke: null,
-    hist: [], fut: [], saveT: null, dirty: false, pen: 'ink', lastTap: null, palOpen: false, test: null };
+    hist: [], fut: [], saveT: null, dirty: false, pen: 'ink', lastTap: null, palOpen: false, test: null, ro: null, lockT: null };
   buildEditor();
   document.addEventListener('keydown', edKey);
   requestAnimationFrame(() => { fit(); renderEd(); });
+  // Nur eine Person zeichnet gleichzeitig; alle 20 s melden, dass die Skizze noch offen ist
+  claimSketch(); E.lockT = setInterval(claimSketch, 20000);
 }
-function closeEditor() { if (!E) return; if (E.test && E.test.ctl) E.test.ctl.abort(); flushSave(); document.removeEventListener('keydown', edKey); E.root.remove(); E = null; schedRender(); }
+function closeEditor() { if (!E) return; if (E.test && E.test.ctl) E.test.ctl.abort(); clearInterval(E.lockT); releaseSketch(E.sid); flushSave(); document.removeEventListener('keydown', edKey); E.root.remove(); E = null; schedRender(); }
 function buildEditor() {
   const root = h('div', { class: 'ed', role: 'dialog', 'aria-label': 'Circuit sketch' });
-  const name = h('input', { class: 'ed-name', 'aria-label': 'Sketch name' }); name.value = E.name;
+  const name = h('input', { class: 'ed-name', 'aria-label': 'Sketch name' }); name.value = E.name; E.nameEl = name;
   name.addEventListener('change', () => { E.name = name.value.trim() || 'Untitled sketch'; markDirty(); });
   name.addEventListener('keydown', e => { if (e.key === 'Enter') name.blur(); });
   E.saveEl = h('span', { class: 'ed-save' }, 'Saved');
@@ -2081,13 +2199,19 @@ function drawOverlay() {
 function renderChrome() {
   E.toolsEl.querySelectorAll('[data-mode]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.mode === E.mode)));
   E.svg.setAttribute('class', 'cv m-' + E.mode);
-  E.undoBtn.disabled = !E.hist.length || !!E.test; E.redoBtn.disabled = !E.fut.length || !!E.test;
+  E.undoBtn.disabled = !E.hist.length || !!E.test || !!E.ro; E.redoBtn.disabled = !E.fut.length || !!E.test || !!E.ro;
+  E.nameEl.disabled = !!E.ro;
   E.testBtn.className = 'btn sm' + (E.test ? ' primary' : ''); E.testBtn.setAttribute('aria-pressed', String(!!E.test));
   E.testBtn.lastChild.textContent = E.test ? 'Stop test' : 'Test';
-  E.toolsEl.classList.toggle('off', !!E.test); E.toolsEl.inert = !!E.test; E.root.classList.toggle('testing', !!E.test);
+  E.toolsEl.classList.toggle('off', !!(E.test || E.ro)); E.toolsEl.inert = !!(E.test || E.ro); E.root.classList.toggle('testing', !!E.test);
+  E.saveEl.textContent = E.ro ? `${E.ro} is editing` : E.dirty ? 'Saving…' : 'Saved';
   if (E.test) {
     const n = E.data.comps.filter(c => c.t === 'switch' || c.t === 'button').length;
     E.hintEl.textContent = n ? 'Tap switches, hold buttons. Moving dashes show current.' : 'Moving dashes show where current flows.';
+    E.hintEl.hidden = false; E.pens.hidden = true; E.selbar.hidden = true; return;
+  }
+  if (E.ro) {
+    E.hintEl.textContent = `${E.ro} is editing this sketch. You see their changes as they happen.`;
     E.hintEl.hidden = false; E.pens.hidden = true; E.selbar.hidden = true; return;
   }
   const empty = !E.data.comps.length && !E.data.strokes.length;
@@ -2145,6 +2269,7 @@ function onDown(e) {
   const w = toWorld(e.clientX, e.clientY);
   const thr = (e.pointerType === 'touch' ? 22 : 14) / E.k;
   const panStart = extra => ({ sx: e.clientX, sy: e.clientY, tx: E.tx, ty: E.ty, moved: false, w, ...extra });
+  if (E.ro && !E.test) { E.pan = panStart({}); return; }
   if (E.test) {
     // Im Test: Schalter umlegen, Taster halten, sonst Messwerte zeigen; nichts bearbeiten
     const tgt = e.target.closest && e.target.closest('[data-k="c"]');
@@ -2245,7 +2370,7 @@ const snapState = () => JSON.stringify(E.data);
 function commit(pre) { E.hist.push(pre); if (E.hist.length > 80) E.hist.shift(); E.fut = []; markDirty(); }
 function undo() { if (!E.hist.length) return; E.fut.push(snapState()); E.data = JSON.parse(E.hist.pop()); E.sel = null; E.pend = null; markDirty(); renderEd(); }
 function redo() { if (!E.fut.length) return; E.hist.push(snapState()); E.data = JSON.parse(E.fut.pop()); E.sel = null; E.pend = null; markDirty(); renderEd(); }
-function markDirty() { E.dirty = true; E.saveEl.textContent = 'Saving…'; clearTimeout(E.saveT); E.saveT = setTimeout(flushSave, 900); }
+function markDirty() { if (E.ro) return; E.dirty = true; E.saveEl.textContent = 'Saving…'; clearTimeout(E.saveT); E.saveT = setTimeout(flushSave, 900); }
 function flushSave() {
   if (!E || !E.dirty) return; clearTimeout(E.saveT); E.dirty = false;
   const payload = clone({ name: E.name, comps: E.data.comps, wires: E.data.wires, strokes: E.data.strokes }); payload.updated = Date.now();
@@ -2396,6 +2521,7 @@ function edKey(e) {
   const t = e.target; if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
   const mod = e.ctrlKey || e.metaKey, k = e.key.toLowerCase();
   if (E.test) { if (e.key === 'Escape' || (k === 't' && !mod)) { e.preventDefault(); toggleTest(); } return; }
+  if (E.ro) { if (e.key === 'Escape') closeEditor(); else if (k === 't' && e.shiftKey && !mod) toggleTest(); return; }
   if (k === 't' && e.shiftKey && !mod) { toggleTest(); return; }
   if (mod && k === 'z') { e.preventDefault(); e.shiftKey ? redo() : undo(); return; }
   if (mod && k === 'y') { e.preventDefault(); redo(); return; }
@@ -2437,6 +2563,31 @@ function exportMenu() {
     opt('download', 'Download PNG', 'Picture for sharing or printing', async () => { await S.downloads.save({ filename: base + '.png', data: await svgToPng(exportSVG()) }); }, !!S.downloads),
     opt('download', 'Download SVG', 'Sharp at any size, opens in Inkscape or a browser', async () => { await S.downloads.save({ filename: base + '.svg', data: exportSVG() }); }, !!S.downloads)) });
 }
+
+/* ---- who is editing ---- */
+async function claimSketch() {
+  if (!E) return; const ed = E;
+  let r; try { r = await apiJson('POST', '/api/presence', { sketchId: ed.sid, editing: true }); } catch (e) { return; }
+  if (E !== ed) return;
+  const ro = r.mine ? null : (r.holder ? r.holder.name : null);
+  if (ro === E.ro) return;
+  const was = E.ro; E.ro = ro;
+  if (ro) { flushSave(); E.sel = null; E.pend = null; E.mode = 'select'; if (E.palOpen) togglePalette(false); reloadEditorData(); }
+  else if (was) { reloadEditorData(); toast(`${was} is done. You can edit the sketch now.`); }
+  renderEd();
+}
+function releaseSketch(sid) {
+  try { fetch('/api/presence', { method: 'POST', keepalive: true, credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sketchId: sid, editing: false }) }); } catch (e) {}
+}
+function reloadEditorData() {
+  const sk = S.sketches.get(E.sid); if (!sk) return;
+  E.data = { comps: clone(sk.comps || []), wires: clone(sk.wires || []), strokes: clone(sk.strokes || []) };
+  E.name = sk.name || E.name; if (E.nameEl && document.activeElement !== E.nameEl) E.nameEl.value = E.name;
+  E.hist = []; E.fut = [];
+  if (E.test) runSim();
+}
+window.addEventListener('bench:presence', ev => { if (E && ev.detail && ev.detail.sketchId === E.sid) claimSketch(); });
+window.addEventListener('pagehide', () => { if (E) releaseSketch(E.sid); });
 
 /* ---- test: live simulation and Claude check ---- */
 const reduceMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -2571,7 +2722,7 @@ function sketchHash(d) {
 const VERDICTS = { works: ['Should work', 'good'], 'minor issues': ['Works, with issues', 'meh'], "won't work": ['Won’t work as drawn', 'bad'], unclear: ['Hard to tell', 'unk'] };
 function renderAiSection() {
   const T = E && E.test; if (!T || !T.dyn) return;
-  const el = T.dyn.ai, ai = T.ai, avail = dropAvailable(), hash = sketchHash(E.data);
+  const el = T.dyn.ai, ai = T.ai, avail = aiAvailable(), hash = sketchHash(E.data);
   const btn = (label, primary) => h('button', { class: 'btn sm' + (primary ? ' primary' : ''), disabled: !avail, onClick: runReview }, icon('scan', 16), label);
   if (ai.state === 'busy') { el.replaceChildren(h('div', { class: 'lk-busy' }, h('span', { class: 'spin' }), 'Claude is checking the circuit. This can take a minute.'), h('button', { class: 'btn sm quiet', onClick: () => { if (T.ctl) T.ctl.abort(); } }, 'Stop')); return; }
   if (ai.state === 'done' && ai.data) {
@@ -2669,10 +2820,13 @@ async function boot() {
     S.parts = new Map(snap.docs.map(d => [d.id, withPending(partCol().doc(d.id).path, d.data())]));
     S.loaded.parts = true; schedRender();
   }, onDbErr);
-  dropCol().onSnapshot(snap => {
-    const d = snap.docs.find(x => x.id === 'state');
-    S.drop = d ? withPending(dropCol().doc('state').path, d.data()) : S.drop; schedRender();
-  }, onDbErr);
+  if (!GUEST) {
+    dropCol().onSnapshot(snap => {
+      const d = snap.docs.find(x => x.id === 'state');
+      S.drop = d ? withPending(dropCol().doc('state').path, d.data()) : S.drop; schedRender();
+    }, onDbErr);
+    refreshInvites();
+  }
   if (S.route.view === 'project' && S.route.pid) subscribeSketches(S.route.pid);
   S.ready = true; render();
   claude.use('assets').then(a => { S.assets = a; schedRender(); if (a) refreshUsage(); }).catch(() => {});

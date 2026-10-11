@@ -48,6 +48,28 @@ export function clearSessionCookie(req, res) {
   res.clearCookie(COOKIE, { httpOnly: true, secure: req.secure, sameSite: 'lax', path: '/' });
 }
 
+// Gäste: eigenes Cookie mit der Einladung, signiert wie die Besitzer-Session.
+// Ob die Einladung noch gilt, prüft der Server bei jeder Anfrage in der Datenbank.
+const GUEST_COOKIE = 'bench_guest';
+export function makeGuestToken(secret, inviteId) {
+  const exp = Date.now() + MAX_AGE_DAYS * 86400e3;
+  return `${inviteId}.${exp}.${hmac(secret, `guest:${inviteId}:${exp}`)}`;
+}
+export function guestInviteId(secret, token) {
+  if (!token) return null;
+  const [id, exp, sig] = token.split('.');
+  if (!id || !exp || !sig || !(Number(exp) > Date.now())) return null;
+  const want = Buffer.from(hmac(secret, `guest:${id}:${exp}`)), got = Buffer.from(sig);
+  return want.length === got.length && crypto.timingSafeEqual(want, got) ? id : null;
+}
+export const readGuestCookie = req => readCookie(req, GUEST_COOKIE);
+export function setGuestCookie(req, res, token) {
+  res.cookie(GUEST_COOKIE, token, { httpOnly: true, secure: req.secure, sameSite: 'lax', maxAge: MAX_AGE_DAYS * 86400e3, path: '/' });
+}
+export function clearGuestCookie(req, res) {
+  res.clearCookie(GUEST_COOKIE, { httpOnly: true, secure: req.secure, sameSite: 'lax', path: '/' });
+}
+
 // Einfache Bremse gegen Passwort-Raten: 10 Fehlversuche pro IP in 15 Minuten.
 const fails = new Map();
 const WINDOW = 15 * 60e3, LIMIT = 10;

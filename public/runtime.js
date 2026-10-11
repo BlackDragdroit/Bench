@@ -7,6 +7,9 @@
   const POLL_MS = 12000;
 
   const err = (code, extra) => Object.assign(new Error(code), { code }, extra || {});
+  const ME = CONFIG.me || { kind: 'owner' };
+  // Sitzung vorbei: Gäste sehen beim Neuladen die Server-Meldung ("Einladung beendet"), der Besitzer den Login
+  const gone = () => { if (ME.kind === 'guest') location.reload(); else location.href = '/login'; };
 
   async function api(method, url, body, opts = {}) {
     let res;
@@ -17,7 +20,7 @@
     }
     try { res = await fetch(url, init); }
     catch (e) { if (e && e.name === 'AbortError') throw err('cancelled'); throw err('unavailable'); }
-    if (res.status === 401) { location.href = '/login'; throw err('unauthenticated'); }
+    if (res.status === 401) { gone(); throw err('unauthenticated'); }
     if (res.status === 304) return { notModified: true, res };
     let data = null;
     try { data = await res.json(); } catch (e) {}
@@ -54,7 +57,7 @@
     for (const op of ops) {
       if (op.mode === 'delete') map.delete(op.id);
       else if (op.mode === 'set') map.set(op.id, op.data);
-      else map.set(op.id, { ...(map.get(op.id) || {}), ...op.data });
+      else map.set(op.id, window.BenchPatch ? window.BenchPatch.applyPatch(map.get(op.id), op.data) : { ...(map.get(op.id) || {}), ...op.data });
     }
     return [...map].map(([id, data]) => ({ id, data }));
   }
@@ -120,6 +123,21 @@
   }
 
   setInterval(() => { if (document.visibilityState === 'visible') for (const l of listeners) poll(l); }, POLL_MS);
+
+  // Live-Updates: der Server meldet Änderungen sofort, dann wird nur diese Sammlung neu geholt.
+  // Das Polling oben bleibt als Rückfall, falls die Verbindung abreißt.
+  const TABLE_OF = { projects: 'projects', parts: 'parts', sketches: 'sketches', drops: 'drops' };
+  function connectEvents() {
+    if (!window.EventSource) return;
+    const es = new EventSource('/api/events');
+    es.onmessage = ev => {
+      let m; try { m = JSON.parse(ev.data); } catch (e) { return; }
+      if (m.c === 'presence') { window.dispatchEvent(new CustomEvent('bench:presence', { detail: m })); return; }
+      const t = TABLE_OF[m.c]; if (t) for (const l of listeners) if (l.table === t) poll(l, true);
+    };
+    es.addEventListener('ended', () => { es.close(); gone(); });
+  }
+  connectEvents();
   const wake = () => { if (document.visibilityState === 'visible') for (const l of listeners) poll(l); };
   document.addEventListener('visibilitychange', wake);
   window.addEventListener('online', wake);
@@ -221,7 +239,8 @@
   /* ================= user ================= */
   const user = { async id() { return 'me'; } };
 
-  const caps = { db, user, assets, downloads, sample: CONFIG.identify ? sample : null };
+  const aiOk = CONFIG.identify && (ME.kind !== 'guest' || ME.allowAi);
+  const caps = { db, user, assets, downloads, sample: aiOk ? sample : null };
   window.claude = {
     async use(name) {
       if (!(name in caps)) throw err('capability_disabled');
