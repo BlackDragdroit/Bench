@@ -549,6 +549,11 @@ select.inp{appearance:none;background-image:linear-gradient(45deg,transparent 50
 .cv .pin{fill:var(--paper);stroke:var(--gold);stroke-width:1.6}
 .cv .pin.on{fill:var(--gold)}
 .cv .node-ghost{fill:var(--paper);stroke:currentColor;stroke-width:1.2;opacity:.6}
+.cv .marq{fill:color-mix(in srgb,var(--sel) 10%,transparent);stroke:var(--sel);stroke-width:1.2;stroke-dasharray:5 4;vector-effect:non-scaling-stroke}
+.cv .gbox{fill:none;stroke:var(--sel);stroke-width:1.4;stroke-dasharray:6 4;vector-effect:non-scaling-stroke;pointer-events:none}
+.cv.m-area{cursor:crosshair}
+.cv.grab,.cv.grab *{cursor:grab!important}
+.ed-selbar .selcount{align-self:center;padding:0 10px 0 6px;font-size:12.5px;font-weight:600;white-space:nowrap;opacity:.85}
 .cv .rubber{fill:none;stroke:var(--sel);stroke-width:2;stroke-dasharray:6 4}
 .ed-hint{position:absolute;top:10px;left:50%;transform:translateX(-50%);max-width:calc(100% - 24px);padding:6px 13px;border:1px solid var(--line);border-radius:999px;background:var(--paper-2);color:var(--ink-2);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
 .ed-zoom{position:absolute;right:10px;bottom:10px;display:flex;flex-direction:column;border:1.5px solid var(--line-strong);border-radius:6px;background:var(--paper-2)}
@@ -699,6 +704,7 @@ const ICONS = {
   scan:'<path d="M4 8.5V4h4.5M15.5 4H20v4.5M20 15.5V20h-4.5M8.5 20H4v-4.5"/><path d="M7.5 12h9"/>',
   image:'<rect x="3.5" y="5" width="17" height="14" rx="1.5"/><circle cx="9" cy="10" r="1.7"/><path d="M20.5 16l-5-5-8.5 8"/>',
   share:'<circle cx="18" cy="5" r="2.6"/><circle cx="6" cy="12" r="2.6"/><circle cx="18" cy="19" r="2.6"/><path d="M8.3 10.7l7.4-4.3M8.3 13.3l7.4 4.3"/>',
+  area:'<rect x="4" y="4" width="16" height="16" rx="1.5" stroke-dasharray="3.2 2.6"/><path d="M14 14l6 6M14 14v4M14 14h4"/>',
   zap:'<path d="M13 2.5 4.5 13.5h6.5l-1 8 8.5-11h-6.5z"/>',
   dice:'<rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8.5 8.5h.01M15.5 8.5h.01M12 12h.01M8.5 15.5h.01M15.5 15.5h.01" stroke-width="3"/>',
   thumb:'<path d="M7 10v11"/><path d="M15 5.9 14 10h5.8a2 2 0 0 1 1.9 2.6l-2.3 8a2 2 0 0 1-1.9 1.4H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.8a2 2 0 0 0 1.8-1.1L12 2a3.1 3.1 0 0 1 3 3.9Z"/>'
@@ -2311,11 +2317,13 @@ function openEditor(sid) {
     hist: [], fut: [], saveT: null, dirty: false, pen: 'ink', lastTap: null, palOpen: false, test: null, ro: null, lockT: null };
   buildEditor();
   document.addEventListener('keydown', edKey);
+  document.addEventListener('keyup', edKeyUp);
   requestAnimationFrame(() => { fit(); renderEd(); });
   // Nur eine Person zeichnet gleichzeitig; alle 20 s melden, dass die Skizze noch offen ist
   claimSketch(); E.lockT = setInterval(claimSketch, 20000);
 }
-function closeEditor() { if (!E) return; if (E.test && E.test.ctl) E.test.ctl.abort(); clearInterval(E.lockT); releaseSketch(E.sid); flushSave(); document.removeEventListener('keydown', edKey); E.root.remove(); E = null; schedRender(); }
+function edKeyUp(e) { if (E && e.key === ' ') { E.spaceDown = false; E.svg.classList.remove('grab'); } }
+function closeEditor() { if (!E) return; document.removeEventListener('keyup', edKeyUp); if (E.test && E.test.ctl) E.test.ctl.abort(); clearInterval(E.lockT); releaseSketch(E.sid); flushSave(); document.removeEventListener('keydown', edKey); E.root.remove(); E = null; schedRender(); }
 function buildEditor() {
   const root = h('div', { class: 'ed', role: 'dialog', 'aria-label': 'Circuit sketch' });
   const name = h('input', { class: 'ed-name', 'aria-label': 'Sketch name' }); name.value = E.name; E.nameEl = name;
@@ -2328,7 +2336,7 @@ function buildEditor() {
     E.testBtn = h('button', { class: 'btn sm', onClick: toggleTest, title: 'Simulate the circuit and check it (Shift+T)' }, icon('zap', 16), h('span', null, 'Test')),
     h('button', { class: 'btn sm', onClick: exportMenu, 'aria-label': 'Export' }, icon('download', 16), h('span', { class: 'hide-sm' }, 'Export')));
   const tool = (mode, label, ic, keyHint) => h('button', { class: 'tool', 'data-mode': mode, 'aria-pressed': 'false', title: `${label} (${keyHint})`, onClick: () => setMode(mode) }, icon(ic, 22), h('span', null, label));
-  E.toolsEl = h('nav', { class: 'ed-tools', 'aria-label': 'Tools' }, tool('select', 'Select', 'cursor', 'V'), tool('wire', 'Wire', 'wire', 'W'), tool('pen', 'Draw', 'pen', 'P'), tool('text', 'Text', 'text', 'T'), h('span', { class: 'tool-sep' }),
+  E.toolsEl = h('nav', { class: 'ed-tools', 'aria-label': 'Tools' }, tool('select', 'Select', 'cursor', 'V'), tool('wire', 'Wire', 'wire', 'W'), tool('pen', 'Draw', 'pen', 'P'), tool('text', 'Text', 'text', 'T'), tool('area', 'Area', 'area', 'M'), h('span', { class: 'tool-sep' }),
     h('button', { class: 'tool add', title: 'Add symbols and parts (A)', onClick: () => togglePalette() }, icon('plus', 22), h('span', null, 'Add')));
   const svg = document.createElementNS(SVGNS, 'svg');
   svg.setAttribute('class', 'cv');
@@ -2352,7 +2360,14 @@ function buildEditor() {
 }
 const compMap = () => new Map(E.data.comps.map(c => [c.id, c]));
 const findComp = id => E.data.comps.find(c => c.id === id);
-const isSel = (k, id) => !!(E.sel && E.sel.k === k && E.sel.id === id);
+const isSel = (k, id) => {
+  if (E.sel && E.sel.k === k && E.sel.id === id) return true;
+  const g = E.multi; if (!g) return false;
+  if (k === 'c') return g.c.has(id);
+  if (k === 's') return g.s.has(id);
+  if (k === 'w') { const w = E.data.wires.find(x => x.id === id); return !!w && g.c.has(w.a.c) && g.c.has(w.b.c); }
+  return false;
+};
 function renderEd() { if (!E) return; renderLayers(); drawOverlay(); renderSim(); renderChrome(); }
 function renderLayers() {
   const d = E.data, cm = compMap(), wc = wireCounts(d);
@@ -2370,6 +2385,8 @@ function drawOverlay() {
     }
   }
   if (E.stroke) s += `<path d="${smoothPath(E.stroke.p)}" fill="none" stroke="${penColor(E.stroke.c)}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>`;
+  if (E.marq) { const m = E.marq, x = Math.min(m.x0, m.x1), y = Math.min(m.y0, m.y1); s += `<rect class="marq" x="${x}" y="${y}" width="${Math.abs(m.x1 - m.x0)}" height="${Math.abs(m.y1 - m.y0)}"/>`; }
+  if (E.multi && !E.marq) { const b = groupBounds(); if (b) s += `<rect class="gbox" x="${b.x - 8}" y="${b.y - 8}" width="${b.w + 16}" height="${b.h + 16}" rx="6"/>`; }
   E.L.o.innerHTML = s;
 }
 function renderChrome() {
@@ -2394,13 +2411,21 @@ function renderChrome() {
   const hint = E.mode === 'wire' ? (E.pend ? 'Tap another pin to connect. Tap empty space to add a corner.' : 'Tap a pin to start a wire.')
     : E.mode === 'pen' ? 'Draw with a finger or the mouse. Two fingers pan and zoom.'
     : E.mode === 'text' ? 'Tap where the label should go.'
+    : E.mode === 'area' ? 'Drag a box around the parts you want to select.'
     : empty ? 'Tap Add to place symbols or this project’s parts.' : '';
-  E.hintEl.textContent = hint; E.hintEl.hidden = !hint || !!E.sel;
+  E.hintEl.textContent = hint; E.hintEl.hidden = !hint || !!E.sel || !!E.multi;
   E.pens.hidden = E.mode !== 'pen';
   E.pens.querySelectorAll('.pen-c').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.c === E.pen)));
+  const B = (label, ic, fn) => h('button', { onClick: fn }, icon(ic, 19), h('span', null, label));
+  if (E.multi && E.mode === 'select') {
+    const n = E.multi.c.size - [...E.multi.c].filter(id => (findComp(id) || {}).t === 'node').length + E.multi.s.size;
+    E.selbar.replaceChildren(h('span', { class: 'selcount' }, `${n} selected`),
+      B('Rotate', 'rotate', () => groupRotate()), B('Smaller', 'zout', () => groupScale(-1)), B('Larger', 'zin', () => groupScale(1)),
+      B('Duplicate', 'copy', () => groupDuplicate()), B('Delete', 'trash', () => groupDelete()));
+    E.selbar.hidden = false; return;
+  }
   const sel = E.sel;
   if (!sel || E.mode !== 'select') { E.selbar.hidden = true; return; }
-  const B = (label, ic, fn) => h('button', { onClick: fn }, icon(ic, 19), h('span', null, label));
   const btns = [];
   if (sel.k === 'c') {
     const c = findComp(sel.id); if (!c) { E.sel = null; E.selbar.hidden = true; return; }
@@ -2412,7 +2437,7 @@ function renderChrome() {
   btns.push(B('Delete', 'trash', delSel));
   E.selbar.replaceChildren(...btns); E.selbar.hidden = false;
 }
-function setMode(m) { E.mode = m; E.pend = null; E.cursor = null; if (m !== 'select') E.sel = null; if (E.palOpen && window.matchMedia('(max-width:820px)').matches) togglePalette(false); renderEd(); }
+function setMode(m) { E.mode = m; E.pend = null; E.cursor = null; if (m !== 'select') { E.sel = null; E.multi = null; } if (E.palOpen && window.matchMedia('(max-width:820px)').matches) togglePalette(false); renderEd(); }
 
 /* ---- view transform ---- */
 function applyView() { E.vp.setAttribute('transform', `translate(${E.tx} ${E.ty}) scale(${E.k})`); }
@@ -2437,7 +2462,8 @@ function nearestPin(w, thr) {
   return best;
 }
 function onDown(e) {
-  if (e.button && e.button !== 0) return;
+  if (e.button && e.button !== 1 && e.button !== 2 && e.button !== 0) return;
+  const panOnly = e.button === 1 || e.button === 2 || E.spaceDown;
   try { E.svg.setPointerCapture(e.pointerId); } catch (er) {}
   E.ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
   if (E.ptrs.size === 2) { startPinch(); return; }
@@ -2445,7 +2471,7 @@ function onDown(e) {
   const w = toWorld(e.clientX, e.clientY);
   const thr = (e.pointerType === 'touch' ? 22 : 14) / E.k;
   const panStart = extra => ({ sx: e.clientX, sy: e.clientY, tx: E.tx, ty: E.ty, moved: false, w, ...extra });
-  if (E.ro && !E.test) { E.pan = panStart({}); return; }
+  if (panOnly || (E.ro && !E.test)) { E.pan = panStart({}); return; }
   if (E.test) {
     // Im Test: Schalter umlegen, Taster halten, sonst Messwerte zeigen; nichts bearbeiten
     const tgt = e.target.closest && e.target.closest('[data-k="c"]');
@@ -2462,15 +2488,23 @@ function onDown(e) {
     E.pan = panStart({ wireTap: !!E.pend }); return;
   }
   if (E.mode === 'text') { E.pan = panStart({ textTap: true }); return; }
+  if (E.mode === 'area') { E.marq = { x0: w.x, y0: w.y, x1: w.x, y1: w.y, add: false }; E.sel = null; E.multi = null; renderEd(); return; }
   const tgt = e.target.closest && e.target.closest('[data-k]');
   if (tgt) {
     const k = tgt.dataset.k, id = tgt.dataset.id;
+    // Umschalt/Strg-Klick: zur Auswahl hinzufügen oder wieder herausnehmen
+    if ((e.shiftKey || e.ctrlKey || e.metaKey) && (k === 'c' || k === 's')) { toggleInGroup(k, id); return; }
+    // Teil einer Gruppe angefasst: die ganze Gruppe ziehen
+    if (E.multi && ((k === 'c' && E.multi.c.has(id)) || (k === 's' && E.multi.s.has(id)))) { startGroupDrag(w); return; }
+    E.multi = null;
     const again = E.lastTap && E.lastTap.id === id && Date.now() - E.lastTap.t < 380;
     E.sel = { k, id }; E.lastTap = { id, t: Date.now() };
     if (k === 'c') { const c = findComp(id); E.drag = { id, sx: w.x, sy: w.y, ox: c.x, oy: c.y, pre: snapState(), moved: false, again }; }
     renderEd(); return;
   }
-  if (E.sel) { E.sel = null; renderEd(); }
+  // Leere Fläche: mit der Maus ein Auswahlrechteck ziehen, mit dem Finger die Ansicht verschieben
+  if (e.pointerType === 'mouse') { E.marq = { x0: w.x, y0: w.y, x1: w.x, y1: w.y, add: e.shiftKey || e.ctrlKey || e.metaKey }; if (!E.marq.add) { E.sel = null; E.multi = null; } renderEd(); return; }
+  if (E.sel || E.multi) { E.sel = null; E.multi = null; renderEd(); }
   E.pan = panStart({});
 }
 function onMove(e) {
@@ -2485,6 +2519,8 @@ function onMove(e) {
     if (Math.hypot(w.x - lx, w.y - ly) * E.k >= 2.5) { p.push(Math.round(w.x), Math.round(w.y)); drawOverlay(); }
     return;
   }
+  if (E.marq) { E.marq.x1 = w.x; E.marq.y1 = w.y; drawOverlay(); return; }
+  if (E.gdrag) { moveGroup(w); return; }
   if (E.drag) {
     const c = findComp(E.drag.id); if (!c) return;
     const nx = snap(E.drag.ox + w.x - E.drag.sx), ny = snap(E.drag.oy + w.y - E.drag.sy);
@@ -2509,6 +2545,8 @@ function onUp(e) {
     if (s.p.length >= 4) { const pre = snapState(); E.data.strokes.push(s); commit(pre); }
     renderEd(); return;
   }
+  if (E.marq) { finishMarquee(); return; }
+  if (E.gdrag) { const g = E.gdrag; E.gdrag = null; if (g.moved) commit(g.pre); renderEd(); return; }
   if (E.drag) {
     const d = E.drag; E.drag = null;
     if (d.moved) { commit(d.pre); renderEd(); }
@@ -2528,6 +2566,8 @@ function startPinch() {
   const [a, b] = [...E.ptrs.values()];
   if (E.stroke) E.stroke = null;
   if (E.drag) { if (E.drag.moved) commit(E.drag.pre); E.drag = null; }
+  if (E.gdrag) { if (E.gdrag.moved) commit(E.gdrag.pre); E.gdrag = null; }
+  E.marq = null;
   E.pan = null; E.ignore = true;
   E.pinch = { d0: Math.hypot(a.x - b.x, a.y - b.y) || 1, m0: { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }, k0: E.k, tx0: E.tx, ty0: E.ty };
   renderEd();
@@ -2544,8 +2584,8 @@ function updatePinch() {
 /* ---- edits ---- */
 const snapState = () => JSON.stringify(E.data);
 function commit(pre) { E.hist.push(pre); if (E.hist.length > 80) E.hist.shift(); E.fut = []; markDirty(); }
-function undo() { if (!E.hist.length) return; E.fut.push(snapState()); E.data = JSON.parse(E.hist.pop()); E.sel = null; E.pend = null; markDirty(); renderEd(); }
-function redo() { if (!E.fut.length) return; E.hist.push(snapState()); E.data = JSON.parse(E.fut.pop()); E.sel = null; E.pend = null; markDirty(); renderEd(); }
+function undo() { if (!E.hist.length) return; E.fut.push(snapState()); E.data = JSON.parse(E.hist.pop()); E.sel = null; E.multi = null; E.pend = null; markDirty(); renderEd(); }
+function redo() { if (!E.fut.length) return; E.hist.push(snapState()); E.data = JSON.parse(E.fut.pop()); E.sel = null; E.multi = null; E.pend = null; markDirty(); renderEd(); }
 function markDirty() { if (E.ro) return; E.dirty = true; E.saveEl.textContent = 'Saving…'; clearTimeout(E.saveT); E.saveT = setTimeout(flushSave, 900); }
 function flushSave() {
   if (!E || !E.dirty) return; clearTimeout(E.saveT); E.dirty = false;
@@ -2591,9 +2631,107 @@ function delSel() {
 }
 function resizeSel(dir) {
   const c = E.sel && findComp(E.sel.id); if (!c || c.t === 'node' || c.t === 'text') return;
-  const i = SIZES.indexOf(sizeOf(c)), j = Math.max(0, Math.min(SIZES.length - 1, (i < 0 ? SIZES.indexOf(1) : i) + dir));
-  if (SIZES[j] === sizeOf(c)) { toast(dir > 0 ? 'That’s the largest size.' : 'That’s the smallest size.'); return; }
-  const pre = snapState(); if (SIZES[j] === 1) delete c.s; else c.s = SIZES[j]; commit(pre); renderEd();
+  const k = sizeOf(c), next = dir > 0 ? SIZES.find(v => v > k + 1e-6) : [...SIZES].reverse().find(v => v < k - 1e-6);
+  if (next == null) { toast(dir > 0 ? 'That’s the largest size.' : 'That’s the smallest size.'); return; }
+  const pre = snapState(); if (next === 1) delete c.s; else c.s = next; commit(pre); renderEd();
+}
+/* ---- several things at once ---- */
+// Gruppe: E.multi = { c: Set(Bauteil-IDs inkl. Knoten und Text), s: Set(Freihand-IDs) }.
+// Leitungen gehören dazu, wenn beide Enden in der Gruppe liegen; sie folgen den Pins von selbst.
+function setGroup(cids, sids) {
+  const c = new Set(cids), st = new Set(sids || []);
+  const total = c.size + st.size;
+  if (!total) { E.multi = null; E.sel = null; }
+  else if (total === 1 && c.size === 1) { E.multi = null; E.sel = { k: 'c', id: [...c][0] }; }
+  else if (total === 1) { E.multi = null; E.sel = { k: 's', id: [...st][0] }; }
+  else { E.multi = { c, s: st }; E.sel = null; }
+  if (E.mode !== 'select') E.mode = 'select';
+}
+function toggleInGroup(k, id) {
+  const c = new Set(E.multi ? E.multi.c : []), st = new Set(E.multi ? E.multi.s : []);
+  if (!E.multi && E.sel) { if (E.sel.k === 'c') c.add(E.sel.id); else if (E.sel.k === 's') st.add(E.sel.id); }
+  const set = k === 'c' ? c : st; if (set.has(id)) set.delete(id); else set.add(id);
+  setGroup(c, st); renderEd();
+}
+function selectAll() { setGroup(E.data.comps.map(c => c.id), E.data.strokes.map(x => x.id)); renderEd(); }
+function finishMarquee() {
+  const m = E.marq; E.marq = null;
+  const x0 = Math.min(m.x0, m.x1), x1 = Math.max(m.x0, m.x1), y0 = Math.min(m.y0, m.y1), y1 = Math.max(m.y0, m.y1);
+  if ((x1 - x0) * E.k < 4 && (y1 - y0) * E.k < 4) { if (!m.add) { E.sel = null; E.multi = null; } if (E.mode === 'area') E.mode = 'select'; renderEd(); return; }
+  const inside = (x, y) => x >= x0 && x <= x1 && y >= y0 && y <= y1;
+  const c = new Set(m.add && E.multi ? E.multi.c : []), st = new Set(m.add && E.multi ? E.multi.s : []);
+  if (m.add && !E.multi && E.sel) { if (E.sel.k === 'c') c.add(E.sel.id); else if (E.sel.k === 's') st.add(E.sel.id); }
+  for (const comp of E.data.comps) if (inside(comp.x, comp.y)) c.add(comp.id);
+  for (const sk of E.data.strokes) { const b = bounds({ comps: [], strokes: [sk] }); if (b && inside(b.x + b.w / 2, b.y + b.h / 2)) st.add(sk.id); }
+  // Ecken von Leitungen mitnehmen, wenn beide Enden ausgewählt sind
+  for (let pass = 0; pass < 3; pass++) for (const w of E.data.wires) {
+    const a = findComp(w.a.c), b = findComp(w.b.c);
+    if (a && b && a.t === 'node' && !c.has(a.id) && c.has(b.id) && inside(a.x, a.y)) c.add(a.id);
+    if (a && b && b.t === 'node' && !c.has(b.id) && c.has(a.id) && inside(b.x, b.y)) c.add(b.id);
+  }
+  setGroup(c, st); renderEd();
+}
+const groupItems = () => ({ comps: E.data.comps.filter(c => E.multi.c.has(c.id)), strokes: E.data.strokes.filter(x => E.multi.s.has(x.id)) });
+function groupBounds() { const g = groupItems(); return bounds({ comps: g.comps.filter(c => c.t !== 'node'), strokes: g.strokes }) || bounds(g); }
+function groupCenter() { const b = groupBounds(); return b ? { x: snap(b.x + b.w / 2), y: snap(b.y + b.h / 2) } : null; }
+function startGroupDrag(w) {
+  const g = groupItems();
+  E.gdrag = { sx: w.x, sy: w.y, pre: snapState(), moved: false, dx: 0, dy: 0,
+    comps: g.comps.map(c => [c, c.x, c.y]), strokes: g.strokes.map(x => [x, x.p.slice()]) };
+  renderEd();
+}
+function moveGroup(w) {
+  const g = E.gdrag, dx = snap(w.x - g.sx), dy = snap(w.y - g.sy);
+  if (dx === g.dx && dy === g.dy) return;
+  g.dx = dx; g.dy = dy; g.moved = true;
+  for (const [c, x, y] of g.comps) { c.x = x + dx; c.y = y + dy; }
+  for (const [sk, p] of g.strokes) sk.p = p.map((v, i) => v + (i % 2 ? dy : dx));
+  renderLayers(); drawOverlay();
+}
+// Gruppe größer oder kleiner: Abstände und Bauteilgrößen wachsen gemeinsam um den Mittelpunkt
+function groupScale(dir) {
+  const g = groupItems(), ctr = groupCenter(); if (!ctr) return;
+  const r = dir > 0 ? 1.25 : 0.8;
+  const sized = g.comps.filter(c => c.t !== 'node' && c.t !== 'text');
+  const next = c => Math.round(sizeOf(c) * r * 100) / 100;
+  if (sized.some(c => next(c) < 0.3 || next(c) > 4)) { toast(dir > 0 ? 'That’s as large as it gets.' : 'That’s as small as it gets.'); return; }
+  const pre = snapState(), half = v => Math.round(v / 10) * 10;
+  for (const c of g.comps) {
+    c.x = half(ctr.x + (c.x - ctr.x) * r); c.y = half(ctr.y + (c.y - ctr.y) * r);
+    if (c.t !== 'node' && c.t !== 'text') { const k = next(c); if (Math.abs(k - 1) < 0.01) delete c.s; else c.s = k; }
+  }
+  for (const sk of g.strokes) sk.p = sk.p.map((v, i) => Math.round((i % 2 ? ctr.y : ctr.x) + (v - (i % 2 ? ctr.y : ctr.x)) * r));
+  commit(pre); renderEd();
+}
+function groupRotate() {
+  const g = groupItems(), ctr = groupCenter(); if (!ctr) return;
+  const pre = snapState();
+  for (const c of g.comps) {
+    const [rx, ry] = rot(c.x - ctr.x, c.y - ctr.y, 1); c.x = snap(ctr.x + rx); c.y = snap(ctr.y + ry);
+    if (c.t !== 'node' && c.t !== 'text') c.r = ((c.r || 0) + 1) % 4;
+  }
+  for (const sk of g.strokes) { const p = sk.p.slice(); for (let i = 0; i < p.length; i += 2) { const [rx, ry] = rot(p[i] - ctr.x, p[i + 1] - ctr.y, 1); sk.p[i] = Math.round(ctr.x + rx); sk.p[i + 1] = Math.round(ctr.y + ry); } }
+  commit(pre); renderEd();
+}
+function groupDuplicate() {
+  const g = groupItems(); if (!g.comps.length && !g.strokes.length) return;
+  const pre = snapState(), idm = new Map(), used = new Set(E.data.comps.map(c => c.l).filter(Boolean));
+  const comps = g.comps.map(c => {
+    const n = { ...clone(c), id: uid8(), x: c.x + 40, y: c.y + 40 }; idm.set(c.id, n.id);
+    const m = /^([A-Za-z]+)\d+$/.exec(c.l || ''); if (m) { n.l = nextDesignator(m[1], used); used.add(n.l); }
+    return n;
+  });
+  const wires = E.data.wires.filter(w => idm.has(w.a.c) && idm.has(w.b.c)).map(w => ({ ...clone(w), id: uid8(), a: { ...w.a, c: idm.get(w.a.c) }, b: { ...w.b, c: idm.get(w.b.c) } }));
+  const strokes = g.strokes.map(x => ({ ...clone(x), id: uid8(), p: x.p.map(v => v + 40) }));
+  E.data.comps.push(...comps); E.data.wires.push(...wires); E.data.strokes.push(...strokes);
+  setGroup(comps.map(c => c.id), strokes.map(x => x.id)); commit(pre); renderEd();
+}
+function groupDelete() {
+  const g = E.multi; if (!g) return; const pre = snapState(), d = E.data;
+  d.comps = d.comps.filter(c => !g.c.has(c.id));
+  d.wires = d.wires.filter(w => !g.c.has(w.a.c) && !g.c.has(w.b.c));
+  d.strokes = d.strokes.filter(x => !g.s.has(x.id));
+  pruneNodes(); E.multi = null; E.sel = null; commit(pre); renderEd();
 }
 function rotateSel() { const c = E.sel && findComp(E.sel.id); if (!c || c.t === 'node' || c.t === 'text') return; const pre = snapState(); c.r = ((c.r || 0) + 1) % 4; commit(pre); renderEd(); }
 function flipSel() { const w = E.sel && E.data.wires.find(x => x.id === E.sel.id); if (!w) return; const pre = snapState(); w.f = !w.f; commit(pre); renderEd(); }
@@ -2702,12 +2840,20 @@ function edKey(e) {
   if (mod && k === 'z') { e.preventDefault(); e.shiftKey ? redo() : undo(); return; }
   if (mod && k === 'y') { e.preventDefault(); redo(); return; }
   if (mod) return;
+  if (e.key === ' ' && !mod) { e.preventDefault(); if (!E.spaceDown) { E.spaceDown = true; E.svg.classList.add('grab'); } return; }
+  if (mod && k === 'a') { e.preventDefault(); selectAll(); return; }
+  if (E.multi) {
+    if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); groupDelete(); return; }
+    if (k === 'r') { groupRotate(); return; }
+    if (e.key === '+' || e.key === '=' || e.key === '-') { groupScale(e.key === '-' ? -1 : 1); return; }
+    if (k === 'd') { groupDuplicate(); return; }
+  }
   if (e.key === 'Delete' || e.key === 'Backspace') { if (E.sel) { e.preventDefault(); delSel(); } return; }
-  if (e.key === 'Escape') { if (E.pend) { E.pend = null; renderEd(); } else if (E.palOpen) togglePalette(false); else if (E.sel) { E.sel = null; renderEd(); } else if (E.mode !== 'select') setMode('select'); else closeEditor(); return; }
+  if (e.key === 'Escape') { if (E.pend) { E.pend = null; renderEd(); } else if (E.palOpen) togglePalette(false); else if (E.multi) { E.multi = null; renderEd(); } else if (E.sel) { E.sel = null; renderEd(); } else if (E.mode !== 'select') setMode('select'); else closeEditor(); return; }
   if (k === 'r' && E.sel && E.sel.k === 'c') { rotateSel(); return; }
   if ((e.key === '+' || e.key === '=' || e.key === '-') && E.sel && E.sel.k === 'c') { resizeSel(e.key === '-' ? -1 : 1); return; }
   if (k === 'f' && E.sel && E.sel.k === 'w') { flipSel(); return; }
-  if (k === 'v') setMode('select'); else if (k === 'w') setMode('wire'); else if (k === 'p') setMode('pen'); else if (k === 't') setMode('text'); else if (k === 'a') togglePalette();
+  if (k === 'v') setMode('select'); else if (k === 'w') setMode('wire'); else if (k === 'p') setMode('pen'); else if (k === 't') setMode('text'); else if (k === 'm') setMode('area'); else if (k === 'a') togglePalette();
 }
 
 /* ---- export ---- */
