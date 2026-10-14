@@ -563,6 +563,9 @@ select.inp{appearance:none;background-image:linear-gradient(45deg,transparent 50
 .ed-pens{position:absolute;left:12px;bottom:12px;display:flex;gap:6px;padding:6px;border:1.5px solid var(--line-strong);border-radius:999px;background:var(--paper-2)}
 .pen-c{width:30px;height:30px;border-radius:50%;border:2px solid transparent;background:var(--pc);box-shadow:inset 0 0 0 3px var(--paper-2)}
 .pen-c[aria-pressed="true"]{border-color:var(--ink)}
+.wsw{display:block;width:19px;height:19px;border-radius:50%;background:var(--wc);box-shadow:0 0 0 1.5px color-mix(in srgb,var(--paper-2) 55%,transparent)}
+.wsw.auto{background:conic-gradient(#D9533B 0 25%,#3E7BD6 0 50%,#3E9F5C 0 75%,#C9A227 0)}
+.ed-selbar button[aria-pressed="true"] .wsw{box-shadow:0 0 0 2.5px var(--paper-2)}
 .ed-pal{width:310px;display:flex;flex-direction:column;min-height:0;background:var(--paper-2);border-left:1.5px solid var(--line-strong)}
 .pal-h{display:flex;align-items:center;gap:8px;padding:10px 8px 8px 16px;border-bottom:1px solid var(--line)}
 .pal-h b{flex:1;font:700 19px var(--font-head)}
@@ -638,6 +641,8 @@ button.tfind:disabled{cursor:default}
   .ed-pal{position:absolute;left:0;right:0;bottom:0;z-index:5;width:auto;height:74%;border-left:0;border-top:1.5px solid var(--line-strong);border-radius:12px 12px 0 0;box-shadow:var(--shadow)}
   .hide-sm{display:none}
   .ed-selbar button{min-width:50px}
+  .ed-selbar button.wpick{min-width:0;padding:7px 5px}
+  .ed-selbar .wpick span:last-child{display:none}
   .ed-zoom{bottom:auto;top:52px}
 }
 .m-only{display:none}
@@ -2192,6 +2197,58 @@ function wirePts(w, cm) {
   return [a, w.f ? { x: a.x, y: b.y } : { x: b.x, y: a.y }, b];
 }
 const penColor = c => c === 'red' ? '#D9533B' : c === 'blue' ? '#3E7BD6' : 'currentColor';
+/* Kabelfarben: jedes Netz bekommt automatisch eine Farbe (Masse schwarz, Versorgung rot, Signale bunt).
+   Ein Kabel mit eigener Farbe (w.col) behält sie. */
+const WIRE_COLS = { red: '#D9533B', orange: '#E08A2E', yellow: '#C9A227', green: '#3E9F5C', teal: '#1E9AA8', blue: '#3E7BD6', purple: '#8A5CD1', pink: '#D0558F' };
+const WIRE_COL_NAMES = { auto: 'Auto', ink: 'Black', red: 'Red', orange: 'Orange', yellow: 'Yellow', green: 'Green', teal: 'Teal', blue: 'Blue', purple: 'Purple', pink: 'Pink' };
+const SIGNAL_COLS = ['blue', 'green', 'purple', 'teal', 'yellow', 'pink', 'orange'], SUPPLY_COLS = ['red', 'orange', 'pink'];
+const GND_PIN = /^(gnd|vss|v-|0v|com|agnd|dgnd)$/i, SUP_PIN = /^(vcc|vdd|vin|v\+|vbat|vbus|\+?\d+(\.\d+)?v|\d+v\d+)$/i;
+const colHex = k => (k && WIRE_COLS[k]) || null;
+function netColors(d) {
+  const out = { wire: new Map(), key: new Map() };
+  const wires = d.wires || []; if (!wires.length) return out;
+  let auto = new Map();
+  if (window.BenchSim) {
+    const comps = (d.comps || []).filter(c => c.t !== 'text');
+    const { netOf, gndNet } = BenchSim.buildNets(comps, wires);
+    const info = new Map(), get = n => { if (!info.has(n)) info.set(n, { gnd: n === gndNet, sup: null, min: null }); return info.get(n); };
+    let batNeg = null;
+    for (const c of comps) BenchSim.pinNames(c).forEach((nm, i) => {
+      const k = c.id + ':' + i, n = netOf.get(k); if (n == null) return; const o = get(n);
+      if (o.min == null || k < o.min) o.min = k;
+      if (c.t === 'vcc') o.sup = o.sup || String(c.v || 'VCC').trim().toUpperCase().replace(/\s+/g, '').replace(/^\+/, '');
+      else if (c.t === 'battery') { if (i === 0) o.sup = o.sup || 'BAT'; else if (batNeg == null) batNeg = n; }
+      else if (c.t === 'block') { if (GND_PIN.test(nm)) o.gnd = true; else if (SUP_PIN.test(nm)) o.sup = o.sup || nm.toUpperCase().replace(/^\+/, ''); }
+    });
+    // Ohne Masse-Symbol gilt der Minuspol der Batterie als Masse
+    if (![...info.values()].some(o => o.gnd) && batNeg != null) get(batNeg).gnd = true;
+    const used = new Set(wires.map(w => netOf.get(w.a.c + ':' + w.a.p)).filter(n => n != null));
+    const nets = [...used].sort((a, b) => String(get(a).min).localeCompare(String(get(b).min)));
+    const supCol = new Map(), taken = new Set();
+    const hash = t => { let x = 0; for (const ch of String(t)) x = (x * 31 + ch.charCodeAt(0)) >>> 0; return x; };
+    for (const n of nets) {
+      const o = get(n); let col;
+      if (o.gnd) col = 'ink';
+      else if (o.sup) { if (!supCol.has(o.sup)) supCol.set(o.sup, SUPPLY_COLS[Math.min(supCol.size, SUPPLY_COLS.length - 1)]); col = supCol.get(o.sup); }
+      else {
+        // Farbe hängt vom Netz ab, nicht von der Reihenfolge, damit sie beim Weiterzeichnen möglichst bleibt
+        const p = hash(o.min) % SIGNAL_COLS.length;
+        col = SIGNAL_COLS[p];
+        for (let j = 0; j < SIGNAL_COLS.length; j++) { const c = SIGNAL_COLS[(p + j) % SIGNAL_COLS.length]; if (!taken.has(c)) { col = c; break; } }
+        taken.add(col);
+      }
+      auto.set(n, col);
+    }
+    for (const w of wires) { const a = auto.get(netOf.get(w.a.c + ':' + w.a.p)); if (a) out.wire.set(w.id, a); }
+  }
+  for (const w of wires) {
+    if (w.col && w.col !== 'auto') out.wire.set(w.id, w.col);
+    const col = out.wire.get(w.id);
+    for (const e of [w.a, w.b]) { const k = e.c + ':' + e.p; if (!out.key.has(k)) out.key.set(k, col); }
+  }
+  return out;
+}
+const dotFill = k => { const x = colHex(k); return x ? `fill="${x}" stroke="none"` : F; };
 const T = (x, y, s, o = {}) => `<text x="${x}" y="${y}" text-anchor="${o.a || 'middle'}" font-size="${o.size || 11}" font-weight="${o.w || 500}"${o.op ? ` opacity="${o.op}"` : ''} font-family="${FONT}" ${F}>${esc(s)}</text>`;
 function blockBody(c, g) {
   let s = `<rect x="${-g.halfW}" y="${g.top}" width="${2 * g.halfW}" height="${g.bot - g.top}" rx="2"/>`;
@@ -2214,7 +2271,7 @@ function labelMarkup(c, rb) {
   if (wdt >= hgt) return (L ? T(x, y + rb[1] - 6, L, { w: 600 }) : '') + (V ? T(x, y + rb[3] + 14, V) : '');
   return (L ? T(x + rb[2] + 6, y - 2, L, { a: 'start', w: 600 }) : '') + (V ? T(x + rb[2] + 6, y + 12, V, { a: 'start' }) : '');
 }
-function compMarkup(c, sel, live, wc) {
+function compMarkup(c, sel, live, wc, nc) {
   const tr = `translate(${c.x} ${c.y})`;
   const da = live ? ` data-k="c" data-id="${c.id}"` : '';
   const cls = live ? ` class="cmp${sel ? ' sel' : ''}"` : '';
@@ -2224,7 +2281,7 @@ function compMarkup(c, sel, live, wc) {
   }
   if (c.t === 'node') {
     const n = wc.get(c.id) || 0;
-    return `<g${cls}${da} transform="${tr}">${n >= 3 ? `<circle r="4" ${F}/>` : ''}${live && (sel || n === 0 || E.mode === 'wire') ? '<circle r="3.6" class="node-ghost"/>' : ''}${live ? '<circle class="hit" r="10"/>' : ''}</g>`;
+    return `<g${cls}${da} transform="${tr}">${n >= 3 ? `<circle r="4" ${nc && !sel ? dotFill(nc.key.get(c.id + ':0')) : F}/>` : ''}${live && (sel || n === 0 || E.mode === 'wire') ? '<circle r="3.6" class="node-ghost"/>' : ''}${live ? '<circle class="hit" r="10"/>' : ''}</g>`;
   }
   let body, bb;
   if (c.t === 'block') { const g = blockGeom(c); bb = g.bb; body = blockBody(c, g); }
@@ -2242,14 +2299,15 @@ function compMarkup(c, sel, live, wc) {
   if (live && E && E.test && (c.t === 'switch' || c.t === 'button')) return `<g class="cmp tog"${da}><g ${tf}>${body}<rect class="hit" x="${bb[0]}" y="${bb[1] - 8}" width="${bb[2]}" height="${bb[3] + 16}"/></g>${labelMarkup(c, rb)}</g>`;
   return `<g${cls}${da}><g ${tf}>${body}${live ? `<rect class="hit" x="${bb[0]}" y="${bb[1]}" width="${bb[2]}" height="${bb[3]}"/>` : ''}${sel && live ? `<rect class="selbox" x="${bb[0] - 5}" y="${bb[1] - 5}" width="${bb[2] + 10}" height="${bb[3] + 10}"/>` : ''}</g>${labelMarkup(c, rb)}</g>`;
 }
-function wireMarkup(w, cm, sel, live) {
+function wireMarkup(w, cm, sel, live, nc) {
   const pts = wirePts(w, cm); if (!pts) return '';
   const d = 'M' + pts.map(p => `${p.x} ${p.y}`).join('L');
-  return `<g${live ? ` data-k="w" data-id="${w.id}"` : ''}${live && sel ? ' class="sel"' : ''}><path d="${d}"/>${live ? `<path class="whit" d="${d}"/>` : ''}</g>`;
+  const hx = nc && colHex(nc.wire.get(w.id));
+  return `<g${live ? ` data-k="w" data-id="${w.id}"` : ''}${live && sel ? ' class="sel"' : ''}>${live && sel && hx ? `<path class="str-sel" d="${d}"/>` : ''}<path d="${d}"${hx ? ` stroke="${hx}"` : ''}/>${live ? `<path class="whit" d="${d}"/>` : ''}</g>`;
 }
-function junctionDots(d, cm, wc) {
+function junctionDots(d, cm, wc, nc) {
   let s = '';
-  for (const c of d.comps || []) { if (c.t === 'node' || c.t === 'text') continue; localPins(c).forEach((_, i) => { if ((wc.get(c.id + ':' + i) || 0) >= 2) { const p = pinPos({ c: c.id, p: i }, cm); if (p) s += `<circle cx="${p.x}" cy="${p.y}" r="4" ${F}/>`; } }); }
+  for (const c of d.comps || []) { if (c.t === 'node' || c.t === 'text') continue; localPins(c).forEach((_, i) => { if ((wc.get(c.id + ':' + i) || 0) >= 2) { const p = pinPos({ c: c.id, p: i }, cm); if (p) s += `<circle cx="${p.x}" cy="${p.y}" r="4" ${nc ? dotFill(nc.key.get(c.id + ':' + i)) : F}/>`; } }); }
   return s;
 }
 function smoothPath(p) {
@@ -2264,8 +2322,8 @@ function strokeMarkup(s, sel, live) {
   return `<g${live ? ` data-k="s" data-id="${s.id}"` : ''}>${sel && live ? `<path class="str-sel" d="${d}"/>` : ''}<path d="${d}" stroke="${penColor(s.c)}" stroke-width="2.4"/>${live ? `<path class="whit" d="${d}"/>` : ''}</g>`;
 }
 function contentMarkup(d) {
-  const cm = new Map((d.comps || []).map(c => [c.id, c])), wc = wireCounts(d);
-  return `<g>${(d.strokes || []).map(s => strokeMarkup(s, false, false)).join('')}</g><g>${(d.wires || []).map(w => wireMarkup(w, cm, false, false)).join('')}${junctionDots(d, cm, wc)}</g><g>${(d.comps || []).map(c => compMarkup(c, false, false, wc)).join('')}</g>`;
+  const cm = new Map((d.comps || []).map(c => [c.id, c])), wc = wireCounts(d), nc = netColors(d);
+  return `<g>${(d.strokes || []).map(s => strokeMarkup(s, false, false)).join('')}</g><g>${(d.wires || []).map(w => wireMarkup(w, cm, false, false, nc)).join('')}${junctionDots(d, cm, wc, nc)}</g><g>${(d.comps || []).map(c => compMarkup(c, false, false, wc, nc)).join('')}</g>`;
 }
 function bounds(d) {
   let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
@@ -2370,10 +2428,10 @@ const isSel = (k, id) => {
 };
 function renderEd() { if (!E) return; renderLayers(); drawOverlay(); renderSim(); renderChrome(); }
 function renderLayers() {
-  const d = E.data, cm = compMap(), wc = wireCounts(d);
+  const d = E.data, cm = compMap(), wc = wireCounts(d), nc = netColors(d);
   E.L.s.innerHTML = d.strokes.map(s => strokeMarkup(s, isSel('s', s.id), true)).join('');
-  E.L.w.innerHTML = d.wires.map(w => wireMarkup(w, cm, isSel('w', w.id), true)).join('') + junctionDots(d, cm, wc);
-  E.L.c.innerHTML = d.comps.map(c => compMarkup(c, isSel('c', c.id), true, wc)).join('');
+  E.L.w.innerHTML = d.wires.map(w => wireMarkup(w, cm, isSel('w', w.id), true, nc)).join('') + junctionDots(d, cm, wc, nc);
+  E.L.c.innerHTML = d.comps.map(c => compMarkup(c, isSel('c', c.id), true, wc, nc)).join('');
 }
 function drawOverlay() {
   let s = '';
@@ -2417,11 +2475,20 @@ function renderChrome() {
   E.pens.hidden = E.mode !== 'pen';
   E.pens.querySelectorAll('.pen-c').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.c === E.pen)));
   const B = (label, ic, fn) => h('button', { onClick: fn }, icon(ic, 19), h('span', null, label));
+  const selWires = selectedWires(), sk = selKey();
+  const swatch = k => h('span', { class: 'wsw' + (k === 'auto' ? ' auto' : ''), style: `--wc:${k === 'ink' ? 'var(--paper-2)' : colHex(k) || 'transparent'}` });
+  if (selWires.length && E.colPick === sk && E.mode === 'select') {
+    const cur = new Set(selWires.map(w => w.col || 'auto')), one = cur.size === 1 ? [...cur][0] : null;
+    E.selbar.replaceChildren(...['auto', 'ink', ...Object.keys(WIRE_COLS)].map(k => h('button', { class: 'wpick', 'aria-pressed': String(one === k), title: k === 'auto' ? 'Automatic: one colour per connection' : WIRE_COL_NAMES[k], onClick: () => setWireCol(k) }, swatch(k), h('span', null, WIRE_COL_NAMES[k]))),
+      B('Back', 'back', () => { E.colPick = null; renderChrome(); }));
+    E.selbar.hidden = false; return;
+  }
+  const colourBtn = () => { const one = new Set(selWires.map(w => w.col || 'auto')); const k = one.size === 1 ? [...one][0] : 'auto'; return h('button', { onClick: () => { E.colPick = sk; renderChrome(); } }, swatch(k), h('span', null, 'Colour')); };
   if (E.multi && E.mode === 'select') {
     const n = E.multi.c.size - [...E.multi.c].filter(id => (findComp(id) || {}).t === 'node').length + E.multi.s.size;
     E.selbar.replaceChildren(h('span', { class: 'selcount' }, `${n} selected`),
       B('Rotate', 'rotate', () => groupRotate()), B('Smaller', 'zout', () => groupScale(-1)), B('Larger', 'zin', () => groupScale(1)),
-      B('Duplicate', 'copy', () => groupDuplicate()), B('Delete', 'trash', () => groupDelete()));
+      selWires.length ? colourBtn() : null, B('Duplicate', 'copy', () => groupDuplicate()), B('Delete', 'trash', () => groupDelete()));
     E.selbar.hidden = false; return;
   }
   const sel = E.sel;
@@ -2433,7 +2500,7 @@ function renderChrome() {
     if (c.t !== 'node' && c.t !== 'text') { const k = sizeOf(c); btns.push(B('Smaller', 'zout', () => resizeSel(-1)), B(k === 1 ? 'Larger' : `Larger · ${k}×`, 'zin', () => resizeSel(1))); }
     if (c.t !== 'node' && c.t !== 'gnd') btns.push(B(c.t === 'text' ? 'Edit' : 'Label', 'edit', editSel));
     if (c.t !== 'node') btns.push(B('Duplicate', 'copy', dupSel));
-  } else if (sel.k === 'w') btns.push(B('Flip bend', 'flip', flipSel));
+  } else if (sel.k === 'w') btns.push(colourBtn(), B('Flip bend', 'flip', flipSel));
   btns.push(B('Delete', 'trash', delSel));
   E.selbar.replaceChildren(...btns); E.selbar.hidden = false;
 }
@@ -2734,6 +2801,13 @@ function groupDelete() {
   pruneNodes(); E.multi = null; E.sel = null; commit(pre); renderEd();
 }
 function rotateSel() { const c = E.sel && findComp(E.sel.id); if (!c || c.t === 'node' || c.t === 'text') return; const pre = snapState(); c.r = ((c.r || 0) + 1) % 4; commit(pre); renderEd(); }
+function selKey() { return E.multi ? 'g' + [...E.multi.c].sort().join() : E.sel ? E.sel.k + E.sel.id : ''; }
+function selectedWires() { if (!E.multi && !(E.sel && E.sel.k === 'w')) return []; return E.data.wires.filter(w => isSel('w', w.id)); }
+function setWireCol(k) {
+  const ws = selectedWires(); if (!ws.length) return;
+  const pre = snapState(); ws.forEach(w => { if (k === 'auto') delete w.col; else w.col = k; }); commit(pre);
+  E.colPick = null; renderEd();
+}
 function flipSel() { const w = E.sel && E.data.wires.find(x => x.id === E.sel.id); if (!w) return; const pre = snapState(); w.f = !w.f; commit(pre); renderEd(); }
 function dupSel() {
   const c = E.sel && findComp(E.sel.id); if (!c || c.t === 'node') return;
