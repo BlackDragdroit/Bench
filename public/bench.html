@@ -2437,9 +2437,11 @@ function drawOverlay() {
   let s = '';
   if (E.mode === 'wire') {
     for (const c of E.data.comps) { if (c.t === 'text') continue; worldPins(c).forEach((p, i) => { const on = E.pend && E.pend.c === c.id && E.pend.p === i; s += `<circle class="pin${on ? ' on' : ''}" cx="${p.x}" cy="${p.y}" r="${on ? 5.5 : 4}"/>`; }); }
+    const np = E.cursor && nearestPin(E.cursor, 18 / E.k), wp = E.cursor && !np && nearestWirePoint(E.cursor, 14 / E.k);
+    if (wp) s += `<circle class="pin on" cx="${wp.x}" cy="${wp.y}" r="5.5"/>`;
     if (E.pend && E.cursor) {
       const a = pinPos(E.pend, compMap());
-      if (a) { const np = nearestPin(E.cursor, 18 / E.k); const b = np ? { x: np.x, y: np.y } : { x: snap(E.cursor.x), y: snap(E.cursor.y) }; const mid = pinVertical(E.pend) ? `${a.x} ${b.y}` : `${b.x} ${a.y}`; s += `<path class="rubber" d="M${a.x} ${a.y}L${mid}L${b.x} ${b.y}"/>`; }
+      if (a) { const b = np ? { x: np.x, y: np.y } : wp ? { x: wp.x, y: wp.y } : { x: snap(E.cursor.x), y: snap(E.cursor.y) }; const mid = pinVertical(E.pend) ? `${a.x} ${b.y}` : `${b.x} ${a.y}`; s += `<path class="rubber" d="M${a.x} ${a.y}L${mid}L${b.x} ${b.y}"/>`; }
     }
   }
   if (E.stroke) s += `<path d="${smoothPath(E.stroke.p)}" fill="none" stroke="${penColor(E.stroke.c)}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>`;
@@ -2466,7 +2468,7 @@ function renderChrome() {
     E.hintEl.hidden = false; E.pens.hidden = true; E.selbar.hidden = true; return;
   }
   const empty = !E.data.comps.length && !E.data.strokes.length;
-  const hint = E.mode === 'wire' ? (E.pend ? 'Tap another pin to connect. Tap empty space to add a corner.' : 'Tap a pin to start a wire.')
+  const hint = E.mode === 'wire' ? (E.pend ? 'Tap a pin or a wire to connect. Tap empty space to add a corner.' : 'Tap a pin, or anywhere on a wire, to start a wire.')
     : E.mode === 'pen' ? 'Draw with a finger or the mouse. Two fingers pan and zoom.'
     : E.mode === 'text' ? 'Tap where the label should go.'
     : E.mode === 'area' ? 'Drag a box around the parts you want to select.'
@@ -2528,6 +2530,39 @@ function nearestPin(w, thr) {
   for (const c of E.data.comps) { if (c.t === 'text') continue; const ps = worldPins(c); for (let i = 0; i < ps.length; i++) { const dx = ps[i].x - w.x, dy = ps[i].y - w.y, d = dx * dx + dy * dy; if (d < bd) { bd = d; best = { c: c.id, p: i, x: ps[i].x, y: ps[i].y }; } } }
   return best;
 }
+// Nächste Stelle auf einem Kabel (auf das Raster gerundet, entlang des Abschnitts)
+function nearestWirePoint(w, thr) {
+  const cm = compMap(); let best = null, bd = thr;
+  for (const wr of E.data.wires) {
+    const pts = wirePts(wr, cm); if (!pts) continue;
+    for (let i = 0; i < pts.length - 1; i++) {
+      const a = pts[i], b = pts[i + 1], hor = a.y === b.y;
+      const lo = hor ? Math.min(a.x, b.x) : Math.min(a.y, b.y), hi = hor ? Math.max(a.x, b.x) : Math.max(a.y, b.y);
+      const along = hor ? w.x : w.y; if (along < lo - thr || along > hi + thr) continue;
+      const d = Math.abs(hor ? w.y - a.y : w.x - a.x); if (d >= bd) continue;
+      const t = clamp(snap(along), lo, hi);
+      bd = d; best = { wire: wr.id, x: hor ? t : a.x, y: hor ? a.y : t };
+    }
+  }
+  return best;
+}
+// Kabel an dieser Stelle teilen; die beiden Hälften behalten Verlauf und Farbe. Gibt den Knoten zurück.
+function splitWire(hit) {
+  const w = E.data.wires.find(x => x.id === hit.wire); if (!w) return null;
+  const cm = compMap();
+  for (const e of [w.a, w.b]) { const p = pinPos(e, cm); if (p && p.x === hit.x && p.y === hit.y) return { c: e.c, p: e.p }; }
+  let node = E.data.comps.find(c => c.t === 'node' && c.x === hit.x && c.y === hit.y);
+  if (!node) { node = { id: uid8(), t: 'node', x: hit.x, y: hit.y, r: 0 }; E.data.comps.push(node); }
+  const i = E.data.wires.indexOf(w), extra = w.col ? { col: w.col } : {};
+  E.data.wires.splice(i, 1, { id: uid8(), a: { ...w.a }, b: { c: node.id, p: 0 }, f: w.f, ...extra }, { id: uid8(), a: { c: node.id, p: 0 }, b: { ...w.b }, f: w.f, ...extra });
+  return { c: node.id, p: 0 };
+}
+function tapWire(hit) {
+  const pre = snapState(), at = splitWire(hit); if (!at) return;
+  if (!E.pend) { E.pend = at; E.cursor = { x: hit.x, y: hit.y }; commit(pre); renderEd(); return; }
+  if (!(E.pend.c === at.c && E.pend.p === at.p)) E.data.wires.push({ id: uid8(), a: { ...E.pend }, b: at, f: pinVertical(E.pend) });
+  E.pend = null; commit(pre); renderEd();
+}
 function onDown(e) {
   if (e.button && e.button !== 1 && e.button !== 2 && e.button !== 0) return;
   const panOnly = e.button === 1 || e.button === 2 || E.spaceDown;
@@ -2552,6 +2587,8 @@ function onDown(e) {
   if (E.mode === 'wire') {
     const pin = nearestPin(w, thr);
     if (pin) { E.pan = panStart({ pin }); return; }
+    const hit = nearestWirePoint(w, thr);
+    if (hit) { E.pan = panStart({ wireHit: hit }); return; }
     E.pan = panStart({ wireTap: !!E.pend }); return;
   }
   if (E.mode === 'text') { E.pan = panStart({ textTap: true }); return; }
@@ -2576,7 +2613,7 @@ function onDown(e) {
 }
 function onMove(e) {
   if (!E) return;
-  if (!E.ptrs.has(e.pointerId)) { if (E.mode === 'wire' && E.pend && e.pointerType === 'mouse') { E.cursor = toWorld(e.clientX, e.clientY); drawOverlay(); } return; }
+  if (!E.ptrs.has(e.pointerId)) { if (E.mode === 'wire' && e.pointerType === 'mouse') { E.cursor = toWorld(e.clientX, e.clientY); drawOverlay(); } return; }
   E.ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
   if (E.pinch) { updatePinch(); return; }
   if (E.ignore) return;
@@ -2624,6 +2661,7 @@ function onUp(e) {
     const p = E.pan; E.pan = null;
     if (p.moved) return;
     if (p.pin) handleWirePin(p.pin);
+    else if (p.wireHit) tapWire(p.wireHit);
     else if (p.wireTap) addCorner(p.w);
     else if (E.mode === 'wire' && E.pend) { E.pend = null; renderEd(); }
     else if (p.textTap) addText(p.w);
